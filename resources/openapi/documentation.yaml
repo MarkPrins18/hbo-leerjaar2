@@ -1,0 +1,56 @@
+openapi: "3.0.3"
+info:
+  title: "Carshare API"
+  version: "1.0"
+paths:
+  /:
+    get:
+      summary: "Hello world endpoint"
+      responses:
+        "200":
+          description: "Tekstuele begroeting"
+  /cars:
+    get:
+      summary: "Lijst van auto's"
+      responses:
+        "200":
+          description: "Een lijst van auto's"
+    post:
+      summary: "Nieuwe auto toevoegen"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref:  "#/components/schemas/Car"
+      responses:
+        "201":
+          description: "Auto succesvol aangemaakt"
+
+
+components:
+  schemas:
+    Car:
+      type: object
+      required:
+        - brand
+        - model
+        - year
+      properties:
+        id:
+          type: integer
+          readOnly: true
+          example: 1
+        brand:
+          type: string
+          example: "Volkswagen"
+        model:
+          type: string
+          example: "ID.3"
+        year:
+          type: integer
+          example: 2023
+        trim:
+          type: string
+          nullable: true
+          example: "Pro Performance"
