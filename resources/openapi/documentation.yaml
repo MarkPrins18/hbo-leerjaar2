@@ -1,0 +1,17 @@
+openapi: "3.0.3"
+info:
+  title: "Carshare API"
+  version: "1.0"
+paths:
+  /:
+    get:
+      summary: "Hello world endpoint"
+      responses:
+        "200":
+          description: "Tekstuele begroeting"
+  /json/kotlinx-serialization:
+    get:
+      summary: "JSON test endpoint"
+      responses:
+        "200":
+          description: "JSON object"
