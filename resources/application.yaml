@@ -7,3 +7,10 @@ ktor:
       - com.example.ExposedKt.configureExposed
       - com.example.StatusPagesKt.configureStatusPages
       - com.example.RoutingKt.configureRouting
+      - com.example.AuthenticationKt.configureAuthentication
+
+
+jwt:
+  secret: "demo_secret"
+  issuer: "http://localhost:8080/"
+  audience: "http://localhost:8080/"

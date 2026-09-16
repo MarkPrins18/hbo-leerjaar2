@@ -8,6 +8,8 @@ dependencies:
   - $ktor.server.netty
   - $ktor.server.statusPages
   - $ktor.server.swagger
+  - $ktor.server.auth
+  - $ktor.server.auth.jwt
   - $libs.exposed.core
   - $libs.exposed.r2dbc
   - $libs.h2database.h2
