@@ -1,12 +1,13 @@
-package com.example.routes
+package routes
 
-import com.example.models.Car
+import models.Car
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
+//Broken!
 fun Route.carRoutes() {
     val cars = mutableListOf(
         Car(id = 1, brand = "Volkswagen", model = "ID.3", year = 2023, trim = "Pro Performance"),
