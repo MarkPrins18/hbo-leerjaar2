@@ -7,13 +7,15 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.routing
-import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
+import org.jetbrains.exposed.v1.jdbc.Database
 
-suspend fun Application.configureExposed() {
-    val database = R2dbcDatabase.connect(
-        url = "r2dbc:h2:file:///./h2",
-        user = "root",
-        password = "",
+fun Application.configureExposed() {
+    val config = environment.config
+    val database = Database.connect(
+        url = config.property("database.url").getString(),
+        driver = "com.mysql.cj.jdbc.Driver",
+        user = config.property("database.user").getString(),
+        password = config.property("database.password").getString(),
     )
     val userService = ExposedUserService(database).also {
         it.createSchema()

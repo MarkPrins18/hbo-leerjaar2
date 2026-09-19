@@ -33,7 +33,7 @@ data class ICECar(
     override val seats: Int,
     val fuelType: FuelType,
     val tankCapacityL: Double,
-    val automaticTransmission: Boolean //is dit een logsiche aanpak?
+    val automaticTransmission: Boolean
 ) : Car()
 
 @Serializable

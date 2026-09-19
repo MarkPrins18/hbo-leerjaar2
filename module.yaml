@@ -9,10 +9,10 @@ dependencies:
   - $ktor.server.statusPages
   - $ktor.server.swagger
   - $libs.exposed.core
-  - $libs.exposed.r2dbc
+  - $libs.exposed.jdbc
   - $libs.h2database.h2
-  - $libs.h2database.r2dbc
   - $libs.logback.classic
+  - $libs.mysql.connector.j
 
 test-dependencies:
   - $ktor.server.testHost
