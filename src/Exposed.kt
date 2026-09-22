@@ -12,5 +12,7 @@ fun Application.configureExposed() {
             password = config.property("database.password").getString(),
         )
     } catch (_: Exception) {
+        // Geen database beschikbaar, app start wel door.
+        //fix exception
     }
 }
