@@ -1,0 +1,44 @@
+@startuml CarDataModel
+
+package models {
+
+    enum FuelType {
+        PETROL
+        DIESEL
+        LPG
+    }
+
+    abstract class Car <<sealed>> {
+        +id: Int
+        +ownerId: Int
+        +licensePlate: String
+        +brand: String
+        +model: String
+        +year: Int
+        +trim: String?
+        +color: String
+        +seats: Int
+    }
+
+    class ICECar <<data>> {
+        +fuelType: FuelType
+        +tankCapacityL: Double
+        +automaticTransmission: Boolean
+    }
+
+    class BEVCar <<data>> {
+        +batteryCapacityKWh: Double
+    }
+
+    class FCEVCar <<data>> {
+        +tankCapacityKgH2: Double
+    }
+
+    Car <|-- ICECar
+    Car <|-- BEVCar
+    Car <|-- FCEVCar
+
+    ICECar --> FuelType
+}
+
+@enduml
