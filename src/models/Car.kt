@@ -15,7 +15,7 @@ sealed class Car{
     abstract val licensePlate: String
     abstract val brand: String
     abstract val model: String
-    abstract val year: Int
+    abstract val productionYear: Int
     abstract val trim: String?
     abstract val color: String
     abstract val seats: Int
@@ -24,12 +24,12 @@ sealed class Car{
 @Serializable
 @SerialName("ICECar")
 data class ICECar(
-    override val id: Int,
+    override val id: Int? = null,
     override val ownerId: Int,
     override val licensePlate: String,
     override val brand: String,
     override val model: String,
-    override val year: Int,
+    override val productionYear: Int,
     override val trim: String?,
     override val color: String,
     override val seats: Int,
@@ -41,12 +41,12 @@ data class ICECar(
 @Serializable
 @SerialName("BEVCar")
 data class BEVCar(
-    override val id: Int,
+    override val id: Int? = null,
     override val ownerId: Int,
     override val licensePlate: String,
     override val brand: String,
     override val model: String,
-    override val year: Int,
+    override val productionYear: Int,
     override val trim: String?,
     override val color: String,
     override val seats: Int,
@@ -56,12 +56,12 @@ data class BEVCar(
 @Serializable
 @SerialName("FCEVCar")
 data class FCEVCar(
-    override val id: Int,
+    override val id: Int? = null,
     override val ownerId: Int,
     override val licensePlate: String,
     override val brand: String,
     override val model: String,
-    override val year: Int,
+    override val productionYear: Int,
     override val trim: String?,
     override val color: String,
     override val seats: Int,
