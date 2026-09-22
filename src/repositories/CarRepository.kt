@@ -1,14 +1,7 @@
-package repository
+package repositories
 
 import models.Car
 
-/**
- * let op! onderstaande is ai tekst.
- * Abstractie over waar Car-data vandaan komt. De huidige implementatie
- * (InMemoryCarRepository) is een tijdelijke stand-in tot de Exposed/MySQL-
- * implementatie klaar is. Routes en services praten alleen tegen deze
- * interface, nooit tegen een concrete implementatie.
- */
 interface CarRepository {
     suspend fun getAllCars(): List<Car>
 

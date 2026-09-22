@@ -1,5 +1,6 @@
 package models
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -9,7 +10,7 @@ enum class FuelType {
 
 @Serializable
 sealed class Car{
-    abstract val id: Int  //let op misschien ?
+    abstract val id: Int?  //let op ?
     abstract val ownerId: Int
     abstract val licensePlate: String
     abstract val brand: String
@@ -21,6 +22,7 @@ sealed class Car{
 }
 
 @Serializable
+@SerialName("ICECar")
 data class ICECar(
     override val id: Int,
     override val ownerId: Int,
@@ -37,6 +39,7 @@ data class ICECar(
 ) : Car()
 
 @Serializable
+@SerialName("BEVCar")
 data class BEVCar(
     override val id: Int,
     override val ownerId: Int,
@@ -51,6 +54,7 @@ data class BEVCar(
 ) : Car()
 
 @Serializable
+@SerialName("FCEVCar")
 data class FCEVCar(
     override val id: Int,
     override val ownerId: Int,

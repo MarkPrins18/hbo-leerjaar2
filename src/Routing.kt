@@ -1,8 +1,9 @@
-//import routes.carRoutes
+import routes.carRoutes
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.plugins.swagger.*
+import repositories.ExposedCarRepository
 
 fun Application.configureRouting() {
     routing {
@@ -10,6 +11,6 @@ fun Application.configureRouting() {
         get("/") {
             call.respondText("Hello, World!")
         }
-        //carRoutes()
+        carRoutes(ExposedCarRepository()) //let op! expliciete parameter.
     }
 }
