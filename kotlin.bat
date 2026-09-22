@@ -5,7 +5,7 @@
 @rem
 
 @rem Possible environment variables:
-@rem   KOTLIN_CLI_DOWNLOAD_ROOT        Maven repository to download the Kotlin CLI dist from
+@rem   KOTLIN_CLI_DOWNLOAD_ROOT        Maven repositories to download the Kotlin CLI dist from
 @rem                              default: https://packages.jetbrains.team/maven/p/amper/amper
 @rem   KOTLIN_CLI_JRE_DOWNLOAD_ROOT    Url prefix to download the Kotlin CLI JRE from.
 @rem                              default: https:/

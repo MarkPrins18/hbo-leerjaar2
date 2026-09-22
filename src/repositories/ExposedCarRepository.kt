@@ -1,0 +1,88 @@
+package repositories
+
+import models.BEVCar
+import models.Car
+import models.FCEVCar
+import models.ICECar
+import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.leftJoin
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
+import tables.BevCarTable
+import tables.CarTable
+import tables.FcevCarTable
+import tables.IceCarTable
+
+class ExposedCarRepository : CarRepository {
+
+    override suspend fun getAllCars(): List<Car> = suspendTransaction {
+        CarTable
+            .leftJoin(IceCarTable, { CarTable.id }, { IceCarTable.carId })
+            .leftJoin(BevCarTable, { CarTable.id }, { BevCarTable.carId })
+            .leftJoin(FcevCarTable, { CarTable.id }, { FcevCarTable.carId })
+            .selectAll()
+            .map { row -> row.toCar() }
+    }
+
+    override suspend fun getCarById(carId: Int): Car? {
+        TODO("Volgt in een latere stap")
+    }
+
+    override suspend fun createCar(car: Car): Car {
+        TODO("Volgt in een latere stap")
+    }
+
+    override suspend fun updateCar(car: Car): Car? {
+        TODO("Volgt in een latere stap")
+    }
+
+    override suspend fun deleteCar(carId: Int): Boolean {
+        TODO("Volgt in een latere stap")
+    }
+
+    private fun ResultRow.toCar(): Car = when {
+        getOrNull(IceCarTable.carId) != null -> ICECar(
+            id = this[CarTable.id],
+            ownerId = this[CarTable.ownerId],
+            licensePlate = this[CarTable.licensePlate],
+            brand = this[CarTable.brand],
+            model = this[CarTable.model],
+            year = this[CarTable.productionYear].toInt(),
+            trim = this[CarTable.trim],
+            color = this[CarTable.color],
+            seats = this[CarTable.seats].toInt(),
+            fuelType = this[IceCarTable.fuelType],
+            tankCapacityL = this[IceCarTable.tankCapacityL].toDouble(),
+            automaticTransmission = this[IceCarTable.automaticTransmission]
+        )
+
+        getOrNull(BevCarTable.carId) != null -> BEVCar(
+            id = this[CarTable.id],
+            ownerId = this[CarTable.ownerId],
+            licensePlate = this[CarTable.licensePlate],
+            brand = this[CarTable.brand],
+            model = this[CarTable.model],
+            year = this[CarTable.productionYear].toInt(),
+            trim = this[CarTable.trim],
+            color = this[CarTable.color],
+            seats = this[CarTable.seats].toInt(),
+            batteryCapacityKWh = this[BevCarTable.batteryCapacityKwh].toDouble()
+        )
+
+        getOrNull(FcevCarTable.carId) != null -> FCEVCar(
+            id = this[CarTable.id],
+            ownerId = this[CarTable.ownerId],
+            licensePlate = this[CarTable.licensePlate],
+            brand = this[CarTable.brand],
+            model = this[CarTable.model],
+            year = this[CarTable.productionYear].toInt(),
+            trim = this[CarTable.trim],
+            color = this[CarTable.color],
+            seats = this[CarTable.seats].toInt(),
+            tankCapacityKgH2 = this[FcevCarTable.tankCapacityKgH2].toDouble()
+        )
+
+        else -> error("Car ${this[CarTable.id]} heeft geen bijbehorend subtype in ice_car, bev_car of fcev_car")
+    }
+
+}

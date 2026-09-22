@@ -1,6 +1,12 @@
-import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.*
 import org.jetbrains.exposed.v1.jdbc.Database
+import org.jetbrains.exposed.v1.jdbc.SchemaUtils
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import tables.OwnerTable
+import tables.CarTable
+import tables.IceCarTable
+import tables.BevCarTable
+import tables.FcevCarTable
 
 fun Application.configureExposed() {
     val config = environment.config
@@ -14,5 +20,14 @@ fun Application.configureExposed() {
     } catch (_: Exception) {
         // Geen database beschikbaar, app start wel door.
         //fix exception
+    }
+
+    try {
+        transaction {
+            SchemaUtils.create(OwnerTable, CarTable, IceCarTable, BevCarTable, FcevCarTable)
+        }
+    } catch (_: Exception) {
+        // Schema aanmaken mislukt.
+        //fix logging
     }
 }

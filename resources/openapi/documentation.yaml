@@ -1,56 +1,120 @@
-openapi: "3.0.3"
+openapi: 3.0.3
 info:
-  title: "Carshare API"
-  version: "1.0"
+  title: Car Sharing API
+  version: "1.0.0"
+
 paths:
-  /:
-    get:
-      summary: "Hello world endpoint"
-      responses:
-        "200":
-          description: "Tekstuele begroeting"
   /cars:
     get:
-      summary: "Lijst van auto's"
+      summary: Haal alle auto's op
+      operationId: getAllCars
+      tags:
+        - Cars
       responses:
         "200":
-          description: "Een lijst van auto's"
-    post:
-      summary: "Nieuwe auto toevoegen"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref:  "#/components/schemas/Car"
-      responses:
-        "201":
-          description: "Auto succesvol aangemaakt"
-
+          description: Lijst van alle auto's
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Car"
 
 components:
   schemas:
     Car:
+      oneOf:
+        - $ref: "#/components/schemas/ICECar"
+        - $ref: "#/components/schemas/BEVCar"
+        - $ref: "#/components/schemas/FCEVCar"
+      discriminator:
+        propertyName: type
+        mapping:
+          ICECar: "#/components/schemas/ICECar"
+          BEVCar: "#/components/schemas/BEVCar"
+          FCEVCar: "#/components/schemas/FCEVCar"
+
+    CarBase:
       type: object
       required:
+        - id
+        - ownerId
+        - licensePlate
         - brand
         - model
-        - year
+        - productionYear
+        - color
+        - seats
       properties:
         id:
           type: integer
-          readOnly: true
-          example: 1
+          nullable: true
+        ownerId:
+          type: integer
+        licensePlate:
+          type: string
         brand:
           type: string
-          example: "Volkswagen"
         model:
           type: string
-          example: "ID.3"
         year:
           type: integer
-          example: 2023
         trim:
           type: string
           nullable: true
-          example: "Pro Performance"
+        color:
+          type: string
+        seats:
+          type: integer
+
+    ICECar:
+      allOf:
+        - $ref: "#/components/schemas/CarBase"
+        - type: object
+          required:
+            - type
+            - fuelType
+            - tankCapacityL
+            - automaticTransmission
+          properties:
+            type:
+              type: string
+              enum: [ICECar]
+            fuelType:
+              type: string
+              enum: [PETROL, DIESEL, LPG]
+            tankCapacityL:
+              type: number
+              format: double
+            automaticTransmission:
+              type: boolean
+
+    BEVCar:
+      allOf:
+        - $ref: "#/components/schemas/CarBase"
+        - type: object
+          required:
+            - type
+            - batteryCapacityKWh
+          properties:
+            type:
+              type: string
+              enum: [BEVCar]
+            batteryCapacityKWh:
+              type: number
+              format: double
+
+    FCEVCar:
+      allOf:
+        - $ref: "#/components/schemas/CarBase"
+        - type: object
+          required:
+            - type
+            - tankCapacityKgH2
+          properties:
+            type:
+              type: string
+              enum: [FCEVCar]
+            tankCapacityKgH2:
+              type: number
+              format: double

@@ -1,5 +1,6 @@
 package models
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -9,25 +10,26 @@ enum class FuelType {
 
 @Serializable
 sealed class Car{
-    abstract val id: Int  //let op misschien ?
+    abstract val id: Int?  //let op ?
     abstract val ownerId: Int
     abstract val licensePlate: String
     abstract val brand: String
     abstract val model: String
-    abstract val year: Int
+    abstract val productionYear: Int
     abstract val trim: String?
     abstract val color: String
     abstract val seats: Int
 }
 
 @Serializable
+@SerialName("ICECar")
 data class ICECar(
-    override val id: Int,
+    override val id: Int? = null,
     override val ownerId: Int,
     override val licensePlate: String,
     override val brand: String,
     override val model: String,
-    override val year: Int,
+    override val productionYear: Int,
     override val trim: String?,
     override val color: String,
     override val seats: Int,
@@ -37,13 +39,14 @@ data class ICECar(
 ) : Car()
 
 @Serializable
+@SerialName("BEVCar")
 data class BEVCar(
-    override val id: Int,
+    override val id: Int? = null,
     override val ownerId: Int,
     override val licensePlate: String,
     override val brand: String,
     override val model: String,
-    override val year: Int,
+    override val productionYear: Int,
     override val trim: String?,
     override val color: String,
     override val seats: Int,
@@ -51,13 +54,14 @@ data class BEVCar(
 ) : Car()
 
 @Serializable
+@SerialName("FCEVCar")
 data class FCEVCar(
-    override val id: Int,
+    override val id: Int? = null,
     override val ownerId: Int,
     override val licensePlate: String,
     override val brand: String,
     override val model: String,
-    override val year: Int,
+    override val productionYear: Int,
     override val trim: String?,
     override val color: String,
     override val seats: Int,
