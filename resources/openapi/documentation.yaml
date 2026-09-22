@@ -95,12 +95,12 @@ components:
         - type: object
           required:
             - type
-            - batteryCapacityKwh
+            - batteryCapacityKWh
           properties:
             type:
               type: string
               enum: [BEVCar]
-            batteryCapacityKwh:
+            batteryCapacityKWh:
               type: number
               format: double
 
