@@ -12,3 +12,4 @@ database:
   user: "$DB_USER?:carshare_app"
   password: "$DB_PASSWORD:"
   reset-schema: false
+  seed-data: false
