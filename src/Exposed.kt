@@ -10,24 +10,34 @@ import tables.FcevCarTable
 
 fun Application.configureExposed() {
     val config = environment.config
-    try {
-        Database.connect(
-            url = config.property("database.url").getString(),
-            driver = "com.mysql.cj.jdbc.Driver",
-            user = config.property("database.user").getString(),
-            password = config.property("database.password").getString(),
-        )
-    } catch (_: Exception) {
-        // Geen database beschikbaar, app start wel door.
-        //fix exception
-    }
+    val databaseUrl = config.property("database.url").getString()
+    val databaseUser = config.property("database.user").getString()
 
     try {
-        transaction {
-            SchemaUtils.create(OwnerTable, CarTable, IceCarTable, BevCarTable, FcevCarTable)
+        Database.connect(
+            url = databaseUrl,
+            driver = "com.mysql.cj.jdbc.Driver",
+            user = databaseUser,
+            password = config.property("database.password").getString(),
+        )
+        log.info("Succesvol verbonden met database '$databaseUrl' als gebruiker '$databaseUser'.")
+
+        try {
+            transaction {
+                val resetSchema = config.property("database.reset-schema").getString().toBoolean()
+
+                if (resetSchema) {
+                    SchemaUtils.drop(IceCarTable, BevCarTable, FcevCarTable, CarTable, OwnerTable)
+                    log.warn("Database schema verwijderd omdat database.reset-schema=true is.")
+                }
+
+                SchemaUtils.create(OwnerTable, CarTable, IceCarTable, BevCarTable, FcevCarTable)
+            }
+            log.info("Database-transactie succesvol uitgevoerd en schema gecontroleerd.")
+        } catch (exception: Exception) {
+            log.error("Schema aanmaken mislukt.", exception)
         }
-    } catch (_: Exception) {
-        // Schema aanmaken mislukt.
-        //fix logging
+    } catch (exception: Exception) {
+        log.error("Verbinding met de database mislukt. Schema wordt niet aangemaakt.", exception)
     }
 }
