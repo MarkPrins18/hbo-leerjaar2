@@ -1,7 +1,8 @@
 package tables
 
-import org.jetbrains.exposed.v1.core.Table
 import models.FuelType
+import models.VehicleType
+import org.jetbrains.exposed.v1.core.Table
 
 val carTables = listOf(CarTable, IceCarTable, BevCarTable, FcevCarTable)
 
@@ -15,6 +16,11 @@ object CarTable : Table("car") {
     val trim = varchar("trim", 100).nullable()
     val color = varchar("color", 50)
     val seats = ubyte("seats")
+    val doors = ubyte("doors").nullable()
+    val vehicleType = enumerationByName("vehicle_type", 30, VehicleType::class)
+    val readyToDriveWeightKg = integer("ready_to_drive_weight_kg")
+    val consumptionCombined = decimal("consumption_combined", 6, 2)
+    val co2EmissionCombined = decimal("co2_emission_combined", 7, 2)
 
     override val primaryKey = PrimaryKey(id)
 }

@@ -7,12 +7,17 @@ INSERT INTO car (
     production_year,
     trim,
     color,
-    seats
+    seats,
+    doors,
+    vehicle_type,
+    ready_to_drive_weight_kg,
+    consumption_combined,
+    co2_emission_combined
 )
 VALUES
-    (1, 1, 'AA-123-BB', 'Toyota', 'Corolla', 2022, 'Comfort', 'Blue', 5),
-    (2, 1, 'CC-456-DD', 'Tesla', 'Model 3', 2023, 'Long Range', 'White', 5),
-    (3, 2, 'EE-789-FF', 'Hyundai', 'Nexo', 2021, 'Premium', 'Black', 5);
+    (1, 1, 'AA-123-BB', 'Toyota', 'Corolla', 2022, 'Comfort', 'Blue', 5, 5, 'PASSENGER_CAR', 1395, 6.0, 137.0),
+    (2, 1, 'CC-456-DD', 'Tesla', 'Model 3', 2023, 'Long Range', 'White', 5, 4, 'PASSENGER_CAR', 1828, 16.0, 0.0),
+    (3, 2, 'EE-789-FF', 'Hyundai', 'Nexo', 2021, 'Premium', 'Black', 5, 5, 'PASSENGER_CAR', 1889, 0.95, 0.0);
 
 INSERT INTO ice_car (
     car_id,

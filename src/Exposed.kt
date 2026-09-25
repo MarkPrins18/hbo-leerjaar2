@@ -22,12 +22,18 @@ private fun Application.connectToDatabase(): Boolean {
     val databasePassword = config.property("database.password").getString()
 
     return try {
+        //bug in this code, logging isn't running correctly?
         Database.connect(
             url = databaseUrl,
             driver = "com.mysql.cj.jdbc.Driver",
             user = databaseUser,
             password = databasePassword,
         )
+        
+        transaction {
+            exec("SELECT 1")
+        }
+
         log.info("Succesvol verbonden met database '$databaseUrl' als gebruiker '$databaseUser'.") //test logging
         true
     } catch (exception: Exception) {

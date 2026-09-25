@@ -45,10 +45,13 @@ components:
         - productionYear
         - color
         - seats
+        - vehicleType
+        - readyToDriveWeightKg
+        - consumptionCombined
+        - co2EmissionCombined
       properties:
         id:
           type: integer
-          nullable: true
         ownerId:
           type: integer
         licensePlate:
@@ -57,7 +60,7 @@ components:
           type: string
         model:
           type: string
-        year:
+        productionYear:
           type: integer
         trim:
           type: string
@@ -66,6 +69,22 @@ components:
           type: string
         seats:
           type: integer
+        doors:
+          type: integer
+          nullable: true
+        vehicleType:
+          type: string
+          enum:
+            - PASSENGER_CAR
+            - LIGHT_COMMERCIAL_VEHICLE
+        readyToDriveWeightKg:
+          type: integer
+        consumptionCombined:
+          type: number
+          format: double
+        co2EmissionCombined:
+          type: number
+          format: double
 
     ICECar:
       allOf:
