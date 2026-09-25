@@ -15,12 +15,12 @@ object CarTable : Table("car") {
     val productionYear = short("production_year")
     val trim = varchar("trim", 100).nullable()
     val color = varchar("color", 50)
-    val seats = ubyte("seats")
+    val seats = ubyte("seats").nullable()
     val doors = ubyte("doors").nullable()
     val vehicleType = enumerationByName("vehicle_type", 30, VehicleType::class)
     val readyToDriveWeightKg = integer("ready_to_drive_weight_kg")
-    val consumptionCombined = decimal("consumption_combined", 6, 2)
-    val co2EmissionCombined = decimal("co2_emission_combined", 7, 2)
+    val consumptionCombined = decimal("consumption_combined", 6, 2).nullable()
+    val co2EmissionCombined = decimal("co2_emission_combined", 7, 2).nullable()
 
     override val primaryKey = PrimaryKey(id)
 }

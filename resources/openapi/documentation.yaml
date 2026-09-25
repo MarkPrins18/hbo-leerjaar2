@@ -19,6 +19,25 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Car"
+  /cars/import:
+    post:
+      summary: Importeer een auto via het kenteken
+      operationId: importCar
+      tags:
+        - Cars
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CarRequest"
+      responses:
+        "201":
+          description: Auto succesvol geïmporteerd
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Car"
 
 components:
   schemas:
@@ -137,3 +156,32 @@ components:
             tankCapacityKgH2:
               type: number
               format: double
+    CarRequest:
+      type: object
+      required:
+        - licensePlate
+        - ownerId
+      properties:
+        licensePlate:
+          type: string
+        ownerId:
+          type: integer
+          format: int32
+        trim:
+          type: string
+          nullable: true
+        tankCapacityL:
+          type: number
+          format: double
+          nullable: true
+        automaticTransmission:
+          type: boolean
+          nullable: true
+        batteryCapacityKWh:
+          type: number
+          format: double
+          nullable: true
+        tankCapacityKgH2:
+          type: number
+          format: double
+          nullable: true

@@ -44,10 +44,10 @@ sealed class Car {
      * - BEVCar: kWh per 100 km
      * - FCEVCar: kg H2 per 100 km
      */
-    abstract val consumptionCombined: Double
+    abstract val consumptionCombined: Double?
 
     /** Combined CO2 emission in g/km. Used for MRB discounts on EV/PHEV vehicles. */
-    abstract val co2EmissionCombined: Double
+    abstract val co2EmissionCombined: Double?
 }
 
 @Serializable
@@ -65,8 +65,8 @@ data class ICECar(
     override val doors: Int?,
     override val vehicleType: VehicleType,
     override val readyToDriveWeightKg: Int,
-    override val consumptionCombined: Double,
-    override val co2EmissionCombined: Double,
+    override val consumptionCombined: Double?,
+    override val co2EmissionCombined: Double?,
     val fuelType: FuelType,
     val tankCapacityL: Double,
     val automaticTransmission: Boolean
@@ -87,8 +87,8 @@ data class BEVCar(
     override val doors: Int?,
     override val vehicleType: VehicleType,
     override val readyToDriveWeightKg: Int,
-    override val consumptionCombined: Double,
-    override val co2EmissionCombined: Double,
+    override val consumptionCombined: Double?,
+    override val co2EmissionCombined: Double?,
     val batteryCapacityKWh: Double
 ) : Car()
 
@@ -107,7 +107,7 @@ data class FCEVCar(
     override val doors: Int?,
     override val vehicleType: VehicleType,
     override val readyToDriveWeightKg: Int,
-    override val consumptionCombined: Double,
-    override val co2EmissionCombined: Double,
+    override val consumptionCombined: Double?,
+    override val co2EmissionCombined: Double?,
     val tankCapacityKgH2: Double
 ) : Car()

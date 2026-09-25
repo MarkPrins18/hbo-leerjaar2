@@ -13,3 +13,6 @@ database:
   password: "$DB_PASSWORD:"
   reset-schema: true
   seed-data: true
+
+rdw:
+  appToken: "$RDW_APP_TOKEN:"

@@ -8,6 +8,9 @@ dependencies:
   - $ktor.server.netty
   - $ktor.server.statusPages
   - $ktor.server.swagger
+  - $libs.ktor.client.core
+  - $libs.ktor.client.cio
+  - $libs.ktor.client.content.negotiation
   - $libs.exposed.core
   - $libs.exposed.jdbc
   - $libs.h2database.h2
