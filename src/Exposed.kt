@@ -6,7 +6,13 @@ import tables.OwnerTable
 import tables.CarTable
 import tables.IceCarTable
 import tables.BevCarTable
+import tables.BonusPointAwardTable
 import tables.FcevCarTable
+import tables.LocationTable
+import tables.PhotoTable
+import tables.RenterTable
+import tables.ReservationTable
+import tables.TripTable
 
 fun Application.configureExposed() {
     val config = environment.config
@@ -31,7 +37,11 @@ fun Application.configureExposed() {
                     log.warn("Database schema verwijderd omdat database.reset-schema=true is.")
                 }
 
-                SchemaUtils.create(OwnerTable, CarTable, IceCarTable, BevCarTable, FcevCarTable)
+                SchemaUtils.create(
+                    OwnerTable, RenterTable,
+                    CarTable, IceCarTable, BevCarTable, FcevCarTable,
+                    ReservationTable, TripTable, BonusPointAwardTable,
+                    LocationTable, PhotoTable)
             }
             log.info("Database-transactie succesvol uitgevoerd en schema gecontroleerd.")
         } catch (exception: Exception) {

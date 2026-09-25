@@ -4,6 +4,7 @@ ktor:
   application:
     modules:
       - SerializationKt.configureSerialization
+      - LoggingKt.configureLogging
       - ExposedKt.configureExposed
       - StatusPagesKt.configureStatusPages
       - RoutingKt.configureRouting

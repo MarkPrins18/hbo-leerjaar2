@@ -19,8 +19,427 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Car"
+    post:
+      summary: Maak een nieuwe auto aan
+      operationId: createCar
+      tags:
+        - Cars
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Car"
+      responses:
+        "201":
+          description: Aangemaakte auto (met gegenereerd id)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Car"
+
+  /cars/{id}:
+    get:
+      summary: Haal 1 auto op
+      operationId: getCarById
+      tags:
+        - Cars
+      parameters:
+        - $ref: "#/components/parameters/CarId"
+      responses:
+        "200":
+          description: De gevraagde auto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Car"
+        "404":
+          description: Auto niet gevonden
+
+  /cars/{carId}/locations:
+    parameters:
+      - $ref: "#/components/parameters/CarIdInPath"
+    get:
+      summary: Haal alle locatiemeldingen van een auto op
+      operationId: getLocationsForCar
+      tags:
+        - Locations
+      responses:
+        "200":
+          description: Lijst van locatiemeldingen
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Location"
+    post:
+      summary: Registreer een nieuwe locatiemelding voor een auto
+      operationId: recordLocation
+      tags:
+        - Locations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Location"
+      responses:
+        "201":
+          description: Opgeslagen locatiemelding
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Location"
+
+  /cars/{carId}/locations/latest:
+    parameters:
+      - $ref: "#/components/parameters/CarIdInPath"
+    get:
+      summary: Haal de laatst bekende locatie van een auto op
+      operationId: getLatestLocationForCar
+      tags:
+        - Locations
+      responses:
+        "200":
+          description: Laatst bekende locatie
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Location"
+        "404":
+          description: Geen locatie bekend voor deze auto
+
+  /cars/{carId}/photos:
+    parameters:
+      - $ref: "#/components/parameters/CarIdInPath"
+    get:
+      summary: Haal alle foto's van een auto op
+      operationId: getPhotosForCar
+      tags:
+        - Photos
+      responses:
+        "200":
+          description: Lijst van foto's
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Photo"
+    post:
+      summary: Voeg een foto toe aan een auto
+      operationId: addPhoto
+      tags:
+        - Photos
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Photo"
+      responses:
+        "201":
+          description: Opgeslagen foto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Photo"
+
+  /cars/{carId}/photos/{photoId}:
+    delete:
+      summary: Verwijder een foto
+      operationId: deletePhoto
+      tags:
+        - Photos
+      parameters:
+        - $ref: "#/components/parameters/CarIdInPath"
+        - name: photoId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Foto verwijderd
+        "404":
+          description: Foto niet gevonden
+
+  /reservations:
+    get:
+      summary: Haal alle reserveringen op
+      operationId: getAllReservations
+      tags:
+        - Reservations
+      responses:
+        "200":
+          description: Lijst van reserveringen
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Reservation"
+    post:
+      summary: Maak een nieuwe reservering aan (issue #9)
+      operationId: createReservation
+      tags:
+        - Reservations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Reservation"
+      responses:
+        "201":
+          description: Aangemaakte reservering (status altijd PENDING)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reservation"
+        "409":
+          description: Auto is in de gevraagde periode al gereserveerd
+
+  /reservations/{id}:
+    get:
+      summary: Haal 1 reservering op
+      operationId: getReservationById
+      tags:
+        - Reservations
+      parameters:
+        - $ref: "#/components/parameters/ReservationId"
+      responses:
+        "200":
+          description: De gevraagde reservering
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reservation"
+        "404":
+          description: Reservering niet gevonden
+    delete:
+      summary: Verwijder een reservering
+      operationId: deleteReservation
+      tags:
+        - Reservations
+      parameters:
+        - $ref: "#/components/parameters/ReservationId"
+      responses:
+        "204":
+          description: Reservering verwijderd
+        "404":
+          description: Reservering niet gevonden
+
+  /reservations/{id}/status:
+    patch:
+      summary: Wijzig de status van een reservering (bijv. bevestigen/annuleren)
+      operationId: updateReservationStatus
+      tags:
+        - Reservations
+      parameters:
+        - $ref: "#/components/parameters/ReservationId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  $ref: "#/components/schemas/ReservationStatus"
+      responses:
+        "200":
+          description: Bijgewerkte reservering
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reservation"
+        "404":
+          description: Reservering niet gevonden
+
+  /trips:
+    get:
+      summary: Haal alle ritten op
+      operationId: getAllTrips
+      tags:
+        - Trips
+      responses:
+        "200":
+          description: Lijst van ritten
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Trip"
+    post:
+      summary: Start een nieuwe rit (issue #11)
+      operationId: startTrip
+      tags:
+        - Trips
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Trip"
+      responses:
+        "201":
+          description: Gestarte rit
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trip"
+
+  /trips/{id}:
+    get:
+      summary: Haal 1 rit op
+      operationId: getTripById
+      tags:
+        - Trips
+      parameters:
+        - $ref: "#/components/parameters/TripId"
+      responses:
+        "200":
+          description: De gevraagde rit
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trip"
+        "404":
+          description: Rit niet gevonden
+
+  /trips/{id}/end:
+    patch:
+      summary: Rond een lopende rit af
+      operationId: endTrip
+      tags:
+        - Trips
+      parameters:
+        - $ref: "#/components/parameters/TripId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [endLatitude, endLongitude, distanceKm]
+              properties:
+                endLatitude:
+                  type: number
+                  format: double
+                endLongitude:
+                  type: number
+                  format: double
+                distanceKm:
+                  type: number
+                  format: double
+      responses:
+        "200":
+          description: Afgeronde rit
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trip"
+        "404":
+          description: Rit niet gevonden
+
+  /renters/{renterId}/bonus-points:
+    get:
+      summary: Haal het totaal aantal bonuspunten van een huurder op (issue #12)
+      operationId: getTotalBonusPoints
+      tags:
+        - BonusPoints
+      parameters:
+        - $ref: "#/components/parameters/RenterId"
+      responses:
+        "200":
+          description: Totaal aantal bonuspunten
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  renterId:
+                    type: integer
+                  totalPoints:
+                    type: integer
+
+  /renters/{renterId}/bonus-points/history:
+    get:
+      summary: Haal de geschiedenis van bonuspunt-toekenningen van een huurder op
+      operationId: getBonusPointHistory
+      tags:
+        - BonusPoints
+      parameters:
+        - $ref: "#/components/parameters/RenterId"
+      responses:
+        "200":
+          description: Lijst van toekenningen
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BonusPointAward"
+
+  /route:
+    post:
+      summary: Berekent een route tussen twee coordinaten (issue #10, via OSRM)
+      operationId: calculateRoute
+      tags:
+        - Route
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RouteRequest"
+      responses:
+        "200":
+          description: Berekende route
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RouteResult"
+        "502":
+          description: Routeringsdienst kon geen route berekenen
 
 components:
+  parameters:
+    CarId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    CarIdInPath:
+      name: carId
+      in: path
+      required: true
+      schema:
+        type: integer
+    ReservationId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    TripId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    RenterId:
+      name: renterId
+      in: path
+      required: true
+      schema:
+        type: integer
+
   schemas:
     Car:
       oneOf:
@@ -37,7 +456,6 @@ components:
     CarBase:
       type: object
       required:
-        - id
         - ownerId
         - licensePlate
         - brand
@@ -57,7 +475,7 @@ components:
           type: string
         model:
           type: string
-        year:
+        productionYear:
           type: integer
         trim:
           type: string
@@ -118,3 +536,179 @@ components:
             tankCapacityKgH2:
               type: number
               format: double
+
+    Location:
+      type: object
+      required:
+        - carId
+        - latitude
+        - longitude
+        - timestamp
+      properties:
+        id:
+          type: integer
+          nullable: true
+        carId:
+          type: integer
+        userId:
+          type: integer
+          nullable: true
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        timestamp:
+          type: integer
+          format: int64
+          description: Epoch-milliseconden
+
+    Photo:
+      type: object
+      required:
+        - carId
+        - url
+        - uploadedAt
+      properties:
+        id:
+          type: integer
+          nullable: true
+        carId:
+          type: integer
+        url:
+          type: string
+        uploadedAt:
+          type: integer
+          format: int64
+          description: Epoch-milliseconden
+
+    ReservationStatus:
+      type: string
+      enum: [PENDING, CONFIRMED, CANCELLED, COMPLETED]
+
+    Reservation:
+      type: object
+      required:
+        - carId
+        - renterId
+        - startTime
+        - endTime
+      properties:
+        id:
+          type: integer
+          nullable: true
+        carId:
+          type: integer
+        renterId:
+          type: integer
+        startTime:
+          type: integer
+          format: int64
+          description: Epoch-milliseconden
+        endTime:
+          type: integer
+          format: int64
+          description: Epoch-milliseconden
+        status:
+          $ref: "#/components/schemas/ReservationStatus"
+        createdAt:
+          type: integer
+          format: int64
+          description: Epoch-milliseconden (wordt door de server bepaald)
+
+    Trip:
+      type: object
+      required:
+        - reservationId
+        - startTime
+        - startLatitude
+        - startLongitude
+      properties:
+        id:
+          type: integer
+          nullable: true
+        reservationId:
+          type: integer
+        startTime:
+          type: integer
+          format: int64
+          description: Epoch-milliseconden
+        endTime:
+          type: integer
+          format: int64
+          nullable: true
+          description: Epoch-milliseconden, null zolang de rit loopt
+        startLatitude:
+          type: number
+          format: double
+        startLongitude:
+          type: number
+          format: double
+        endLatitude:
+          type: number
+          format: double
+          nullable: true
+        endLongitude:
+          type: number
+          format: double
+          nullable: true
+        distanceKm:
+          type: number
+          format: double
+          nullable: true
+
+    BonusPointAward:
+      type: object
+      required:
+        - renterId
+        - tripId
+        - points
+      properties:
+        id:
+          type: integer
+          nullable: true
+        renterId:
+          type: integer
+        tripId:
+          type: integer
+        points:
+          type: integer
+        awardedAt:
+          type: integer
+          format: int64
+          description: Epoch-milliseconden
+
+    RouteRequest:
+      type: object
+      required:
+        - startLatitude
+        - startLongitude
+        - endLatitude
+        - endLongitude
+      properties:
+        startLatitude:
+          type: number
+          format: double
+        startLongitude:
+          type: number
+          format: double
+        endLatitude:
+          type: number
+          format: double
+        endLongitude:
+          type: number
+          format: double
+
+    RouteResult:
+      type: object
+      required:
+        - distanceMeters
+        - durationSeconds
+      properties:
+        distanceMeters:
+          type: number
+          format: double
+        durationSeconds:
+          type: number
+          format: double

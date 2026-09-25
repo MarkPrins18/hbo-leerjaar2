@@ -2,6 +2,7 @@ product: jvm/app
 
 dependencies:
   - $ktor.serialization.kotlinx.json
+  - $ktor.server.callLogging
   - $ktor.server.config.yaml
   - $ktor.server.contentNegotiation
   - $ktor.server.core
