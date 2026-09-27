@@ -60,11 +60,17 @@ class ExposedCarRepository : CarRepository {
                 }
 
                 is BEVCar -> {
-                    // later
+                    BevCarTable.insert {
+                        it[BevCarTable.carId] = carId
+                        it[BevCarTable.batteryCapacityKwh] = car.batteryCapacityKWh.toBigDecimal()
+                    }
                 }
 
                 is FCEVCar -> {
-                    // later
+                    FcevCarTable.insert {
+                        it[FcevCarTable.carId] = carId
+                        it[FcevCarTable.tankCapacityKgH2] = car.tankCapacityKgH2.toBigDecimal()
+                    }
                 }
             }
 

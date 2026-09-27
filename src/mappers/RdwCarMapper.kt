@@ -24,8 +24,16 @@ object RdwCarMapper {
         batteryCapacityKWh: Double? = null,
         tankCapacityKgH2: Double? = null
     ): Car {
-        val hoofdbrandstof = brandstoffen.firstOrNull { it.fuelSequenceNumber == "1" }
-            ?: throw RdwMappingException("Geen hoofdbrandstof gevonden voor kenteken ${voertuig.licensePlate}")
+        val hoofdbrandstof = if (brandstoffen.size > 1) {
+            // Hybrid: multiple fuel rows (incl. Elektriciteit). We treat hybrids
+            // as ICE, so we pick the non-electric row.
+            brandstoffen.firstOrNull { it.fuelDescription != "Elektriciteit" }
+                ?: throw RdwMappingException("Geen niet-elektrische brandstof gevonden voor hybride kenteken ${voertuig.licensePlate}")
+        } else {
+            // Not a hybrid: just take the main fuel at sequence number 1
+            brandstoffen.firstOrNull { it.fuelSequenceNumber == "1" }
+                ?: throw RdwMappingException("Geen hoofdbrandstof gevonden voor kenteken ${voertuig.licensePlate}")
+        }
 
         val vehicleType = mapVehicleType(voertuig.vehicleType)
 

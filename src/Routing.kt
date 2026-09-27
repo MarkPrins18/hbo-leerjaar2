@@ -3,7 +3,6 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.post
-import requests.CarRequest
 import services.CarImportService
 import routes.carRoutes
 import io.ktor.server.application.*

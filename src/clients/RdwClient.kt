@@ -41,13 +41,6 @@ class RdwClient(private val appToken: String) {
         return result
     }
 
-    /*suspend fun getFuel(licensePlate: String): List<RdwFuelDto> {
-        return httpClient.get("https://opendata.rdw.nl/resource/8ys7-d773.json") {
-            parameter("kenteken", normalize(licensePlate))
-            header("X-App-Token", appToken)
-        }.body()
-    }*/
-
     private fun normalize(licensePlate: String): String =
         licensePlate.replace("-", "").uppercase()
 }
