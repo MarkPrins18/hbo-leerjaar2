@@ -12,6 +12,7 @@ dependencies:
   - $libs.ktor.client.cio
   - $libs.ktor.client.content.negotiation
   - $libs.exposed.core
+  - $libs.exposed.kotlin.datetime
   - $libs.exposed.jdbc
   - $libs.h2database.h2
   - $libs.logback.classic
