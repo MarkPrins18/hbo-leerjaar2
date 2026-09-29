@@ -123,7 +123,7 @@ class ExposedCarRepository : CarRepository {
                 change.consumptionCombined, change.co2EmissionCombined
             ).any { it != null }
 
-            if (carChanged) {
+            if (carChanged) { //fix the conversion scopes
                 CarTable.update({ CarTable.id eq carId }) {
                     change.ownerId?.let { value -> it[ownerId] = value }
                     change.licensePlate?.let { value -> it[licensePlate] = normalizeLicensePlate(value) }

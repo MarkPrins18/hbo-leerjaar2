@@ -37,8 +37,6 @@ class RdwClient(private val appToken: String) {
             header("X-App-Token", appToken)
         }.body()
 
-        println(result)
-
         return result
     }
 }

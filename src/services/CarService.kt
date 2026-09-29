@@ -14,7 +14,7 @@ class CarService(
 ) {
     suspend fun importCar(request: CarRequest): Car { //rename || suspendtransaction
         val voertuig = rdwClient.getVehicle(request.licensePlate)
-            ?: throw RdwMappingException(
+            ?: throw ApiException(HttpStatusCode.BadRequest,
                 "Geen voertuig gevonden voor kenteken ${request.licensePlate}"
             )
 
