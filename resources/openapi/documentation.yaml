@@ -111,6 +111,35 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Car"
+  /cars/{carId}/maps:
+    get:
+      summary: Open de locatie van een auto in Google Maps
+      description: Stuurt door naar Google Maps met de laatst bekende locatie van de auto.
+      operationId: getCarLocationInMaps
+      tags:
+        - Maps
+      parameters:
+        - name: carId
+          in: path
+          required: true
+          description: Het id van de auto
+          schema:
+            type: integer
+            format: int32
+          example: 1
+      responses:
+        "200":
+          description: Doorverwijzing naar de laatst bekende locatie in Google Maps
+          headers:
+            Location:
+              description: URL van de locatie in Google Maps
+              schema:
+                type: string
+                format: uri
+        "400":
+          description: Ongeldig auto-id
+        "404":
+          description: Geen locatie bekend voor deze auto
 
 components:
   schemas:
