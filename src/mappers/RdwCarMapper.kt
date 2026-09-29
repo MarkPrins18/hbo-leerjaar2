@@ -1,11 +1,6 @@
 package mappers
 
-import models.BEVCar
-import models.Car
-import models.FCEVCar
-import models.FuelType
-import models.ICECar
-import models.VehicleType
+import models.*
 import models.rdw.RdwFuelDto
 import models.rdw.RdwVehicleDto
 

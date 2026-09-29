@@ -1,12 +1,7 @@
 import config.configureRdw
-import io.ktor.http.HttpStatusCode
-import io.ktor.server.request.receive
-import io.ktor.server.response.respond
-import io.ktor.server.routing.post
-import services.CarImportService
+import services.CarService
 import routes.carRoutes
 import io.ktor.server.application.*
-import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.plugins.swagger.*
 import repositories.ExposedCarRepository
@@ -14,7 +9,7 @@ import repositories.ExposedCarRepository
 fun Application.configureRouting() {
     val rdwClient = configureRdw()
     val carRepository = ExposedCarRepository()
-    val carImportService = CarImportService(
+    val carImportService = CarService(
         rdwClient,
         carRepository
     ) //check why this?

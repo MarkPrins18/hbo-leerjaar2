@@ -11,6 +11,7 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import models.rdw.RdwFuelDto
 import models.rdw.RdwVehicleDto
+import mappers.normalizeLicensePlate
 
 class RdwClient(private val appToken: String) {
 
@@ -22,7 +23,7 @@ class RdwClient(private val appToken: String) {
 
     suspend fun getVehicle(licensePlate: String): RdwVehicleDto? {
         val response: List<RdwVehicleDto> = httpClient.get("https://opendata.rdw.nl/resource/m9d7-ebf2.json") {
-            parameter("kenteken", normalize(licensePlate))
+            parameter("kenteken", normalizeLicensePlate(licensePlate))
             header("X-App-Token", appToken)
         }.body()
         return response.firstOrNull()
@@ -32,7 +33,7 @@ class RdwClient(private val appToken: String) {
         val result: List<RdwFuelDto> = httpClient.get(
             "https://opendata.rdw.nl/resource/8ys7-d773.json"
         ) {
-            parameter("kenteken", normalize(licensePlate))
+            parameter("kenteken", normalizeLicensePlate(licensePlate))
             header("X-App-Token", appToken)
         }.body()
 
@@ -40,7 +41,4 @@ class RdwClient(private val appToken: String) {
 
         return result
     }
-
-    private fun normalize(licensePlate: String): String =
-        licensePlate.replace("-", "").uppercase()
 }
