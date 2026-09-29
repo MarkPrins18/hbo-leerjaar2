@@ -8,16 +8,26 @@ package models {
         LPG
     }
 
+    enum VehicleType {
+        PASSENGER_CAR
+        LIGHT_COMMERCIAL_VEHICLE
+    }
+
     abstract class Car <<sealed>> {
         +id: Int
         +ownerId: Int
         +licensePlate: String
         +brand: String
         +model: String
-        +year: Int
+        +productionYear: Int
         +trim: String?
         +color: String
         +seats: Int
+        +doors: Int?
+        +vehicleType: VehicleType
+        +readyToDriveWeightKg: Int
+        +consumptionCombined: Double
+        +co2EmissionCombined: Double
     }
 
     class ICECar <<data>> {
@@ -38,6 +48,7 @@ package models {
     Car <|-- BEVCar
     Car <|-- FCEVCar
 
+    Car --> VehicleType
     ICECar --> FuelType
 }
 

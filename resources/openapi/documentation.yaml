@@ -19,6 +19,98 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Car"
+  /cars/{licensePlate}:
+    get:
+      summary: Haal een auto op via het kenteken
+      operationId: getCarByLicensePlate
+      tags:
+        - Cars
+      parameters:
+        - name: licensePlate
+          in: path
+          required: true
+          description: Het kenteken van de auto
+          schema:
+            type: string
+          example: KS711F
+      responses:
+        "200":
+          description: Auto gevonden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Car"
+        "404":
+          description: Auto niet gevonden
+
+  /cars/{id}:
+    patch:
+      summary: Werk een auto bij via het id
+      operationId: updateCar
+      tags:
+        - Cars
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Het id van de auto
+          schema:
+            type: integer
+            format: int32
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CarChangeRequest"
+      responses:
+        "200":
+          description: Auto succesvol bijgewerkt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Car"
+        "404":
+          description: Auto niet gevonden
+    delete:
+      summary: Verwijder een auto via het id
+      operationId: deleteCar
+      tags:
+        - Cars
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Het id van de auto
+          schema:
+            type: integer
+            format: int32
+          example: 1
+      responses:
+        "204":
+          description: Auto succesvol verwijderd
+        "404":
+          description: Auto niet gevonden
+  /cars/import:
+    post:
+      summary: Importeer een auto via het kenteken
+      operationId: importCar
+      tags:
+        - Cars
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CarRequest"
+      responses:
+        "201":
+          description: Auto succesvol geïmporteerd
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Car"
 
 components:
   schemas:
@@ -45,10 +137,13 @@ components:
         - productionYear
         - color
         - seats
+        - vehicleType
+        - readyToDriveWeightKg
+        - consumptionCombined
+        - co2EmissionCombined
       properties:
         id:
           type: integer
-          nullable: true
         ownerId:
           type: integer
         licensePlate:
@@ -57,7 +152,7 @@ components:
           type: string
         model:
           type: string
-        year:
+        productionYear:
           type: integer
         trim:
           type: string
@@ -66,6 +161,22 @@ components:
           type: string
         seats:
           type: integer
+        doors:
+          type: integer
+          nullable: true
+        vehicleType:
+          type: string
+          enum:
+            - PASSENGER_CAR
+            - LIGHT_COMMERCIAL_VEHICLE
+        readyToDriveWeightKg:
+          type: integer
+        consumptionCombined:
+          type: number
+          format: double
+        co2EmissionCombined:
+          type: number
+          format: double
 
     ICECar:
       allOf:
@@ -118,3 +229,103 @@ components:
             tankCapacityKgH2:
               type: number
               format: double
+    CarRequest:
+      type: object
+      required:
+        - licensePlate
+        - ownerId
+      properties:
+        licensePlate:
+          type: string
+        ownerId:
+          type: integer
+          format: int32
+        trim:
+          type: string
+          nullable: true
+        tankCapacityL:
+          type: number
+          format: double
+          nullable: true
+        automaticTransmission:
+          type: boolean
+          nullable: true
+        batteryCapacityKWh:
+          type: number
+          format: double
+          nullable: true
+        tankCapacityKgH2:
+          type: number
+          format: double
+          nullable: true
+    CarChangeRequest:
+      type: object
+      properties:
+        licensePlate:
+          type: string
+          nullable: true
+        ownerId:
+          type: integer
+          format: int32
+          nullable: true
+        brand:
+          type: string
+          nullable: true
+        model:
+          type: string
+          nullable: true
+        productionYear:
+          type: integer
+          format: int32
+          nullable: true
+        trim:
+          type: string
+          nullable: true
+        color:
+          type: string
+          nullable: true
+        seats:
+          type: integer
+          format: int32
+          nullable: true
+        doors:
+          type: integer
+          format: int32
+          nullable: true
+        vehicleType:
+          type: string
+          enum:
+            - PASSENGER_CAR
+            - LIGHT_COMMERCIAL_VEHICLE
+          nullable: true
+        readyToDriveWeightKg:
+          type: integer
+          format: int32
+          nullable: true
+        consumptionCombined:
+          type: number
+          format: double
+          nullable: true
+        co2EmissionCombined:
+          type: number
+          format: double
+          nullable: true
+        fuelType:
+          type: string
+          enum: [PETROL, DIESEL, LPG]
+          nullable: true
+        tankCapacityL:
+          type: number
+          format: double
+          nullable: true
+        automaticTransmission:
+          type: boolean
+          nullable: true
+        batteryCapacityKWh:
+          type: number
+          format: double
+          nullable: true
+        tankCapacityKgH2:
+          type: number
+          format: double
+          nullable: true

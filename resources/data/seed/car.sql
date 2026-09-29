@@ -7,12 +7,29 @@ INSERT INTO car (
     production_year,
     trim,
     color,
-    seats
+    seats,
+    doors,
+    vehicle_type,
+    ready_to_drive_weight_kg,
+    consumption_combined,
+    co2_emission_combined
 )
 VALUES
-    (1, 1, 'AA-123-BB', 'Toyota', 'Corolla', 2022, 'Comfort', 'Blue', 5),
-    (2, 1, 'CC-456-DD', 'Tesla', 'Model 3', 2023, 'Long Range', 'White', 5),
-    (3, 2, 'EE-789-FF', 'Hyundai', 'Nexo', 2021, 'Premium', 'Black', 5);
+    (
+        1, 1, 'KS711F', 'BMW', 'M235I', 2014,
+        'M235i High Executive', 'WIT', 4, 2,
+        'PASSENGER_CAR', 1530, 8.1, 189
+    ),
+    (
+        2, 2, 'R003BJ', 'BMW', 'I4 M50', 2022,
+        'M50', 'GROEN', 5, 4,
+        'PASSENGER_CAR', 2290, NULL, NULL
+    ),
+    (
+        3, 3, 'GVT21R', 'TOYOTA', 'MIRAI', 2017,
+        'FCV', 'BLAUW', 4, 4,
+        'PASSENGER_CAR', 1925, NULL, NULL
+    );
 
 INSERT INTO ice_car (
     car_id,
@@ -20,16 +37,22 @@ INSERT INTO ice_car (
     tank_capacity_l,
     automatic_transmission
 )
-VALUES (1, 'PETROL', 50.00, true);
+VALUES (
+           1, 'PETROL', 55.00, false
+       );
 
 INSERT INTO bev_car (
     car_id,
     battery_capacity_kwh
 )
-VALUES (2, 75.00);
+VALUES (
+           2, 54.00
+       );
 
 INSERT INTO fcev_car (
     car_id,
     tank_capacity_kg_h2
 )
-VALUES (3, 6.30);
+VALUES (
+           3, 20.00
+       );

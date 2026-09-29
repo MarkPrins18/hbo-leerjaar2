@@ -1,9 +1,12 @@
 package repositories
 
 import models.Car
+import requests.CarChangeRequest
 
 interface CarRepository {
     suspend fun getAllCars(): List<Car>
+
+    suspend fun getCarByLicensePlate(licensePlate: String): Car?
 
     suspend fun getCarById(carId: Int): Car?
 
@@ -16,9 +19,9 @@ interface CarRepository {
 
     /**
      * Geeft de bijgewerkte auto terug, of null als er geen auto bestaat
-     * met het id van [car].
+     * met het id van car.
      */
-    suspend fun updateCar(car: Car): Car?
+    suspend fun updateCar(carId: Int, change: CarChangeRequest): Car?
 
     /** Geeft true terug als er iets verwijderd is. */
     suspend fun deleteCar(carId: Int): Boolean
