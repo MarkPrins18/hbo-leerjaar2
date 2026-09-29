@@ -128,7 +128,7 @@ paths:
             format: int32
           example: 1
       responses:
-        "302":
+        "200":
           description: Doorverwijzing naar de laatst bekende locatie in Google Maps
           headers:
             Location:
