@@ -1,24 +1,30 @@
 package services
 
 import clients.RdwClient
-import io.ktor.http.HttpStatusCode
+import io.ktor.server.plugins.NotFoundException
 import mappers.RdwCarMapper
-import mappers.RdwMappingException
 import repositories.CarRepository
 import requests.*
 import models.*
+import repositories.LocationRepository
+import kotlin.coroutines.cancellation.CancellationException
 
 class CarService(
     private val rdwClient: RdwClient,
-    private val carRepository: CarRepository
+    private val carRepository: CarRepository,
+    private val locationRepository: LocationRepository
 ) {
-    suspend fun importCar(request: CarRequest): Car { //rename || suspendtransaction
-        val voertuig = rdwClient.getVehicle(request.licensePlate)
-            ?: throw ApiException(HttpStatusCode.BadRequest,
-                "Geen voertuig gevonden voor kenteken ${request.licensePlate}"
-            )
+    suspend fun importCar(request: CarRequest): Car {
+        request.validate()
 
-        val brandstoffen = rdwClient.getFuel(request.licensePlate)
+        if (carRepository.getCarByLicensePlate(request.licensePlate) != null) {
+            throw ConflictException("Kenteken ${request.licensePlate} bestaat al")
+        }
+
+        val voertuig = callRdw { rdwClient.getVehicle(request.licensePlate) }
+            ?: throw UnprocessableException("Geen voertuig gevonden bij de RDW voor kenteken ${request.licensePlate}")
+
+        val brandstoffen = callRdw { rdwClient.getFuel(request.licensePlate) }
 
         val car = RdwCarMapper.toCar(
             voertuig = voertuig,
@@ -31,43 +37,49 @@ class CarService(
             batteryCapacityKWh = request.batteryCapacityKWh,
             tankCapacityKgH2 = request.tankCapacityKgH2
         )
-        return carRepository.createCar(car) //is return logical?
+        return carRepository.createCar(car)
     }
 
-    suspend fun changeCar(carId: Int, change: CarChangeRequest) : Car? { //suspendTransaction || rename
+    suspend fun updateCar(carId: Int, change: CarChangeRequest): Car {
         val car = carRepository.getCarById(carId)
-            ?: return null
+            ?: throw carNotFound(carId)
 
-        when (car) {
-            is ICECar -> {
-                if (change.batteryCapacityKWh != null ||
-                    change.tankCapacityKgH2 != null
-                ) {
-                    throw ApiException(HttpStatusCode.BadRequest, "Deze velden kunnen niet worden aangepast voor een ICE-auto")
-                }
-            }
-
-            is BEVCar -> {
-                if (change.fuelType != null ||
-                    change.tankCapacityL != null ||
-                    change.automaticTransmission != null ||
-                    change.tankCapacityKgH2 != null
-                ) {
-                    throw ApiException(HttpStatusCode.BadRequest, "Deze velden kunnen niet worden aangepast voor een BEV-auto")
-                }
-            }
-
-            is FCEVCar -> {
-                if (change.fuelType != null ||
-                    change.tankCapacityL != null ||
-                    change.automaticTransmission != null ||
-                    change.batteryCapacityKWh != null
-                ) {
-                    throw ApiException(HttpStatusCode.BadRequest, "Deze velden kunnen niet worden aangepast voor een FCEV-auto")
-                }
-            }
-        }
+        change.validate(car)
 
         return carRepository.updateCar(carId, change)
+            ?: throw carNotFound(carId)
     }
+
+    suspend fun getCarByLicensePlate(licensePlate: String): Car =
+        carRepository.getCarByLicensePlate(licensePlate)
+            ?: throw NotFoundException("Auto met kenteken $licensePlate niet gevonden")
+
+    suspend fun deleteCar(carId: Int) {
+        if (!carRepository.deleteCar(carId)) {
+            throw carNotFound(carId)
+        }
+    }
+
+    suspend fun getCars(filter: CarFilter): List<Car> {
+        filter.validate()
+
+        val cars = carRepository.getAllCars()
+        if (filter.maxDistanceKm == null) return cars // add `&& filter.maxPrice == null` once matchesPrice is enabled
+
+        return cars.filter { car ->
+            val location = locationRepository.getLatestLocationByCarId(car.id)
+            filter.matches(location)
+        }
+    }
+
+    private fun carNotFound(carId: Int) = NotFoundException("Auto $carId niet gevonden")
+
+    private suspend fun <T> callRdw(block: suspend () -> T): T =
+        try {
+            block()
+        } catch (exception: CancellationException) {
+            throw exception
+        } catch (exception: Exception) {
+            throw ExternalServiceException("De RDW API is niet bereikbaar of gaf een ongeldig antwoord", exception)
+        }
 }

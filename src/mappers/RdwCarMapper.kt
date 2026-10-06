@@ -3,8 +3,7 @@ package mappers
 import models.*
 import models.rdw.RdwFuelDto
 import models.rdw.RdwVehicleDto
-
-class RdwMappingException(message: String) : Exception(message)
+import services.UnprocessableException
 
 object RdwCarMapper {
 
@@ -23,17 +22,17 @@ object RdwCarMapper {
             // Hybrid: multiple fuel rows (incl. Elektriciteit). We treat hybrids
             // as ICE, so we pick the non-electric row.
             brandstoffen.firstOrNull { it.fuelDescription != "Elektriciteit" }
-                ?: throw RdwMappingException("Geen niet-elektrische brandstof gevonden voor hybride kenteken ${voertuig.licensePlate}")
+                ?: throw UnprocessableException("Geen niet-elektrische brandstof gevonden voor hybride kenteken ${voertuig.licensePlate}")
         } else {
             // Not a hybrid: just take the main fuel at sequence number 1
             brandstoffen.firstOrNull { it.fuelSequenceNumber == "1" }
-                ?: throw RdwMappingException("Geen hoofdbrandstof gevonden voor kenteken ${voertuig.licensePlate}")
+                ?: throw UnprocessableException("Geen hoofdbrandstof gevonden voor kenteken ${voertuig.licensePlate}")
         }
 
         val vehicleType = mapVehicleType(voertuig.vehicleType)
 
         val readyToDriveWeightKg = voertuig.readyToDriveWeightKg?.toIntOrNull()
-            ?: throw RdwMappingException("Geen massa rijklaar bekend voor kenteken ${voertuig.licensePlate}")
+            ?: throw UnprocessableException("Geen massa rijklaar bekend voor kenteken ${voertuig.licensePlate}")
 
         val consumptionCombined = hoofdbrandstof.consumptionCombined?.toDoubleOrNull() //No throw!!
         val co2EmissionCombined = hoofdbrandstof.co2EmissionCombined?.toDoubleOrNull()
@@ -53,7 +52,7 @@ object RdwCarMapper {
                 consumptionCombined = consumptionCombined,
                 co2EmissionCombined = co2EmissionCombined,
                 batteryCapacityKWh = batteryCapacityKWh
-                    ?: throw RdwMappingException("batteryCapacityKWh is verplicht voor een BEV")
+                    ?: throw UnprocessableException("batteryCapacityKWh is verplicht voor een BEV")
             )
             "Waterstof" -> FCEVCar(
                 id = id, ownerId = ownerId,
@@ -65,7 +64,7 @@ object RdwCarMapper {
                 consumptionCombined = consumptionCombined,
                 co2EmissionCombined = co2EmissionCombined,
                 tankCapacityKgH2 = tankCapacityKgH2
-                    ?: throw RdwMappingException("tankCapacityKgH2 is verplicht voor een FCEV")
+                    ?: throw UnprocessableException("tankCapacityKgH2 is verplicht voor een FCEV")
             )
             "Benzine", "Diesel", "LPG" -> ICECar(
                 id = id, ownerId = ownerId,
@@ -78,32 +77,32 @@ object RdwCarMapper {
                 co2EmissionCombined = co2EmissionCombined,
                 fuelType = mapFuelType(fuelDescription),
                 tankCapacityL = tankCapacityL
-                    ?: throw RdwMappingException("tankCapacityL is verplicht voor een ICE-auto"),
+                    ?: throw UnprocessableException("tankCapacityL is verplicht voor een ICE-auto"),
                 automaticTransmission = automaticTransmission
-                    ?: throw RdwMappingException("automaticTransmission is verplicht voor een ICE-auto")
+                    ?: throw UnprocessableException("automaticTransmission is verplicht voor een ICE-auto")
             )
-            else -> throw RdwMappingException("Niet-ondersteunde brandstof: $fuelDescription")
+            else -> throw UnprocessableException("Niet-ondersteunde brandstof: $fuelDescription")
         }
     }
 
     private fun mapVehicleType(voertuigsoort: String): VehicleType = when (voertuigsoort) {
         "Personenauto" -> VehicleType.PASSENGER_CAR
         "Bedrijfsauto" -> VehicleType.LIGHT_COMMERCIAL_VEHICLE
-        else -> throw RdwMappingException("Onbekend voertuigsoort: $voertuigsoort")
+        else -> throw UnprocessableException("Onbekend voertuigsoort: $voertuigsoort")
     }
 
     private fun mapFuelType(fuelDescription: String): FuelType = when (fuelDescription) {
         "Benzine" -> FuelType.PETROL
         "Diesel" -> FuelType.DIESEL
         "LPG" -> FuelType.LPG
-        else -> throw RdwMappingException("Niet-ondersteunde brandstof: $fuelDescription")
+        else -> throw UnprocessableException("Niet-ondersteunde brandstof: $fuelDescription")
     }
 
     private fun parseProductionYear(firstAdmissionDate: String): Int {
         if (firstAdmissionDate.length < 4) {
-            throw RdwMappingException("Onbekend datumformaat voor datum_eerste_toelating: $firstAdmissionDate")
+            throw UnprocessableException("Onbekend datumformaat voor datum_eerste_toelating: $firstAdmissionDate")
         }
         return firstAdmissionDate.take(4).toIntOrNull()
-            ?: throw RdwMappingException("Kon jaartal niet parsen uit datum_eerste_toelating: $firstAdmissionDate")
+            ?: throw UnprocessableException("Kon jaartal niet parsen uit datum_eerste_toelating: $firstAdmissionDate")
     }
 }
