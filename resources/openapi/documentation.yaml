@@ -197,6 +197,59 @@ paths:
           description: Ongeldig auto-id
         "404":
           description: Geen locatie bekend voor deze auto
+  /reservations:
+    post:
+      summary: Maak een reservering aan
+      operationId: createReservation
+      tags:
+        - Reservations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReservationRequest"
+      responses:
+        "201":
+          description: Reservering succesvol aangemaakt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reservation"
+        "400":
+          description: Ongeldige request, starttijd ligt in het verleden of eindtijd ligt niet na de starttijd
+        "404":
+          description: Auto of gebruiker niet gevonden
+        "409":
+          description: Auto is in dit tijdsblok al gereserveerd
+  /reservations/{id}/cancel:
+    patch:
+      summary: Annuleer een reservering via het id
+      operationId: cancelReservation
+      tags:
+        - Reservations
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Het id van de reservering
+          schema:
+            type: integer
+            format: int32
+          example: 1
+      responses:
+        "200":
+          description: Reservering succesvol geannuleerd
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reservation"
+        "400":
+          description: Ongeldig reservering-id
+        "404":
+          description: Reservering niet gevonden
+        "409":
+          description: Reservering is al geannuleerd of de starttijd is al verstreken
 
 components:
   schemas:
@@ -344,6 +397,53 @@ components:
           type: number
           format: double
           nullable: true
+
+    ReservationRequest:
+      type: object
+      required:
+        - carId
+        - userId
+        - startTime
+        - endTime
+      properties:
+        carId:
+          type: integer
+          format: int32
+        userId:
+          type: integer
+          format: int32
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+
+    Reservation:
+      type: object
+      required:
+        - id
+        - carId
+        - userId
+        - startTime
+        - endTime
+        - status
+      properties:
+        id:
+          type: integer
+        carId:
+          type: integer
+        userId:
+          type: integer
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [PENDING, CONFIRMED, CANCELLED, COMPLETED]
     CarChangeRequest:
       type: object
       properties:
