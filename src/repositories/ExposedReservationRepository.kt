@@ -2,7 +2,6 @@ package repositories
 
 import mappers.toReservation
 import models.Reservation
-import models.ReservationStatus
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greater
@@ -31,7 +30,7 @@ class ExposedReservationRepository : ReservationRepository {
     override suspend fun hasActiveOverlap(carId: Int, startTime: Instant, endTime: Instant): Boolean = suspendTransaction {
         !ReservationTable.selectAll().where {
             (ReservationTable.carId eq carId) and
-                    (ReservationTable.status inList listOf(ReservationStatus.PENDING, ReservationStatus.CONFIRMED)) and
+                    (ReservationTable.status inList listOf(Reservation.PENDING, Reservation.CONFIRMED)) and
                     (ReservationTable.startTime less endTime) and
                     (ReservationTable.endTime greater startTime)
         }.empty()
@@ -39,7 +38,7 @@ class ExposedReservationRepository : ReservationRepository {
 
 
     override suspend fun createReservation(
-        carId: Int, userId: Int, startTime: Instant, endTime: Instant, status: ReservationStatus
+        carId: Int, userId: Int, startTime: Instant, endTime: Instant, status: Reservation
     ): Reservation = suspendTransaction {
         val inserted = ReservationTable.insert {
             it[ReservationTable.carId] = carId
@@ -57,7 +56,7 @@ class ExposedReservationRepository : ReservationRepository {
         ReservationTable.selectAll().where { ReservationTable.id eq id }.singleOrNull()?.toReservation()
     }
 
-    override suspend fun updateStatus(id: Int, status: ReservationStatus): Reservation? = suspendTransaction {
+    override suspend fun updateStatus(id: Int, status: Reservation): Reservation? = suspendTransaction {
         ReservationTable.update({ ReservationTable.id eq id }) {
             it[ReservationTable.status] = status
         }

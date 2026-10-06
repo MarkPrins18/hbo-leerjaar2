@@ -1,6 +1,5 @@
 package tables
 
-import models.ReservationStatus
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.datetime.timestamp
 import org.jetbrains.exposed.v1.core.less
