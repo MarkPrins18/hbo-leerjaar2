@@ -2,6 +2,7 @@ package services
 
 import io.ktor.http.HttpStatusCode
 import models.Reservation
+import models.ReservationStatus
 import repositories.ReservationRepository
 import requests.ReservationRequest
 import kotlin.time.Clock
