@@ -4,6 +4,11 @@ import kotlinx.serialization.Serializable
 import kotlin.time.Instant
 
 @Serializable
+enum class ReservationStatus {
+    PENDING, CONFIRMED, CANCELLED, COMPLETED
+}
+
+@Serializable
 data class Reservation(
     val id: Int,
     val carId: Int,
