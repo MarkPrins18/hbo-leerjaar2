@@ -13,7 +13,7 @@ class ExposedLocationRepository : LocationRepository {
         LocationTable
             .selectAll()
             .where { LocationTable.carId eq carId }
-            .orderBy(LocationTable.timestamp to SortOrder.DESC)
+            .orderBy(LocationTable.timestamp to SortOrder.DESC, LocationTable.id to SortOrder.DESC)
             .limit(1)
             .singleOrNull()
             ?.toLocation()

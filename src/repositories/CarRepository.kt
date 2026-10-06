@@ -11,18 +11,14 @@ interface CarRepository {
     suspend fun getCarById(carId: Int): Car?
 
     /**
-     * Slaat een nieuwe auto op. Het `id`-veld van [car] wordt genegeerd;
-     * de repository genereert zelf een nieuw id en geeft de opgeslagen
-     * auto (mét gegenereerd id) terug.
+     * Saves a new car. The `id` field of [car] is ignored; the repository
+     * generates a new id and returns the saved car including that id.
      */
     suspend fun createCar(car: Car): Car
 
-    /**
-     * Geeft de bijgewerkte auto terug, of null als er geen auto bestaat
-     * met het id van car.
-     */
+    /** Returns the updated car, or null if no car exists with id [carId]. */
     suspend fun updateCar(carId: Int, change: CarChangeRequest): Car?
 
-    /** Geeft true terug als er iets verwijderd is. */
+    /** Returns true if a car was deleted. */
     suspend fun deleteCar(carId: Int): Boolean
 }

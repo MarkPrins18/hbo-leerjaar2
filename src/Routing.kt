@@ -13,16 +13,16 @@ fun Application.configureRouting() {
     val rdwClient = configureRdw()
     val carRepository = ExposedCarRepository()
     val locationRepository = ExposedLocationRepository()
-    val carImportService = CarService(rdwClient, carRepository)
+    val carService = CarService(
+        rdwClient,
+        carRepository,
+        locationRepository
+    )
     val reservationRepository = ExposedReservationRepository()
     val reservationService = ReservationService(reservationRepository)
-
     routing {
         swaggerUI(path = "swagger", swaggerFile = "openapi/documentation.yaml")
-        carRoutes(
-            ExposedCarRepository(),
-            carImportService
-        )
+        carRoutes(carService)
         mapsRoutes(locationRepository)
         reservationRoutes(reservationService)
     }

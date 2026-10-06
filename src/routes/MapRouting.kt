@@ -2,7 +2,8 @@ package routes
 
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.http.HttpStatusCode
+import io.ktor.server.plugins.NotFoundException
+import io.ktor.server.util.getOrFail
 import repositories.LocationRepository
 
 fun Route.mapsRoutes(
@@ -10,11 +11,10 @@ fun Route.mapsRoutes(
 ) {
 
     get("/cars/{carId}/maps") {
-        val carId = call.parameters["carId"]?.toIntOrNull()
-            ?: return@get call.respond(HttpStatusCode.BadRequest, "Ongeldig auto-id")
+        val carId = call.parameters.getOrFail<Int>("carId")
 
         val location = locationRepository.getLatestLocationByCarId(carId)
-            ?: return@get call.respond(HttpStatusCode.NotFound, "Geen locatie bekend voor deze auto")
+            ?: throw NotFoundException("Geen locatie bekend voor deze auto")
 
         //automatic redirect to maps
        // call.respondRedirect("https://www.google.com/maps/dir/?api=1&destination=${location.latitude},${location.longitude}")
