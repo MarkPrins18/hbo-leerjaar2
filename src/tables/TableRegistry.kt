@@ -1,3 +1,3 @@
 package tables
 
-val allTables = ownerTables + carTables + locationTables
+val allTables = ownerTables + carTables + locationTables + reservationTables
