@@ -1,11 +1,11 @@
-package requests
+package dto
 
 import kotlinx.serialization.Serializable
 import models.FuelType
 import models.VehicleType
 
 @Serializable
-data class CarRequest(
+data class CarDto(
     val licensePlate: String,
     val ownerId: Int,
     val trim: String? = null,
@@ -16,7 +16,7 @@ data class CarRequest(
 )
 
 @Serializable
-data class CarChangeRequest(
+data class CarChangeDto(
     val licensePlate: String? = null,
     val ownerId: Int? = null,
     val brand: String? = null,

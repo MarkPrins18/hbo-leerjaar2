@@ -3,8 +3,9 @@ package services
 import io.ktor.server.plugins.BadRequestException
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
+import mappers.normalizeLicensePlate
 import models.*
-import requests.*
+import dto.*
 import kotlin.time.Clock
 
 // Upper limits follow the database columns: decimal(6,2) = 9999.99, decimal(7,2) = 99999.99
@@ -20,8 +21,8 @@ private val TANK_CAPACITY_L = 0.01..9999.99
 private val BATTERY_CAPACITY_KWH = 0.01..99999.99
 private val TANK_CAPACITY_KG_H2 = 0.01..9999.99
 
-fun CarRequest.validate() {
-    checkText("licensePlate", licensePlate, LICENSE_PLATE_MAX_LENGTH)
+fun CarDto.validate() {
+    checkText("licensePlate", normalizeLicensePlate(licensePlate), LICENSE_PLATE_MAX_LENGTH)
     checkRange("ownerId", ownerId, 1..Int.MAX_VALUE)
     trim?.let { checkText("trim", it, NAME_MAX_LENGTH) }
     tankCapacityL?.let { checkRange("tankCapacityL", it, TANK_CAPACITY_L) }
@@ -29,10 +30,10 @@ fun CarRequest.validate() {
     tankCapacityKgH2?.let { checkRange("tankCapacityKgH2", it, TANK_CAPACITY_KG_H2) }
 }
 
-fun CarChangeRequest.validate(car: Car) {
+fun CarChangeDto.validate(car: Car) {
     checkFieldsMatchSubtype(car)
 
-    licensePlate?.let { checkText("licensePlate", it, LICENSE_PLATE_MAX_LENGTH) }
+    licensePlate?.let { checkText("licensePlate", normalizeLicensePlate(it), LICENSE_PLATE_MAX_LENGTH) }
     ownerId?.let { checkRange("ownerId", it, 1..Int.MAX_VALUE) }
     brand?.let { checkText("brand", it, NAME_MAX_LENGTH) }
     model?.let { checkText("model", it, NAME_MAX_LENGTH) }
@@ -51,7 +52,7 @@ fun CarChangeRequest.validate(car: Car) {
     tankCapacityKgH2?.let { checkRange("tankCapacityKgH2", it, TANK_CAPACITY_KG_H2) }
 }
 
-private fun CarChangeRequest.checkFieldsMatchSubtype(car: Car) {
+private fun CarChangeDto.checkFieldsMatchSubtype(car: Car) {
     val iceFieldsChanged = fuelType != null || tankCapacityL != null || automaticTransmission != null
     val bevFieldsChanged = batteryCapacityKWh != null
     val fcevFieldsChanged = tankCapacityKgH2 != null

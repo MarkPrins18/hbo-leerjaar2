@@ -4,7 +4,7 @@ import clients.RdwClient
 import io.ktor.server.plugins.NotFoundException
 import mappers.RdwCarMapper
 import repositories.CarRepository
-import requests.*
+import dto.*
 import models.*
 import repositories.LocationRepository
 import kotlin.coroutines.cancellation.CancellationException
@@ -14,7 +14,7 @@ class CarService(
     private val carRepository: CarRepository,
     private val locationRepository: LocationRepository
 ) {
-    suspend fun importCar(request: CarRequest): Car {
+    suspend fun importCar(request: CarDto): Car {
         request.validate()
 
         if (carRepository.getCarByLicensePlate(request.licensePlate) != null) {
@@ -40,7 +40,7 @@ class CarService(
         return carRepository.createCar(car)
     }
 
-    suspend fun updateCar(carId: Int, change: CarChangeRequest): Car {
+    suspend fun updateCar(carId: Int, change: CarChangeDto): Car {
         val car = carRepository.getCarById(carId)
             ?: throw carNotFound(carId)
 
