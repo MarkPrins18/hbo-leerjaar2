@@ -8,6 +8,8 @@ dependencies:
   - $ktor.server.netty
   - $ktor.server.statusPages
   - $ktor.server.swagger
+  - $ktor.server.auth
+  - $ktor.server.auth.jwt
   - $libs.ktor.client.core
   - $libs.ktor.client.cio
   - $libs.ktor.client.content.negotiation
@@ -16,6 +18,8 @@ dependencies:
   - $libs.exposed.jdbc
   - $libs.h2database.h2
   - $libs.logback.classic
+  - $libs.mysql.connector.j
+  - $libs.jbcrypt
 
 test-dependencies:
   - $ktor.server.testHost
@@ -24,4 +28,3 @@ settings:
   ktor: enabled
   kotlin:
     serialization: enabled
-
