@@ -1,7 +1,7 @@
 package services
 
 import models.Location
-import requests.CarFilter
+import dto.CarFilter
 
 fun CarFilter.matches(location: Location?): Boolean =
     matchesDistance(location)

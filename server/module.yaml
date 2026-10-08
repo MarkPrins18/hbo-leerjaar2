@@ -28,4 +28,3 @@ settings:
   ktor: enabled
   kotlin:
     serialization: enabled
-

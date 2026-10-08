@@ -8,7 +8,7 @@ import io.ktor.http.Parameters
 import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.request.receive
 import io.ktor.server.util.getOrFail
-import requests.*
+import dto.*
 
 fun Route.carRoutes(
     carService: CarService
@@ -32,12 +32,12 @@ fun Route.carRoutes(
         }
         patch("/{id}"){ //is put needed?
             val carId = call.parameters.getOrFail<Int>("id")
-            val change = call.receive<CarChangeRequest>()
+            val change = call.receive<CarChangeDto>()
 
             call.respond(carService.updateCar(carId, change))
         }
         post("/import") {
-            val request = call.receive<CarRequest>()
+            val request = call.receive<CarDto>()
 
             val car = carService.importCar(request)
 
