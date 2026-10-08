@@ -13,7 +13,7 @@ fun Application.connectToDatabase(): Boolean {
     return try {
         Database.connect(
             url = databaseUrl,
-            driver = "com.mysql.cj.jdbc.Driver",
+            driver = "org.h2.Driver",
             user = databaseUser,
             password = databasePassword,
         )

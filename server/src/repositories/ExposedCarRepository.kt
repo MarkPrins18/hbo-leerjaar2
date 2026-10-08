@@ -14,7 +14,7 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.update
-import requests.CarChangeRequest
+import dto.CarChangeDto
 import tables.BevCarTable
 import tables.CarTable
 import tables.FcevCarTable
@@ -101,7 +101,7 @@ class ExposedCarRepository : CarRepository {
         findCarById(carId) ?: error("Car $carId not found right after insert")
     }
 
-    override suspend fun updateCar(carId: Int, change: CarChangeRequest): Car? = suspendTransaction {
+    override suspend fun updateCar(carId: Int, change: CarChangeDto): Car? = suspendTransaction {
         val existingCar = findCarById(carId) ?: return@suspendTransaction null
 
         // An update without any columns would produce invalid SQL
