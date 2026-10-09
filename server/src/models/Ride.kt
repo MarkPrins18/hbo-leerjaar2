@@ -12,5 +12,6 @@ data class Ride(
     val status: RideStatus,
     val distanceM: Double?,
     val avgAcceleration: Double?,
-    val avgDeceleration: Double?
+    val avgDeceleration: Double?,
+    val bonusPoints: Int?,
 )

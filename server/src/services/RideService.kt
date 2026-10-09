@@ -40,8 +40,9 @@ class RideService(
         if (ride.status != RideStatus.IN_PROGRESS) {
             throw ApiException(HttpStatusCode.Conflict, "Rit $rideId is al afgerond")
         }
+        val bonusPoints = calculateBonusPoints(request.distanceM, request.avgAcceleration, request.avgDeceleration)
         return rideRepository.finishRide(
-            rideId, Clock.System.now(), request.distanceM, request.avgAcceleration, request.avgDeceleration
+            rideId, Clock.System.now(), request.distanceM, request.avgAcceleration, request.avgDeceleration, bonusPoints
         ) ?: throw ApiException(HttpStatusCode.NotFound, "Rit $rideId niet gevonden")
     }
 }

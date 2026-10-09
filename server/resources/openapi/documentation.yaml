@@ -281,6 +281,9 @@ paths:
   /rides/{id}/finish:
     patch:
       summary: Rond een rit af met de gegevens van het telematica-kastje
+      description: |
+        Slaat de ritgegevens op, zet de status op COMPLETED en kent bonuspunten
+        toe voor rustig rijgedrag (zie het veld bonusPoints in het schema Ride).
       operationId: finishRide
       tags:
         - Rides
@@ -667,13 +670,13 @@ components:
           type: number
           format: double
           minimum: 0
-          description: Gemiddelde acceleratie
+          description: Gemiddelde acceleratie in m/s²
           example: 1.8
         avgDeceleration:
           type: number
           format: double
           minimum: 0
-          description: Gemiddelde deceleratie
+          description: Gemiddelde deceleratie in m/s²
           example: 2.1
     Ride:
       type: object
@@ -709,6 +712,15 @@ components:
           type: number
           format: double
           nullable: true
+        bonusPoints:
+            type: integer
+            format: int32
+            nullable: true
+            description: |
+              Bonuspunten voor rustig rijgedrag, berekend bij het afronden.
+              Rustig = avgAcceleration < 2,78 m/s² en avgDeceleration < 3,43 m/s².
+              Een rustige rit levert 1 punt per volle kilometer op, anders 0.
+              Leeg (null) zolang de rit loopt.
     LoginRequest:
       type: object
       required:
