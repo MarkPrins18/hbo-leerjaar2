@@ -250,6 +250,68 @@ paths:
           description: Reservering niet gevonden
         "409":
           description: Reservering is al geannuleerd of de starttijd is al verstreken
+  /reservations/{id}/rides:
+    post:
+      summary: Start een rit voor een reservering
+      operationId: startRide
+      tags:
+        - Rides
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Het id van de reservering
+          schema:
+            type: integer
+            format: int32
+          example: 1
+      responses:
+        "201":
+          description: Rit succesvol gestart
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ride"
+        "400":
+          description: Ongeldig reservering-id
+        "404":
+          description: Reservering niet gevonden
+        "409":
+          description: Reservering is niet bevestigd, is nu niet actief, of er loopt al een rit
+  /rides/{id}/finish:
+    patch:
+      summary: Rond een rit af met de gegevens van het telematica-kastje
+      operationId: finishRide
+      tags:
+        - Rides
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Het id van de rit
+          schema:
+            type: integer
+            format: int32
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RideFinishRequest"
+      responses:
+        "200":
+          description: Rit succesvol afgerond
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ride"
+        "400":
+          description: Ongeldig rit-id, ongeldige request body of negatieve waarde
+        "404":
+          description: Rit niet gevonden
+        "409":
+          description: Rit is al afgerond
 
   /users:
     get:
@@ -585,6 +647,65 @@ components:
           format: double
           nullable: true
         tankCapacityKgH2:
+          type: number
+          format: double
+          nullable: true
+    RideFinishRequest:
+      type: object
+      required:
+        - distanceM
+        - avgAcceleration
+        - avgDeceleration
+      properties:
+        distanceM:
+          type: number
+          format: double
+          minimum: 0
+          description: Gereden afstand in meter
+          example: 12500.0
+        avgAcceleration:
+          type: number
+          format: double
+          minimum: 0
+          description: Gemiddelde acceleratie
+          example: 1.8
+        avgDeceleration:
+          type: number
+          format: double
+          minimum: 0
+          description: Gemiddelde deceleratie
+          example: 2.1
+    Ride:
+      type: object
+      required:
+        - id
+        - reservationId
+        - startTime
+        - status
+      properties:
+        id:
+          type: integer
+        reservationId:
+          type: integer
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+          enum: [ IN_PROGRESS, COMPLETED ]
+        distanceM:
+          type: number
+          format: double
+          nullable: true
+        avgAcceleration:
+          type: number
+          format: double
+          nullable: true
+        avgDeceleration:
           type: number
           format: double
           nullable: true
