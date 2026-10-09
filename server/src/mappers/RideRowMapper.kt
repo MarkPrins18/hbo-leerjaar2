@@ -12,5 +12,6 @@ fun ResultRow.toRide(): Ride = Ride(
     status = this[RideTable.status],
     distanceM = this[RideTable.distanceM],
     avgAcceleration = this[RideTable.avgAcceleration],
-    avgDeceleration = this[RideTable.avgDeceleration]
+    avgDeceleration = this[RideTable.avgDeceleration],
+    bonusPoints = this[RideTable.bonusPoints],
 )

@@ -15,6 +15,7 @@ object RideTable : Table("ride") {
     val distanceM = double("distance_m").nullable()
     val avgAcceleration = double("avg_acceleration").nullable()
     val avgDeceleration = double("avg_deceleration").nullable()
+    val bonusPoints = integer("bonus_points").nullable()
 
     override val primaryKey = PrimaryKey(id)
 }

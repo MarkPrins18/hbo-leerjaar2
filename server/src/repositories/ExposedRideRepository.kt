@@ -30,12 +30,13 @@ class ExposedRideRepository : RideRepository {
         RideTable.selectAll().where { RideTable.id eq id }.single().toRide()
     }
 
-    override suspend fun getRideById(id: Int): Ride? = suspendTransaction {
-        RideTable.selectAll().where { RideTable.id eq id }.singleOrNull()?.toRide()
+    override suspend fun getRideById(rideId: Int): Ride? = suspendTransaction {
+        RideTable.selectAll().where { RideTable.id eq rideId }.singleOrNull()?.toRide()
     }
 
     override suspend fun finishRide(
-        id: Int, endTime: Instant, distanceM: Double, avgAcceleration: Double, avgDeceleration: Double
+        id: Int, endTime: Instant, distanceM: Double, avgAcceleration: Double, avgDeceleration: Double,
+        bonusPoints: Int
     ): Ride? = suspendTransaction {
         RideTable.update({ RideTable.id eq id }) {
             it[RideTable.endTime] = endTime
@@ -43,6 +44,7 @@ class ExposedRideRepository : RideRepository {
             it[RideTable.distanceM] = distanceM
             it[RideTable.avgAcceleration] = avgAcceleration
             it[RideTable.avgDeceleration] = avgDeceleration
+            it[RideTable.bonusPoints] = bonusPoints
         }
         RideTable.selectAll().where { RideTable.id eq id }.singleOrNull()?.toRide()
     }
