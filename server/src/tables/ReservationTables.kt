@@ -11,7 +11,7 @@ val reservationTables = listOf(ReservationTable)
 object ReservationTable : Table("reservation") {
     val id = integer("id").autoIncrement()
     val carId = integer("car_id") references CarTable.id
-    val userId = integer("user_id") references OwnerTable.id
+    val userId = integer("user_id") references UserTable.id
     val startTime = timestamp("start_time")
     val endTime = timestamp("end_time")
     val status = enumerationByName("status", 20, ReservationStatus::class)

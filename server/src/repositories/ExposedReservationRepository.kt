@@ -13,7 +13,7 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.update
 import tables.CarTable
-import tables.OwnerTable
+import tables.UserTable
 import tables.ReservationTable
 import kotlin.time.Instant
 
@@ -24,7 +24,7 @@ class ExposedReservationRepository : ReservationRepository {
     }
 
     override suspend fun userExists(userId: Int): Boolean = suspendTransaction {
-        !OwnerTable.selectAll().where { OwnerTable.id eq userId }.empty()
+        !UserTable.selectAll().where { UserTable.id eq userId }.empty()
     }
 
 

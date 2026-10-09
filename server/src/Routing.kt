@@ -11,6 +11,8 @@ import repositories.ExposedReservationRepository
 import repositories.ExposedUserRepository
 import services.AuthService
 import services.ReservationService
+import repositories.ExposedRideRepository
+import services.RideService
 import services.TokenService
 import services.UserService
 
@@ -25,6 +27,8 @@ fun Application.configureRouting() {
     )
     val reservationRepository = ExposedReservationRepository()
     val reservationService = ReservationService(reservationRepository)
+    val rideRepository = ExposedRideRepository()
+    val rideService = RideService(rideRepository, reservationRepository)
     val userRepository = ExposedUserRepository()
     val userService = UserService(userRepository)
     val authService = AuthService(userRepository, TokenService(jwtConfig()))
@@ -33,6 +37,7 @@ fun Application.configureRouting() {
         carRoutes(carService)
         mapsRoutes(locationRepository)
         reservationRoutes(reservationService)
+        rideRoutes(rideService)
         userRoutes(userService, authService)
     }
 }
