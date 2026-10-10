@@ -1,0 +1,41 @@
+@startuml StartRide
+
+actor Client
+participant RideRouting
+participant RideService
+participant ReservationRepository
+participant RideRepository
+participant StatusPages
+database H2
+
+Client -> RideRouting : POST /reservations/{id}/rides
+RideRouting -> RideService : startRide(reservationId)
+
+RideService -> ReservationRepository : getReservationById(reservationId)
+ReservationRepository -> H2
+ReservationRepository --> RideService : Reservation?
+alt reservering niet gevonden
+    RideService --> StatusPages : ApiException(404)
+    StatusPages --> Client : 404 Not Found
+end
+
+alt status niet CONFIRMED of nu buiten start- en eindtijd
+    RideService --> StatusPages : ApiException(409)
+    StatusPages --> Client : 409 Conflict
+end
+
+RideService -> RideRepository : hasRideInProgress(reservationId)
+RideRepository -> H2
+RideRepository --> RideService : Boolean
+alt er loopt al een rit
+    RideService --> StatusPages : ApiException(409)
+    StatusPages --> Client : 409 Conflict
+end
+
+RideService -> RideRepository : startRide(reservationId, now)
+RideRepository -> H2 : INSERT ride (IN_PROGRESS)
+RideRepository --> RideService : Ride
+RideService --> RideRouting : Ride
+RideRouting --> Client : 201 Created
+
+@enduml
