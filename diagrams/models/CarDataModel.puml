@@ -48,8 +48,54 @@ package models {
     Car <|-- BEVCar
     Car <|-- FCEVCar
 
+    enum ReservationStatus {
+        PENDING
+        CONFIRMED
+        CANCELLED
+        COMPLETED
+    }
+
+    enum RideStatus {
+        IN_PROGRESS
+        COMPLETED
+    }
+
+    class User <<data>> {
+        +id: Int
+        +email: String
+        +passwordHash: String
+    }
+
+    class Reservation <<data>> {
+        +id: Int
+        +carId: Int
+        +userId: Int
+        +startTime: Instant
+        +endTime: Instant
+        +status: ReservationStatus
+    }
+
+    class Ride <<data>> {
+        +id: Int
+        +reservationId: Int
+        +startTime: Instant
+        +endTime: Instant?
+        +status: RideStatus
+        +distanceM: Double?
+        +avgAcceleration: Double?
+        +avgDeceleration: Double?
+        +bonusPoints: Int?
+    }
+
     Car --> VehicleType
     ICECar --> FuelType
+
+    Reservation --> ReservationStatus
+    Ride --> RideStatus
+    Car "*" --> "1" User : ownerId
+    Reservation "*" --> "1" User : userId
+    Reservation "*" --> "1" Car : carId
+    Ride "*" --> "1" Reservation : reservationId
 }
 
 @enduml
