@@ -1,0 +1,48 @@
+@startuml CreateReservation
+
+actor Client
+participant ReservationRouting
+participant ReservationService
+participant ReservationRepository
+participant StatusPages
+database H2
+
+Client -> ReservationRouting : POST /reservations (ReservationRequest)
+ReservationRouting -> ReservationService : createReservation(request)
+
+alt starttijd in het verleden of eindtijd <= starttijd
+    ReservationService --> StatusPages : ApiException(400)
+    StatusPages --> Client : 400 Bad Request
+end
+
+ReservationService -> ReservationRepository : carExists(carId)
+ReservationRepository -> H2
+ReservationRepository --> ReservationService : Boolean
+alt auto bestaat niet
+    ReservationService --> StatusPages : ApiException(404)
+    StatusPages --> Client : 404 Not Found
+end
+
+ReservationService -> ReservationRepository : userExists(userId)
+ReservationRepository -> H2
+ReservationRepository --> ReservationService : Boolean
+alt gebruiker bestaat niet
+    ReservationService --> StatusPages : ApiException(404)
+    StatusPages --> Client : 404 Not Found
+end
+
+ReservationService -> ReservationRepository : hasActiveOverlap(carId, startTime, endTime)
+ReservationRepository -> H2
+ReservationRepository --> ReservationService : Boolean
+alt tijdsblok al gereserveerd
+    ReservationService --> StatusPages : ApiException(409)
+    StatusPages --> Client : 409 Conflict
+end
+
+ReservationService -> ReservationRepository : createReservation(..., CONFIRMED)
+ReservationRepository -> H2 : INSERT reservation
+ReservationRepository --> ReservationService : Reservation
+ReservationService --> ReservationRouting : Reservation
+ReservationRouting --> Client : 201 Created
+
+@enduml
