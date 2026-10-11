@@ -6,12 +6,16 @@ import repositories.CarRepository
 import dto.*
 import models.*
 import repositories.LocationRepository
+import repositories.PhotoRepository
+import storage.PhotoStorage
 import kotlin.coroutines.cancellation.CancellationException
 
 class CarService(
     private val rdwClient: RdwClient,
     private val carRepository: CarRepository,
-    private val locationRepository: LocationRepository
+    private val locationRepository: LocationRepository,
+    private val photoRepository: PhotoRepository,
+    private val photoStorage: PhotoStorage
 ) {
     suspend fun importCar(request: CarDto): Car {
         request.validate()
@@ -54,9 +58,13 @@ class CarService(
             ?: throw ResourceNotFoundException("Auto met kenteken $licensePlate niet gevonden")
 
     suspend fun deleteCar(carId: Int) {
+        val photoFileNames = photoRepository.getFileNamesByCarId(carId)
+
         if (!carRepository.deleteCar(carId)) {
             throw carNotFound(carId)
         }
+
+        photoFileNames.forEach(photoStorage::delete)
     }
 
     suspend fun getCars(filter: CarFilter): List<Car> {
