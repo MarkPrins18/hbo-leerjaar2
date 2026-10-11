@@ -4,7 +4,7 @@ import io.ktor.http.HttpStatusCode
 
 /**
  * Base exception for errors that must reach the client with a specific HTTP status.
- * Handled in StatusPages.kt. For 400 and 404, use Ktor's BadRequestException and NotFoundException.
+ * Handled in StatusPages.kt. Always throw one of the classes below, not Ktor's own exceptions.
  * For a status without its own class, throw ApiException(HttpStatusCode.X, "message") directly.
  */
 open class ApiException(
@@ -13,6 +13,10 @@ open class ApiException(
     cause: Throwable? = null
 ) : Exception(message, cause)
 
+/** 400: the input is invalid, e.g. a weak password. */
+class ValidationException(message: String) :
+    ApiException(HttpStatusCode.BadRequest, message)
+
 /** 401: the user is not logged in. */
 class UnauthorizedException(message: String = "Niet ingelogd") :
     ApiException(HttpStatusCode.Unauthorized, message)
@@ -20,6 +24,10 @@ class UnauthorizedException(message: String = "Niet ingelogd") :
 /** 403: the user is logged in but not allowed to do this, e.g. changing someone else's car. */
 class ForbiddenException(message: String = "Geen toegang") :
     ApiException(HttpStatusCode.Forbidden, message)
+
+/** 404: the requested resource does not exist, e.g. an unknown car id. */
+class ResourceNotFoundException(message: String) :
+    ApiException(HttpStatusCode.NotFound, message)
 
 /** 409: the request conflicts with existing data, e.g. a car that is already reserved. */
 class ConflictException(message: String) :

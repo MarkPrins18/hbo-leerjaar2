@@ -1,7 +1,6 @@
 package services
 
 import clients.RdwClient
-import io.ktor.server.plugins.NotFoundException
 import mappers.RdwCarMapper
 import repositories.CarRepository
 import dto.*
@@ -52,7 +51,7 @@ class CarService(
 
     suspend fun getCarByLicensePlate(licensePlate: String): Car =
         carRepository.getCarByLicensePlate(licensePlate)
-            ?: throw NotFoundException("Auto met kenteken $licensePlate niet gevonden")
+            ?: throw ResourceNotFoundException("Auto met kenteken $licensePlate niet gevonden")
 
     suspend fun deleteCar(carId: Int) {
         if (!carRepository.deleteCar(carId)) {
@@ -72,7 +71,7 @@ class CarService(
         }
     }
 
-    private fun carNotFound(carId: Int) = NotFoundException("Auto $carId niet gevonden")
+    private fun carNotFound(carId: Int) = ResourceNotFoundException("Auto $carId niet gevonden")
 
     private suspend fun <T> callRdw(block: suspend () -> T): T =
         try {

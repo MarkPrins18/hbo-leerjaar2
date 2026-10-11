@@ -12,17 +12,13 @@ import org.jetbrains.exposed.v1.exceptions.ExposedSQLException
 import services.ApiException
 
 /**
- * Translates exceptions into HTTP responses. Which exception to throw for which status:
- * - 400 BadRequestException (Ktor): invalid input. Also thrown by receive() and getOrFail().
- * - 401 UnauthorizedException
- * - 403 ForbiddenException
- * - 404 NotFoundException (Ktor)
- * - 409 ConflictException. Duplicate keys and foreign key errors from the database also become 409.
- * - 413 / 415: thrown by Ktor itself (body too large / wrong Content-Type).
- * - 422 UnprocessableException
- * - 502 ExternalServiceException
+ * Translates exceptions into HTTP responses.
+ * - Exceptions from services/Exception.kt are handled via ApiException.
+ * - Thrown by Ktor itself, never throw these yourself: BadRequestException and parameter exceptions (400,
+ *   from receive() and getOrFail()), NotFoundException (404), PayloadTooLargeException (413)
+ *   and UnsupportedMediaTypeException (415).
+ * - Duplicate keys and foreign key errors from the database become 409.
  * - 500: everything else. The details are logged, not sent to the client.
- * Any other status: throw ApiException(HttpStatusCode.X, "message").
  */
 fun Application.configureStatusPages() {
     install(StatusPages) {

@@ -13,7 +13,7 @@ Schoolproject: Kotlin/Ktor Web API voor een autodeelplatform, gebouwd door een t
 - Alleen Kotlin stdlib, geen `java.*`. Geen DI-library; dependencies via constructors vanuit `Routing.kt`.
 - Route → Service → Repository. Routes kennen alleen services.
 - Validatie in `services/CarValidation.kt`.
-- Fouten: gooi exceptions (`services/Exception.kt`, Ktor's `BadRequestException`/`NotFoundException`), `StatusPages.kt` handelt ze af. Nooit zelf foutcodes responden.
+- Fouten: gooi alleen exceptions uit `services/Exception.kt`, niet die van Ktor. `StatusPages.kt` handelt ze af. Nooit zelf foutcodes responden.
 - Repository-functies zijn `suspend` met `suspendTransaction`; ids zijn `Int`.
 
 ## Database

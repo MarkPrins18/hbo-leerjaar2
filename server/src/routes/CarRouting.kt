@@ -3,9 +3,9 @@ package routes
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import services.CarService
+import services.ValidationException
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Parameters
-import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.request.receive
 import io.ktor.server.util.getOrFail
 import dto.*
@@ -49,7 +49,7 @@ fun Route.carRoutes(
 private fun Parameters.optionalDouble(name: String): Double? {
     val raw = this[name] ?: return null
     return raw.toDoubleOrNull()
-        ?: throw BadRequestException("'$name' moet een getal zijn")
+        ?: throw ValidationException("'$name' moet een getal zijn")
 }
 
 private fun Parameters.toCarFilter(): CarFilter = CarFilter(

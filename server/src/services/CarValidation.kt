@@ -1,6 +1,5 @@
 package services
 
-import io.ktor.server.plugins.BadRequestException
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 import mappers.normalizeLicensePlate
@@ -68,7 +67,7 @@ private fun CarChangeDto.checkFieldsMatchSubtype(car: Car) {
             is BEVCar -> "BEV"
             is FCEVCar -> "FCEV"
         }
-        throw BadRequestException("Deze velden kunnen niet worden aangepast voor een $type-auto")
+        throw ValidationException("Deze velden kunnen niet worden aangepast voor een $type-auto")
     }
 }
 
@@ -80,34 +79,34 @@ fun CarFilter.validate() {
 
     val distanceParameters = listOf(maxDistanceKm, latitude, longitude)
     if (distanceParameters.any { it != null } && distanceParameters.any { it == null }) {
-        throw BadRequestException("'maxDistanceKm', 'latitude' en 'longitude' moeten samen worden opgegeven")
+        throw ValidationException("'maxDistanceKm', 'latitude' en 'longitude' moeten samen worden opgegeven")
     }
 }
 
 private fun checkNotNegative(name: String, value: Double) {
     if (!value.isFinite() || value < 0) {
-        throw BadRequestException("'$name' moet een getal van 0 of hoger zijn")
+        throw ValidationException("'$name' moet een getal van 0 of hoger zijn")
     }
 }
 
 private fun checkText(name: String, value: String, maxLength: Int) {
     if (value.isBlank()) {
-        throw BadRequestException("'$name' mag niet leeg zijn")
+        throw ValidationException("'$name' mag niet leeg zijn")
     }
     if (value.length > maxLength) {
-        throw BadRequestException("'$name' mag maximaal $maxLength tekens zijn")
+        throw ValidationException("'$name' mag maximaal $maxLength tekens zijn")
     }
 }
 
 private fun checkRange(name: String, value: Int, range: IntRange) {
     if (value !in range) {
-        throw BadRequestException("'$name' moet tussen ${range.first} en ${range.last} liggen")
+        throw ValidationException("'$name' moet tussen ${range.first} en ${range.last} liggen")
     }
 }
 
 private fun checkRange(name: String, value: Double, range: ClosedFloatingPointRange<Double>) {
     if (value !in range) {
-        throw BadRequestException("'$name' moet tussen ${range.start} en ${range.endInclusive} liggen")
+        throw ValidationException("'$name' moet tussen ${range.start} en ${range.endInclusive} liggen")
     }
 }
 

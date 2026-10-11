@@ -1,6 +1,5 @@
 package services
 
-import io.ktor.server.plugins.BadRequestException
 import requests.RegisterRequest
 
 private const val EMAIL_MAX_LENGTH = 255
@@ -17,7 +16,7 @@ fun RegisterRequest.validate() {
 
 private fun validateEmail(email: String) {
     if (email.length > EMAIL_MAX_LENGTH || !EMAIL_PATTERN.matches(email)) {
-        throw BadRequestException("Veld 'email' bevat geen geldig e-mailadres")
+        throw ValidationException("Veld 'email' bevat geen geldig e-mailadres")
     }
 }
 
@@ -31,9 +30,9 @@ private fun validatePassword(password: String) {
     }
 
     if (missingRequirements.isNotEmpty()) {
-        throw BadRequestException("Veld 'password' is te zwak, het mist: ${missingRequirements.joinToString(", ")}")
+        throw ValidationException("Veld 'password' is te zwak, het mist: ${missingRequirements.joinToString(", ")}")
     }
     if (password.toByteArray().size > PASSWORD_MAX_BYTES) {
-        throw BadRequestException("Veld 'password' mag maximaal $PASSWORD_MAX_BYTES bytes lang zijn")
+        throw ValidationException("Veld 'password' mag maximaal $PASSWORD_MAX_BYTES bytes lang zijn")
     }
 }
