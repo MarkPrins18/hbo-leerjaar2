@@ -7,7 +7,7 @@ import dto.*
 import models.*
 import repositories.LocationRepository
 import repositories.PhotoRepository
-import storage.PhotoStorage
+import config.PhotoStorage
 import kotlin.coroutines.cancellation.CancellationException
 
 class CarService(

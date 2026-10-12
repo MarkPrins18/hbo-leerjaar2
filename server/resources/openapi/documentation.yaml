@@ -829,11 +829,11 @@ components:
         email:
           type: string
           format: email
-          example: jan@example.com
+          example: eigenaar1@carshare.nl
         password:
           type: string
           format: password
-          example: Geheim123!
+          example: Welkom123!
     LoginResponse:
       type: object
       required:

@@ -1,4 +1,4 @@
-package storage
+package config
 
 import kotlinx.io.buffered
 import kotlinx.io.files.Path

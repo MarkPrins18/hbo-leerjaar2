@@ -3,7 +3,7 @@ package services
 import models.Photo
 import repositories.CarRepository
 import repositories.PhotoRepository
-import storage.PhotoStorage
+import config.PhotoStorage
 import kotlin.uuid.Uuid
 
 class PhotoService(
