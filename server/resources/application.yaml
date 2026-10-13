@@ -15,6 +15,9 @@ database:
   reset-schema: true
   seed-data: true
 
+photos:
+  directory: "./server/resources/data/database/photos"
+
 rdw:
   appToken: "$RDW_APP_TOKEN:"
 

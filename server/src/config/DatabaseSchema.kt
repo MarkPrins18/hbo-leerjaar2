@@ -13,6 +13,7 @@ fun Application.syncDatabaseSchema(): Boolean {
         transaction {
             if (resetSchema) {
                 SchemaUtils.drop(*allTables.toTypedArray())
+                photoStorage().clear()
                 log.warn("Database schema verwijderd omdat database.reset-schema=true is.")
             }
 
