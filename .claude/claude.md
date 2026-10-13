@@ -25,3 +25,6 @@ Schoolproject: Kotlin/Ktor Web API voor een autodeelplatform, gebouwd door een t
 
 ## Ontwerpkeuzes
 Lees `.claude/decisions.md` voordat je iets wijzigt aan de RDW-import, mappers of datamodellen.
+
+## Testen
+Lees `.claude/testing.md` voordat je tests schrijft.
