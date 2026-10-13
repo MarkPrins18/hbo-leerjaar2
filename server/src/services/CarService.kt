@@ -1,7 +1,7 @@
 package services
 
 import clients.RdwClient
-import mappers.RdwCarMapper
+import mappers.toCar
 import repositories.CarRepository
 import dto.*
 import models.*
@@ -29,8 +29,7 @@ class CarService(
 
         val brandstoffen = callRdw { rdwClient.getFuel(request.licensePlate) }
 
-        val car = RdwCarMapper.toCar(
-            voertuig = voertuig,
+        val car = voertuig.toCar(
             brandstoffen = brandstoffen,
             id = 0,
             ownerId = request.ownerId,
