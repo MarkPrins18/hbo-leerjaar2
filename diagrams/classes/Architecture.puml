@@ -1,0 +1,115 @@
+@startuml Architecture
+
+skinparam packageStyle rectangle
+
+package routes {
+    class CarRouting <<file>> {
+        +carRoutes(carService)
+    }
+    class MapRouting <<file>> {
+        +mapsRoutes(locationRepository)
+    }
+    class ReservationRouting <<file>> {
+        +reservationRoutes(reservationService)
+    }
+    class RideRouting <<file>> {
+        +rideRoutes(rideService)
+    }
+    class UserRouting <<file>> {
+        +userRoutes(userService, authService)
+    }
+}
+
+package services {
+    class CarService {
+        +importCar(request): Car
+        +updateCar(carId, change): Car
+        +getCarByLicensePlate(licensePlate): Car
+        +deleteCar(carId)
+        +getCars(filter): List<Car>
+    }
+    class ReservationService {
+        +createReservation(request): Reservation
+        +cancelReservation(id): Reservation
+    }
+    class RideService {
+        +startRide(reservationId): Ride
+        +finishRide(rideId, request): Ride
+    }
+    class UserService {
+        +register(request): User
+        +getAllUsers(): List<User>
+    }
+    class AuthService {
+        +login(request): String
+    }
+    class TokenService {
+        +createToken(user): String
+    }
+}
+
+package repositories {
+    interface CarRepository {
+        +getAllCars()
+        +getCarById(carId)
+        +getCarByLicensePlate(licensePlate)
+        +createCar(car)
+        +updateCar(carId, change)
+        +deleteCar(carId)
+    }
+    interface LocationRepository {
+        +getLatestLocationByCarId(carId)
+    }
+    interface ReservationRepository {
+        +carExists(carId)
+        +userExists(userId)
+        +hasActiveOverlap(carId, startTime, endTime)
+        +createReservation(...)
+        +getReservationById(id)
+        +updateStatus(id, status)
+    }
+    interface RideRepository {
+        +hasRideInProgress(reservationId)
+        +startRide(reservationId, startTime)
+        +getRideById(rideId)
+        +finishRide(...)
+    }
+    interface UserRepository {
+        +findByEmail(email)
+        +findAll()
+        +create(email, passwordHash)
+    }
+
+    class ExposedCarRepository
+    class ExposedLocationRepository
+    class ExposedReservationRepository
+    class ExposedRideRepository
+    class ExposedUserRepository
+
+    CarRepository <|.. ExposedCarRepository
+    LocationRepository <|.. ExposedLocationRepository
+    ReservationRepository <|.. ExposedReservationRepository
+    RideRepository <|.. ExposedRideRepository
+    UserRepository <|.. ExposedUserRepository
+}
+
+class RdwClient <<external>>
+
+CarRouting --> CarService
+ReservationRouting --> ReservationService
+RideRouting --> RideService
+UserRouting --> UserService
+UserRouting --> AuthService
+MapRouting --> LocationRepository
+
+CarService --> RdwClient
+CarService --> CarRepository
+CarService --> LocationRepository
+ReservationService --> ReservationRepository
+RideService --> RideRepository
+RideService --> ReservationRepository
+UserService --> UserRepository
+AuthService --> UserRepository
+AuthService --> TokenService
+
+@enduml

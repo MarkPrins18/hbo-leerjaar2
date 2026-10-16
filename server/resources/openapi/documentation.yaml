@@ -1,0 +1,772 @@
+openapi: 3.0.3
+info:
+  title: Car Sharing API
+  version: "1.0.0"
+
+paths:
+  /cars:
+    get:
+      summary: Haal alle auto's op
+      operationId: getAllCars
+      tags:
+        - Cars
+      description: |
+        Geeft alle auto's terug. Filters zijn optioneel en kunnen gecombineerd
+        worden, bijvoorbeeld:
+        `/cars?maxPrice=50&maxDistanceKm=10&latitude=51.5853&longitude=4.7946`
+      parameters:
+        - name: maxPrice
+          in: query
+          required: false
+          description: Maximale prijs (wordt nog niet toegepast, wacht op RentalOffer)
+          schema:
+            type: number
+            format: double
+            minimum: 0
+          example: 50.0
+        - name: maxDistanceKm
+          in: query
+          required: false
+          description: Maximale afstand vanaf de opgegeven coördinaten in kilometer. Alleen samen met latitude en longitude.
+          schema:
+            type: number
+            format: double
+            minimum: 0
+          example: 10.0
+        - name: latitude
+          in: query
+          required: false
+          description: Breedtegraad van het vertrekpunt. Alleen samen met maxDistanceKm en longitude.
+          schema:
+            type: number
+            format: double
+            minimum: -90
+            maximum: 90
+          example: 51.5853
+        - name: longitude
+          in: query
+          required: false
+          description: Lengtegraad van het vertrekpunt. Alleen samen met maxDistanceKm en latitude.
+          schema:
+            type: number
+            format: double
+            minimum: -180
+            maximum: 180
+          example: 4.7946
+      responses:
+        "200":
+          description: Lijst van alle auto's
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Car"
+        "400":
+          description: Ongeldige filterwaarde (geen getal of buiten bereik), of maxDistanceKm, latitude en longitude niet alle drie opgegeven
+  /cars/{licensePlate}:
+    get:
+      summary: Haal een auto op via het kenteken
+      operationId: getCarByLicensePlate
+      tags:
+        - Cars
+      parameters:
+        - name: licensePlate
+          in: path
+          required: true
+          description: Het kenteken van de auto
+          schema:
+            type: string
+          example: KS711F
+      responses:
+        "200":
+          description: Auto gevonden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Car"
+        "404":
+          description: Auto niet gevonden
+
+  /cars/{id}:
+    patch:
+      summary: Werk een auto bij via het id
+      operationId: updateCar
+      tags:
+        - Cars
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Het id van de auto
+          schema:
+            type: integer
+            format: int32
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CarChangeRequest"
+      responses:
+        "200":
+          description: Auto succesvol bijgewerkt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Car"
+        "400":
+          description: Ongeldige waarde of veld hoort niet bij het type auto
+        "404":
+          description: Auto niet gevonden
+        "409":
+          description: Kenteken bestaat al of eigenaar bestaat niet
+    delete:
+      summary: Verwijder een auto via het id
+      operationId: deleteCar
+      tags:
+        - Cars
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Het id van de auto
+          schema:
+            type: integer
+            format: int32
+          example: 1
+      responses:
+        "204":
+          description: Auto succesvol verwijderd
+        "404":
+          description: Auto niet gevonden
+  /cars/import:
+    post:
+      summary: Importeer een auto via het kenteken
+      operationId: importCar
+      tags:
+        - Cars
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CarRequest"
+      responses:
+        "201":
+          description: Auto succesvol geïmporteerd
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Car"
+        "400":
+          description: Ongeldige waarde in de request
+        "409":
+          description: Kenteken bestaat al of eigenaar bestaat niet
+        "422":
+          description: Kenteken onbekend bij de RDW, of RDW-gegevens niet te verwerken
+        "502":
+          description: De RDW API is niet bereikbaar of gaf een ongeldig antwoord
+  /cars/{carId}/maps:
+    get:
+      summary: Open de locatie van een auto in Google Maps
+      description: Stuurt door naar Google Maps met de laatst bekende locatie van de auto.
+      operationId: getCarLocationInMaps
+      tags:
+        - Maps
+      parameters:
+        - name: carId
+          in: path
+          required: true
+          description: Het id van de auto
+          schema:
+            type: integer
+            format: int32
+          example: 1
+      responses:
+        "200":
+          description: Doorverwijzing naar de laatst bekende locatie in Google Maps
+          headers:
+            Location:
+              description: URL van de locatie in Google Maps
+              schema:
+                type: string
+                format: uri
+        "400":
+          description: Ongeldig auto-id
+        "404":
+          description: Geen locatie bekend voor deze auto
+  /reservations:
+    post:
+      summary: Maak een reservering aan
+      operationId: createReservation
+      tags:
+        - Reservations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReservationRequest"
+      responses:
+        "201":
+          description: Reservering succesvol aangemaakt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reservation"
+        "400":
+          description: Ongeldige request, starttijd ligt in het verleden of eindtijd ligt niet na de starttijd
+        "404":
+          description: Auto of gebruiker niet gevonden
+        "409":
+          description: Auto is in dit tijdsblok al gereserveerd
+  /reservations/{id}/cancel:
+    patch:
+      summary: Annuleer een reservering via het id
+      operationId: cancelReservation
+      tags:
+        - Reservations
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Het id van de reservering
+          schema:
+            type: integer
+            format: int32
+          example: 1
+      responses:
+        "200":
+          description: Reservering succesvol geannuleerd
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reservation"
+        "400":
+          description: Ongeldig reservering-id
+        "404":
+          description: Reservering niet gevonden
+        "409":
+          description: Reservering is al geannuleerd of de starttijd is al verstreken
+  /reservations/{id}/rides:
+    post:
+      summary: Start een rit voor een reservering
+      operationId: startRide
+      tags:
+        - Rides
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Het id van de reservering
+          schema:
+            type: integer
+            format: int32
+          example: 1
+      responses:
+        "201":
+          description: Rit succesvol gestart
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ride"
+        "400":
+          description: Ongeldig reservering-id
+        "404":
+          description: Reservering niet gevonden
+        "409":
+          description: Reservering is niet bevestigd, is nu niet actief, of er loopt al een rit
+  /rides/{id}/finish:
+    patch:
+      summary: Rond een rit af met de gegevens van het telematica-kastje
+      description: |
+        Slaat de ritgegevens op, zet de status op COMPLETED en kent bonuspunten
+        toe voor rustig rijgedrag (zie het veld bonusPoints in het schema Ride).
+      operationId: finishRide
+      tags:
+        - Rides
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Het id van de rit
+          schema:
+            type: integer
+            format: int32
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RideFinishRequest"
+      responses:
+        "200":
+          description: Rit succesvol afgerond
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ride"
+        "400":
+          description: Ongeldig rit-id, ongeldige request body of negatieve waarde
+        "404":
+          description: Rit niet gevonden
+        "409":
+          description: Rit is al afgerond
+
+  /users:
+    get:
+      summary: Haal alle gebruikers op (tijdelijk, voor testen)
+      operationId: getAllUsers
+      tags:
+        - Users
+      responses:
+        "200":
+          description: Lijst van alle gebruikers, zonder wachtwoord
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+  /users/register:
+    post:
+      summary: Maak een nieuw account aan
+      description: |
+        Het wachtwoord moet minimaal 8 tekens lang zijn en een hoofdletter,
+        een kleine letter, een cijfer en een speciaal teken bevatten.
+      operationId: register
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: Account succesvol aangemaakt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Ongeldig e-mailadres of te zwak wachtwoord, de foutmelding noemt het veld
+        "409":
+          description: Er bestaat al een account met dit e-mailadres
+  /users/login:
+    post:
+      summary: Log in met e-mail en wachtwoord
+      description: |
+        Geeft een JWT-token terug. Gebruik deze token via de knop "Authorize"
+        om beveiligde endpoints aan te roepen.
+      operationId: login
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Succesvol ingelogd
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "400":
+          description: Ongeldige request body
+        "401":
+          description: Onjuist e-mailadres of wachtwoord
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Car:
+      oneOf:
+        - $ref: "#/components/schemas/ICECar"
+        - $ref: "#/components/schemas/BEVCar"
+        - $ref: "#/components/schemas/FCEVCar"
+      discriminator:
+        propertyName: type
+        mapping:
+          ICECar: "#/components/schemas/ICECar"
+          BEVCar: "#/components/schemas/BEVCar"
+          FCEVCar: "#/components/schemas/FCEVCar"
+
+    CarBase:
+      type: object
+      required:
+        - id
+        - ownerId
+        - licensePlate
+        - brand
+        - model
+        - productionYear
+        - color
+        - seats
+        - vehicleType
+        - readyToDriveWeightKg
+        - consumptionCombined
+        - co2EmissionCombined
+      properties:
+        id:
+          type: integer
+        ownerId:
+          type: integer
+        licensePlate:
+          type: string
+        brand:
+          type: string
+        model:
+          type: string
+        productionYear:
+          type: integer
+        trim:
+          type: string
+          nullable: true
+        color:
+          type: string
+        seats:
+          type: integer
+        doors:
+          type: integer
+          nullable: true
+        vehicleType:
+          type: string
+          enum:
+            - PASSENGER_CAR
+            - LIGHT_COMMERCIAL_VEHICLE
+        readyToDriveWeightKg:
+          type: integer
+        consumptionCombined:
+          type: number
+          format: double
+        co2EmissionCombined:
+          type: number
+          format: double
+
+    ICECar:
+      allOf:
+        - $ref: "#/components/schemas/CarBase"
+        - type: object
+          required:
+            - type
+            - fuelType
+            - tankCapacityL
+            - automaticTransmission
+          properties:
+            type:
+              type: string
+              enum: [ICECar]
+            fuelType:
+              type: string
+              enum: [PETROL, DIESEL, LPG]
+            tankCapacityL:
+              type: number
+              format: double
+            automaticTransmission:
+              type: boolean
+
+    BEVCar:
+      allOf:
+        - $ref: "#/components/schemas/CarBase"
+        - type: object
+          required:
+            - type
+            - batteryCapacityKWh
+          properties:
+            type:
+              type: string
+              enum: [BEVCar]
+            batteryCapacityKWh:
+              type: number
+              format: double
+
+    FCEVCar:
+      allOf:
+        - $ref: "#/components/schemas/CarBase"
+        - type: object
+          required:
+            - type
+            - tankCapacityKgH2
+          properties:
+            type:
+              type: string
+              enum: [FCEVCar]
+            tankCapacityKgH2:
+              type: number
+              format: double
+    CarRequest:
+      type: object
+      required:
+        - licensePlate
+        - ownerId
+      properties:
+        licensePlate:
+          type: string
+        ownerId:
+          type: integer
+          format: int32
+        trim:
+          type: string
+          nullable: true
+        tankCapacityL:
+          type: number
+          format: double
+          nullable: true
+        automaticTransmission:
+          type: boolean
+          nullable: true
+        batteryCapacityKWh:
+          type: number
+          format: double
+          nullable: true
+        tankCapacityKgH2:
+          type: number
+          format: double
+          nullable: true
+
+    ReservationRequest:
+      type: object
+      required:
+        - carId
+        - userId
+        - startTime
+        - endTime
+      properties:
+        carId:
+          type: integer
+          format: int32
+        userId:
+          type: integer
+          format: int32
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+
+    Reservation:
+      type: object
+      required:
+        - id
+        - carId
+        - userId
+        - startTime
+        - endTime
+        - status
+      properties:
+        id:
+          type: integer
+        carId:
+          type: integer
+        userId:
+          type: integer
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [PENDING, CONFIRMED, CANCELLED, COMPLETED]
+    CarChangeRequest:
+      type: object
+      properties:
+        licensePlate:
+          type: string
+          nullable: true
+        ownerId:
+          type: integer
+          format: int32
+          nullable: true
+        brand:
+          type: string
+          nullable: true
+        model:
+          type: string
+          nullable: true
+        productionYear:
+          type: integer
+          format: int32
+          nullable: true
+        trim:
+          type: string
+          nullable: true
+        color:
+          type: string
+          nullable: true
+        seats:
+          type: integer
+          format: int32
+          nullable: true
+        doors:
+          type: integer
+          format: int32
+          nullable: true
+        vehicleType:
+          type: string
+          enum:
+            - PASSENGER_CAR
+            - LIGHT_COMMERCIAL_VEHICLE
+          nullable: true
+        readyToDriveWeightKg:
+          type: integer
+          format: int32
+          nullable: true
+        consumptionCombined:
+          type: number
+          format: double
+          nullable: true
+        co2EmissionCombined:
+          type: number
+          format: double
+          nullable: true
+        fuelType:
+          type: string
+          enum: [PETROL, DIESEL, LPG]
+          nullable: true
+        tankCapacityL:
+          type: number
+          format: double
+          nullable: true
+        automaticTransmission:
+          type: boolean
+          nullable: true
+        batteryCapacityKWh:
+          type: number
+          format: double
+          nullable: true
+        tankCapacityKgH2:
+          type: number
+          format: double
+          nullable: true
+    RideFinishRequest:
+      type: object
+      required:
+        - distanceM
+        - avgAcceleration
+        - avgDeceleration
+      properties:
+        distanceM:
+          type: number
+          format: double
+          minimum: 0
+          description: Gereden afstand in meter
+          example: 12500.0
+        avgAcceleration:
+          type: number
+          format: double
+          minimum: 0
+          description: Gemiddelde acceleratie in m/s²
+          example: 1.8
+        avgDeceleration:
+          type: number
+          format: double
+          minimum: 0
+          description: Gemiddelde deceleratie in m/s²
+          example: 2.1
+    Ride:
+      type: object
+      required:
+        - id
+        - reservationId
+        - startTime
+        - status
+      properties:
+        id:
+          type: integer
+        reservationId:
+          type: integer
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+          enum: [ IN_PROGRESS, COMPLETED ]
+        distanceM:
+          type: number
+          format: double
+          nullable: true
+        avgAcceleration:
+          type: number
+          format: double
+          nullable: true
+        avgDeceleration:
+          type: number
+          format: double
+          nullable: true
+        bonusPoints:
+            type: integer
+            format: int32
+            nullable: true
+            description: |
+              Bonuspunten voor rustig rijgedrag, berekend bij het afronden.
+              Rustig = avgAcceleration < 2,78 m/s² en avgDeceleration < 3,43 m/s².
+              Een rustige rit levert 1 punt per volle kilometer op, anders 0.
+              Leeg (null) zolang de rit loopt.
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: jan@example.com
+        password:
+          type: string
+          format: password
+          example: Geheim123!
+    LoginResponse:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          description: JWT-token, 60 minuten geldig
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: jan@example.com
+        password:
+          type: string
+          format: password
+          minLength: 8
+          example: Geheim123!
+    User:
+      type: object
+      required:
+        - id
+        - email
+      properties:
+        id:
+          type: integer
+          format: int32
+        email:
+          type: string
+          format: email

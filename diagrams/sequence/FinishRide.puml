@@ -1,0 +1,38 @@
+@startuml FinishRide
+
+actor Client
+participant RideRouting
+participant RideService
+participant RideRepository
+participant StatusPages
+database H2
+
+Client -> RideRouting : PATCH /rides/{id}/finish (RideFinishRequest)
+RideRouting -> RideService : finishRide(rideId, request)
+
+alt afstand of acceleraties negatief
+    RideService --> StatusPages : ApiException(400)
+    StatusPages --> Client : 400 Bad Request
+end
+
+RideService -> RideRepository : getRideById(rideId)
+RideRepository -> H2
+RideRepository --> RideService : Ride?
+alt rit niet gevonden
+    RideService --> StatusPages : ApiException(404)
+    StatusPages --> Client : 404 Not Found
+end
+
+alt rit niet IN_PROGRESS
+    RideService --> StatusPages : ApiException(409)
+    StatusPages --> Client : 409 Conflict
+end
+
+RideService -> RideService : calculateBonusPoints(distanceM, avgAcceleration, avgDeceleration)
+RideService -> RideRepository : finishRide(rideId, now, distanceM, avgAcceleration, avgDeceleration, bonusPoints)
+RideRepository -> H2 : UPDATE ride (COMPLETED)
+RideRepository --> RideService : Ride
+RideService --> RideRouting : Ride
+RideRouting --> Client : 200 OK
+
+@enduml

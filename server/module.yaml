@@ -1,0 +1,30 @@
+product: jvm/app
+
+dependencies:
+  - $ktor.serialization.kotlinx.json
+  - $ktor.server.config.yaml
+  - $ktor.server.contentNegotiation
+  - $ktor.server.core
+  - $ktor.server.netty
+  - $ktor.server.statusPages
+  - $ktor.server.swagger
+  - $ktor.server.auth
+  - $ktor.server.auth.jwt
+  - $libs.ktor.client.core
+  - $libs.ktor.client.cio
+  - $libs.ktor.client.content.negotiation
+  - $libs.exposed.core
+  - $libs.exposed.kotlin.datetime
+  - $libs.exposed.jdbc
+  - $libs.h2database.h2
+  - $libs.logback.classic
+  - $libs.mysql.connector.j
+  - $libs.jbcrypt
+
+test-dependencies:
+  - $ktor.server.testHost
+
+settings:
+  ktor: enabled
+  kotlin:
+    serialization: enabled
