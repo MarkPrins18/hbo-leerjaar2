@@ -11,9 +11,12 @@ fun Application.seedIfNeeded() {
 
     val seedFilePaths = listOf(
         "/data/seed/owner.sql",
+        "/data/seed/users.sql",
         "/data/seed/car.sql",
         "/data/seed/location.sql",
         "/data/seed/rental_terms.sql",
+        "/data/seed/reservation.sql",
+        "/data/seed/ride.sql",
     )
 
     if (!seedData) return
