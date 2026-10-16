@@ -20,6 +20,7 @@ import tables.CarTable
 import tables.FcevCarTable
 import tables.IceCarTable
 import tables.LocationTable
+import tables.RentalTermsTable
 
 class ExposedCarRepository : CarRepository {
 
@@ -168,6 +169,7 @@ class ExposedCarRepository : CarRepository {
     override suspend fun deleteCar(carId: Int): Boolean = suspendTransaction {
         // Important! Delete subtype and references first, they reference car.
         LocationTable.deleteWhere { LocationTable.carId eq carId }
+        RentalTermsTable.deleteWhere { RentalTermsTable.carId eq carId }
         IceCarTable.deleteWhere { IceCarTable.carId eq carId }
         BevCarTable.deleteWhere { BevCarTable.carId eq carId }
         FcevCarTable.deleteWhere { FcevCarTable.carId eq carId }

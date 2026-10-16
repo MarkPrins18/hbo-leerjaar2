@@ -13,6 +13,7 @@ fun Application.seedIfNeeded() {
         "/data/seed/owner.sql",
         "/data/seed/car.sql",
         "/data/seed/location.sql",
+        "/data/seed/rental_terms.sql",
     )
 
     if (!seedData) return
