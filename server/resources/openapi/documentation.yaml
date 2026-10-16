@@ -141,6 +141,36 @@ paths:
           description: Auto succesvol verwijderd
         "404":
           description: Auto niet gevonden
+  /cars/{id}/cost-data:
+    post:
+      summary: "Testroute: vul ontbrekende MRB en verbruik aan via Gemini"
+      description: >
+        Vraagt Gemini alleen om de waardes die nog leeg zijn (roadTaxPerQuarter, consumptionCombined)
+        en slaat ze op bij de auto. Zijn beide al ingevuld, dan wordt Gemini niet aangeroepen.
+        Seedauto 2 (BEV) heeft geen verbruik en is daarom handig om mee te testen.
+      operationId: fillMissingCostData
+      tags:
+        - Cars
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Het id van de auto
+          schema:
+            type: integer
+            format: int32
+          example: 2
+      responses:
+        "200":
+          description: Auto met de aangevulde waardes
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Car"
+        "404":
+          description: Auto niet gevonden
+        "502":
+          description: De Gemini API is niet bereikbaar of gaf een ongeldig antwoord
   /cars/import:
     post:
       summary: Importeer een auto via het kenteken
@@ -407,7 +437,7 @@ components:
       type: object
       required:
         - id
-        - ownerId
+        - userId
         - licensePlate
         - brand
         - model
@@ -421,7 +451,7 @@ components:
       properties:
         id:
           type: integer
-        ownerId:
+        userId:
           type: integer
         licensePlate:
           type: string
@@ -454,6 +484,11 @@ components:
         co2EmissionCombined:
           type: number
           format: double
+        roadTaxPerQuarter:
+          type: number
+          format: double
+          nullable: true
+          description: "MRB per kwartaal in euro (provincie Noord-Brabant)"
 
     ICECar:
       allOf:
@@ -508,13 +543,23 @@ components:
               format: double
     CarRequest:
       type: object
+      example:
+        licensePlate: "R-816-LF"
+        userId: 1
+        trim: null
+        tankCapacityL: null
+        automaticTransmission: true
+        batteryCapacityKWh: null
+        tankCapacityKgH2: null
+        consumptionCombined: null
+        roadTaxPerQuarter: null
       required:
         - licensePlate
-        - ownerId
+        - userId
       properties:
         licensePlate:
           type: string
-        ownerId:
+        userId:
           type: integer
           format: int32
         trim:
@@ -527,6 +572,8 @@ components:
         automaticTransmission:
           type: boolean
           nullable: true
+          default: true
+          description: "Alleen voor ICE-auto's. Niet opgegeven = automaat."
         batteryCapacityKWh:
           type: number
           format: double
@@ -535,6 +582,15 @@ components:
           type: number
           format: double
           nullable: true
+        consumptionCombined:
+          type: number
+          format: double
+          nullable: true
+        roadTaxPerQuarter:
+          type: number
+          format: double
+          nullable: true
+          description: "MRB per kwartaal in euro (provincie Noord-Brabant)"
 
     ReservationRequest:
       type: object
@@ -588,7 +644,7 @@ components:
         licensePlate:
           type: string
           nullable: true
-        ownerId:
+        userId:
           type: integer
           format: int32
           nullable: true
@@ -634,6 +690,11 @@ components:
           type: number
           format: double
           nullable: true
+        roadTaxPerQuarter:
+          type: number
+          format: double
+          nullable: true
+          description: "MRB per kwartaal in euro (provincie Noord-Brabant)"
         fuelType:
           type: string
           enum: [PETROL, DIESEL, LPG]

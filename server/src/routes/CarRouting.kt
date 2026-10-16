@@ -36,6 +36,11 @@ fun Route.carRoutes(
 
             call.respond(carService.updateCar(carId, change))
         }
+        post("/{id}/cost-data") { //remove: test route until the total cost calculation exists
+            val carId = call.parameters.getOrFail<Int>("id")
+
+            call.respond(carService.fillMissingCostData(carId))
+        }
         post("/import") {
             val request = call.receive<CarDto>()
 

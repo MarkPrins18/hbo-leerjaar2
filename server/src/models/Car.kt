@@ -21,7 +21,7 @@ enum class VehicleType {
 @Serializable
 sealed class Car {
     abstract val id: Int
-    abstract val ownerId: Int
+    abstract val userId: Int
     abstract val licensePlate: String
     abstract val brand: String
     abstract val model: String
@@ -48,13 +48,16 @@ sealed class Car {
 
     /** Combined CO2 emission in g/km. Used for MRB discounts on EV/PHEV vehicles. */
     abstract val co2EmissionCombined: Double?
+
+    /** MRB (Dutch road tax) per quarter in EUR, for a private owner in the province of Noord-Brabant. */
+    abstract val roadTaxPerQuarter: Double?
 }
 
 @Serializable
 @SerialName("ICECar")
 data class ICECar(
     override val id: Int,
-    override val ownerId: Int,
+    override val userId: Int,
     override val licensePlate: String,
     override val brand: String,
     override val model: String,
@@ -67,6 +70,7 @@ data class ICECar(
     override val readyToDriveWeightKg: Int,
     override val consumptionCombined: Double?,
     override val co2EmissionCombined: Double?,
+    override val roadTaxPerQuarter: Double?,
     val fuelType: FuelType,
     val tankCapacityL: Double,
     val automaticTransmission: Boolean
@@ -76,7 +80,7 @@ data class ICECar(
 @SerialName("BEVCar")
 data class BEVCar(
     override val id: Int,
-    override val ownerId: Int,
+    override val userId: Int,
     override val licensePlate: String,
     override val brand: String,
     override val model: String,
@@ -89,6 +93,7 @@ data class BEVCar(
     override val readyToDriveWeightKg: Int,
     override val consumptionCombined: Double?,
     override val co2EmissionCombined: Double?,
+    override val roadTaxPerQuarter: Double?,
     val batteryCapacityKWh: Double
 ) : Car()
 
@@ -96,7 +101,7 @@ data class BEVCar(
 @SerialName("FCEVCar")
 data class FCEVCar(
     override val id: Int,
-    override val ownerId: Int,
+    override val userId: Int,
     override val licensePlate: String,
     override val brand: String,
     override val model: String,
@@ -109,5 +114,6 @@ data class FCEVCar(
     override val readyToDriveWeightKg: Int,
     override val consumptionCombined: Double?,
     override val co2EmissionCombined: Double?,
+    override val roadTaxPerQuarter: Double?,
     val tankCapacityKgH2: Double
 ) : Car()

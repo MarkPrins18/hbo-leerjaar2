@@ -7,7 +7,7 @@ import tables.*
 fun ResultRow.toCar(): Car = when {
     getOrNull(IceCarTable.carId) != null -> ICECar(
         id = this[CarTable.id],
-        ownerId = this[CarTable.ownerId],
+        userId = this[CarTable.userId],
         licensePlate = this[CarTable.licensePlate],
         brand = this[CarTable.brand],
         model = this[CarTable.model],
@@ -20,6 +20,7 @@ fun ResultRow.toCar(): Car = when {
         readyToDriveWeightKg = this[CarTable.readyToDriveWeightKg],
         consumptionCombined = this[CarTable.consumptionCombined]?.toDouble(),
         co2EmissionCombined = this[CarTable.co2EmissionCombined]?.toDouble(),
+        roadTaxPerQuarter = this[CarTable.roadTaxPerQuarter]?.toDouble(),
         fuelType = this[IceCarTable.fuelType],
         tankCapacityL = this[IceCarTable.tankCapacityL].toDouble(),
         automaticTransmission = this[IceCarTable.automaticTransmission]
@@ -27,7 +28,7 @@ fun ResultRow.toCar(): Car = when {
 
     getOrNull(BevCarTable.carId) != null -> BEVCar(
         id = this[CarTable.id],
-        ownerId = this[CarTable.ownerId],
+        userId = this[CarTable.userId],
         licensePlate = this[CarTable.licensePlate],
         brand = this[CarTable.brand],
         model = this[CarTable.model],
@@ -40,12 +41,13 @@ fun ResultRow.toCar(): Car = when {
         readyToDriveWeightKg = this[CarTable.readyToDriveWeightKg],
         consumptionCombined = this[CarTable.consumptionCombined]?.toDouble(),
         co2EmissionCombined = this[CarTable.co2EmissionCombined]?.toDouble(),
+        roadTaxPerQuarter = this[CarTable.roadTaxPerQuarter]?.toDouble(),
         batteryCapacityKWh = this[BevCarTable.batteryCapacityKwh].toDouble()
     )
 
     getOrNull(FcevCarTable.carId) != null -> FCEVCar(
         id = this[CarTable.id],
-        ownerId = this[CarTable.ownerId],
+        userId = this[CarTable.userId],
         licensePlate = this[CarTable.licensePlate],
         brand = this[CarTable.brand],
         model = this[CarTable.model],
@@ -58,6 +60,7 @@ fun ResultRow.toCar(): Car = when {
         readyToDriveWeightKg = this[CarTable.readyToDriveWeightKg],
         consumptionCombined = this[CarTable.consumptionCombined]?.toDouble(),
         co2EmissionCombined = this[CarTable.co2EmissionCombined]?.toDouble(),
+        roadTaxPerQuarter = this[CarTable.roadTaxPerQuarter]?.toDouble(),
         tankCapacityKgH2 = this[FcevCarTable.tankCapacityKgH2].toDouble()
     )
 

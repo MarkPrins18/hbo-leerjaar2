@@ -7,10 +7,12 @@ import models.Car
 import models.FCEVCar
 import models.ICECar
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inSubQuery
 import org.jetbrains.exposed.v1.core.leftJoin
 import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.update
@@ -20,6 +22,8 @@ import tables.CarTable
 import tables.FcevCarTable
 import tables.IceCarTable
 import tables.LocationTable
+import tables.ReservationTable
+import tables.RideTable
 
 class ExposedCarRepository : CarRepository {
 
@@ -56,7 +60,7 @@ class ExposedCarRepository : CarRepository {
 
     override suspend fun createCar(car: Car): Car = suspendTransaction {
         val insertedCar = CarTable.insert {
-            it[ownerId] = car.ownerId
+            it[userId] = car.userId
             it[licensePlate] = normalizeLicensePlate(car.licensePlate)
             it[brand] = car.brand
             it[model] = car.model
@@ -69,6 +73,7 @@ class ExposedCarRepository : CarRepository {
             it[readyToDriveWeightKg] = car.readyToDriveWeightKg
             it[consumptionCombined] = car.consumptionCombined?.toBigDecimal()
             it[co2EmissionCombined] = car.co2EmissionCombined?.toBigDecimal()
+            it[roadTaxPerQuarter] = car.roadTaxPerQuarter?.toBigDecimal()
         }
 
         val carId = insertedCar[CarTable.id]
@@ -106,15 +111,15 @@ class ExposedCarRepository : CarRepository {
 
         // An update without any columns would produce invalid SQL
         val carChanged = listOf(
-            change.ownerId, change.licensePlate, change.brand, change.model,
+            change.userId, change.licensePlate, change.brand, change.model,
             change.productionYear, change.trim, change.color, change.seats,
             change.doors, change.vehicleType, change.readyToDriveWeightKg,
-            change.consumptionCombined, change.co2EmissionCombined
+            change.consumptionCombined, change.co2EmissionCombined, change.roadTaxPerQuarter
         ).any { it != null }
 
         if (carChanged) {
             CarTable.update({ CarTable.id eq carId }) {
-                change.ownerId?.let { value -> it[ownerId] = value }
+                change.userId?.let { value -> it[userId] = value }
                 change.licensePlate?.let { value -> it[licensePlate] = normalizeLicensePlate(value) }
                 change.brand?.let { value -> it[brand] = value }
                 change.model?.let { value -> it[model] = value }
@@ -127,6 +132,7 @@ class ExposedCarRepository : CarRepository {
                 change.readyToDriveWeightKg?.let { value -> it[readyToDriveWeightKg] = value }
                 change.consumptionCombined?.let { value -> it[consumptionCombined] = value.toBigDecimal() }
                 change.co2EmissionCombined?.let { value -> it[co2EmissionCombined] = value.toBigDecimal() }
+                change.roadTaxPerQuarter?.let { value -> it[roadTaxPerQuarter] = value.toBigDecimal() }
             }
         }
 
@@ -167,6 +173,10 @@ class ExposedCarRepository : CarRepository {
 
     override suspend fun deleteCar(carId: Int): Boolean = suspendTransaction {
         // Important! Delete subtype and references first, they reference car.
+        RideTable.deleteWhere {
+            RideTable.reservationId inSubQuery ReservationTable.select(ReservationTable.id).where { ReservationTable.carId eq carId }
+        }
+        ReservationTable.deleteWhere { ReservationTable.carId eq carId }
         LocationTable.deleteWhere { LocationTable.carId eq carId }
         IceCarTable.deleteWhere { IceCarTable.carId eq carId }
         BevCarTable.deleteWhere { BevCarTable.carId eq carId }

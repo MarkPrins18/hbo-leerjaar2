@@ -10,7 +10,7 @@ fun Application.seedIfNeeded() {
     val seedData = config.property("database.seed-data").getString().toBoolean()
 
     val seedFilePaths = listOf(
-        "/data/seed/owner.sql",
+        "/data/seed/users.sql",
         "/data/seed/car.sql",
         "/data/seed/location.sql",
     )

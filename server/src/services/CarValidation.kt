@@ -5,6 +5,7 @@ import kotlinx.datetime.todayIn
 import mappers.normalizeLicensePlate
 import models.*
 import dto.*
+import models.gemini.CarCostEstimate
 import kotlin.time.Clock
 
 // Upper limits follow the database columns: decimal(6,2) = 9999.99, decimal(7,2) = 99999.99
@@ -16,24 +17,27 @@ private val DOORS = 0..9
 private val READY_TO_DRIVE_WEIGHT_KG = 1..10_000
 private val CONSUMPTION_COMBINED = 0.0..9999.99
 private val CO2_EMISSION_COMBINED = 0.0..99999.99
+private val ROAD_TAX_PER_QUARTER = 0.0..99999.99
 private val TANK_CAPACITY_L = 0.01..9999.99
 private val BATTERY_CAPACITY_KWH = 0.01..99999.99
 private val TANK_CAPACITY_KG_H2 = 0.01..9999.99
 
 fun CarDto.validate() {
     checkText("licensePlate", normalizeLicensePlate(licensePlate), LICENSE_PLATE_MAX_LENGTH)
-    checkRange("ownerId", ownerId, 1..Int.MAX_VALUE)
+    checkRange("userId", userId, 1..Int.MAX_VALUE)
     trim?.let { checkText("trim", it, NAME_MAX_LENGTH) }
     tankCapacityL?.let { checkRange("tankCapacityL", it, TANK_CAPACITY_L) }
     batteryCapacityKWh?.let { checkRange("batteryCapacityKWh", it, BATTERY_CAPACITY_KWH) }
     tankCapacityKgH2?.let { checkRange("tankCapacityKgH2", it, TANK_CAPACITY_KG_H2) }
+    consumptionCombined?.let { checkRange("consumptionCombined", it, CONSUMPTION_COMBINED) }
+    roadTaxPerQuarter?.let { checkRange("roadTaxPerQuarter", it, ROAD_TAX_PER_QUARTER) }
 }
 
 fun CarChangeDto.validate(car: Car) {
     checkFieldsMatchSubtype(car)
 
     licensePlate?.let { checkText("licensePlate", normalizeLicensePlate(it), LICENSE_PLATE_MAX_LENGTH) }
-    ownerId?.let { checkRange("ownerId", it, 1..Int.MAX_VALUE) }
+    userId?.let { checkRange("userId", it, 1..Int.MAX_VALUE) }
     brand?.let { checkText("brand", it, NAME_MAX_LENGTH) }
     model?.let { checkText("model", it, NAME_MAX_LENGTH) }
     trim?.let { checkText("trim", it, NAME_MAX_LENGTH) }
@@ -46,6 +50,7 @@ fun CarChangeDto.validate(car: Car) {
 
     consumptionCombined?.let { checkRange("consumptionCombined", it, CONSUMPTION_COMBINED) }
     co2EmissionCombined?.let { checkRange("co2EmissionCombined", it, CO2_EMISSION_COMBINED) }
+    roadTaxPerQuarter?.let { checkRange("roadTaxPerQuarter", it, ROAD_TAX_PER_QUARTER) }
     tankCapacityL?.let { checkRange("tankCapacityL", it, TANK_CAPACITY_L) }
     batteryCapacityKWh?.let { checkRange("batteryCapacityKWh", it, BATTERY_CAPACITY_KWH) }
     tankCapacityKgH2?.let { checkRange("tankCapacityKgH2", it, TANK_CAPACITY_KG_H2) }
@@ -70,6 +75,24 @@ private fun CarChangeDto.checkFieldsMatchSubtype(car: Car) {
         throw ValidationException("Deze velden kunnen niet worden aangepast voor een $type-auto")
     }
 }
+
+/** RDW values that don't fit the database columns are the RDW data's fault, not the client's. */
+fun Car.validateRdwData() {
+    val valid = brand.length <= NAME_MAX_LENGTH && model.length <= NAME_MAX_LENGTH && color.length <= COLOR_MAX_LENGTH
+    if (!valid) {
+        throw UnprocessableException("De RDW-gegevens van kenteken $licensePlate passen niet in de database")
+    }
+}
+
+/** Basic sanity check on the Gemini answer: an out-of-range value is the AI's fault, not the client's. */
+fun CarCostEstimate.validate() {
+    val valid = roadTaxPerQuarter.isNullOrIn(ROAD_TAX_PER_QUARTER) && consumptionCombined.isNullOrIn(CONSUMPTION_COMBINED)
+    if (!valid) {
+        throw ExternalServiceException("Gemini gaf een ongeldig antwoord")
+    }
+}
+
+private fun Double?.isNullOrIn(range: ClosedFloatingPointRange<Double>) = this == null || this in range
 
 fun CarFilter.validate() {
     maxPrice?.let { checkNotNegative("maxPrice", it) }
