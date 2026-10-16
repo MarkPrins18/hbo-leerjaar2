@@ -6,12 +6,14 @@ import repositories.CarRepository
 import dto.*
 import models.*
 import repositories.LocationRepository
+import repositories.RentalTermsRepository
 import kotlin.coroutines.cancellation.CancellationException
 
 class CarService(
     private val rdwClient: RdwClient,
     private val carRepository: CarRepository,
-    private val locationRepository: LocationRepository
+    private val locationRepository: LocationRepository,
+    private val rentalTermsRepository: RentalTermsRepository
 ) {
     suspend fun importCar(request: CarDto): Car {
         request.validate()
@@ -63,11 +65,12 @@ class CarService(
         filter.validate()
 
         val cars = carRepository.getAllCars()
-        if (filter.maxDistanceKm == null) return cars // add `&& filter.maxPrice == null` once matchesPrice is enabled
+        if (filter.maxDistanceKm == null && filter.maxPrice == null) return cars
 
         return cars.filter { car ->
             val location = locationRepository.getLatestLocationByCarId(car.id)
-            filter.matches(location)
+            val rentalTerms = rentalTermsRepository.getRentalTermsByCarId(car.id)
+            filter.matches(location, rentalTerms)
         }
     }
 

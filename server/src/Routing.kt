@@ -7,9 +7,11 @@ import io.ktor.server.routing.*
 import io.ktor.server.plugins.swagger.*
 import repositories.ExposedCarRepository
 import repositories.ExposedLocationRepository
+import repositories.ExposedRentalTermsRepository
 import repositories.ExposedReservationRepository
 import repositories.ExposedUserRepository
 import services.AuthService
+import services.RentalTermsService
 import services.ReservationService
 import repositories.ExposedRideRepository
 import services.RideService
@@ -20,11 +22,14 @@ fun Application.configureRouting() {
     val rdwClient = configureRdw()
     val carRepository = ExposedCarRepository()
     val locationRepository = ExposedLocationRepository()
+    val rentalTermsRepository = ExposedRentalTermsRepository()
     val carService = CarService(
         rdwClient,
         carRepository,
-        locationRepository
+        locationRepository,
+        rentalTermsRepository
     )
+    val rentalTermsService = RentalTermsService(rentalTermsRepository)
     val reservationRepository = ExposedReservationRepository()
     val reservationService = ReservationService(reservationRepository)
     val rideRepository = ExposedRideRepository()
@@ -36,6 +41,7 @@ fun Application.configureRouting() {
         swaggerUI(path = "swagger", swaggerFile = "openapi/documentation.yaml")
         carRoutes(carService)
         mapsRoutes(locationRepository)
+        rentalTermsRoutes(rentalTermsService)
         reservationRoutes(reservationService)
         rideRoutes(rideService)
         userRoutes(userService, authService)
