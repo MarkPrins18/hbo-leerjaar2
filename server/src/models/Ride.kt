@@ -15,3 +15,6 @@ data class Ride(
     val avgDeceleration: Double?,
     val bonusPoints: Int?,
 )
+enum class RideStatus {
+    IN_PROGRESS, COMPLETED
+}
