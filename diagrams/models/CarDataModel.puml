@@ -44,6 +44,20 @@ package models {
         +tankCapacityKgH2: Double
     }
 
+    class RentalTerms <<data>> {
+        +id: Int
+        +carId: Int
+        +pricePerDay: Double
+        +pickupLocation: String
+        +pickupTimeStart: LocalTime?
+        +pickupTimeEnd: LocalTime?
+        +returnLocation: String?
+        +returnTimeStart: LocalTime?
+        +returnTimeEnd: LocalTime?
+    }
+
+    Car "1" <-- "0..1" RentalTerms
+
     Car <|-- ICECar
     Car <|-- BEVCar
     Car <|-- FCEVCar

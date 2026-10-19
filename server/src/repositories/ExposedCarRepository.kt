@@ -22,6 +22,8 @@ import tables.CarTable
 import tables.FcevCarTable
 import tables.IceCarTable
 import tables.LocationTable
+import tables.PhotoTable
+import tables.RentalTermsTable
 import tables.ReservationTable
 import tables.RideTable
 
@@ -178,6 +180,8 @@ class ExposedCarRepository : CarRepository {
         }
         ReservationTable.deleteWhere { ReservationTable.carId eq carId }
         LocationTable.deleteWhere { LocationTable.carId eq carId }
+        PhotoTable.deleteWhere { PhotoTable.carId eq carId }
+        RentalTermsTable.deleteWhere { RentalTermsTable.carId eq carId }
         IceCarTable.deleteWhere { IceCarTable.carId eq carId }
         BevCarTable.deleteWhere { BevCarTable.carId eq carId }
         FcevCarTable.deleteWhere { FcevCarTable.carId eq carId }

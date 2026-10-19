@@ -18,7 +18,7 @@ paths:
         - name: maxPrice
           in: query
           required: false
-          description: Maximale prijs (wordt nog niet toegepast, wacht op RentalOffer)
+          description: Maximale prijs per dag. Auto's zonder verhuurvoorwaarden vallen dan af.
           schema:
             type: number
             format: double
@@ -198,6 +198,105 @@ paths:
           description: Kenteken onbekend bij de RDW, of RDW-gegevens niet te verwerken
         "502":
           description: De RDW API is niet bereikbaar of gaf een ongeldig antwoord
+  /cars/{id}/photos:
+    post:
+      summary: Upload een foto van een auto
+      description: Alleen de ingelogde eigenaar van de auto mag een foto uploaden. Alleen JPEG, maximaal 5 MB.
+      operationId: uploadCarPhoto
+      tags:
+        - Photos
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Het id van de auto
+          schema:
+            type: integer
+            format: int32
+          example: 1
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - photo
+              properties:
+                photo:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Foto succesvol opgeslagen
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Photo"
+        "400":
+          description: Geen foto meegestuurd of het bestand is leeg
+        "401":
+          description: Niet ingelogd
+        "403":
+          description: De ingelogde gebruiker is geen eigenaar van deze auto
+        "404":
+          description: Auto niet gevonden
+        "413":
+          description: Foto is groter dan 5 MB
+        "415":
+          description: Foto is geen JPEG
+    get:
+      summary: Haal de foto's van een auto op
+      operationId: getCarPhotos
+      tags:
+        - Photos
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Het id van de auto
+          schema:
+            type: integer
+            format: int32
+          example: 1
+      responses:
+        "200":
+          description: Lijst met foto's van de auto
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Photo"
+        "404":
+          description: Auto niet gevonden
+  /photos/{id}:
+    get:
+      summary: Haal een foto op
+      operationId: getPhoto
+      tags:
+        - Photos
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Het id van de foto
+          schema:
+            type: integer
+            format: int32
+          example: 1
+      responses:
+        "200":
+          description: De foto
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Foto niet gevonden
   /cars/{carId}/maps:
     get:
       summary: Open de locatie van een auto in Google Maps
@@ -227,6 +326,64 @@ paths:
           description: Ongeldig auto-id
         "404":
           description: Geen locatie bekend voor deze auto
+  /cars/{id}/rental-terms:
+    get:
+      summary: Haal de verhuurvoorwaarden van een auto op
+      operationId: getRentalTerms
+      tags:
+        - RentalTerms
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Het id van de auto
+          schema:
+            type: integer
+            format: int32
+          example: 1
+      responses:
+        "200":
+          description: De verhuurvoorwaarden van de auto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RentalTerms"
+        "400":
+          description: Ongeldig auto-id
+        "404":
+          description: Auto niet gevonden of geen verhuurvoorwaarden bekend
+    put:
+      summary: Stel de verhuurvoorwaarden van een auto in
+      description: Maakt de verhuurvoorwaarden aan, of overschrijft ze als ze al bestaan.
+      operationId: setRentalTerms
+      tags:
+        - RentalTerms
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Het id van de auto
+          schema:
+            type: integer
+            format: int32
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RentalTermsRequest"
+      responses:
+        "200":
+          description: Verhuurvoorwaarden succesvol ingesteld
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RentalTerms"
+        "400":
+          description: Ongeldige waarde, bijvoorbeeld een prijs van 0 of lager
+        "404":
+          description: Auto niet gevonden
   /reservations:
     post:
       summary: Maak een reservering aan
@@ -791,11 +948,11 @@ components:
         email:
           type: string
           format: email
-          example: jan@example.com
+          example: eigenaar1@carshare.nl
         password:
           type: string
           format: password
-          example: Geheim123!
+          example: Welkom123!
     LoginResponse:
       type: object
       required:
@@ -819,6 +976,26 @@ components:
           format: password
           minLength: 8
           example: Geheim123!
+    Photo:
+      type: object
+      required:
+        - id
+        - carId
+        - url
+        - uploadedAt
+      properties:
+        id:
+          type: integer
+          format: int32
+        carId:
+          type: integer
+          format: int32
+        url:
+          type: string
+          example: /photos/1
+        uploadedAt:
+          type: string
+          format: date-time
     User:
       type: object
       required:
@@ -831,3 +1008,72 @@ components:
         email:
           type: string
           format: email
+    RentalTermsRequest:
+      type: object
+      required:
+        - pricePerDay
+        - pickupLocation
+      properties:
+        pricePerDay:
+          type: number
+          format: double
+          example: 89.00
+        pickupLocation:
+          type: string
+          maxLength: 255
+          example: Stationsplein 1, Gorinchem
+        pickupTimeStart:
+          type: string
+          example: "08:00"
+          nullable: true
+        pickupTimeEnd:
+          type: string
+          example: "18:00"
+          nullable: true
+        returnLocation:
+          type: string
+          maxLength: 255
+          example: Parkeergarage Kazerneplein, Gorinchem
+          nullable: true
+        returnTimeStart:
+          type: string
+          example: "08:00"
+          nullable: true
+        returnTimeEnd:
+          type: string
+          example: "20:00"
+          nullable: true
+    RentalTerms:
+      type: object
+      required:
+        - id
+        - carId
+        - pricePerDay
+        - pickupLocation
+      properties:
+        id:
+          type: integer
+          format: int32
+        carId:
+          type: integer
+          format: int32
+        pricePerDay:
+          type: number
+          format: double
+        pickupLocation:
+          type: string
+        pickupTimeStart:
+          type: string
+          nullable: true
+        pickupTimeEnd:
+          type: string
+          nullable: true
+        returnLocation:
+          type: string
+          nullable: true
+        returnTimeStart:
+          type: string
+          nullable: true
+        returnTimeEnd:
+          type: string
+          nullable: true

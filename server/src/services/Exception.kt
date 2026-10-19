@@ -33,6 +33,14 @@ class ResourceNotFoundException(message: String) :
 class ConflictException(message: String) :
     ApiException(HttpStatusCode.Conflict, message)
 
+/** 413: an uploaded file is too large, e.g. a photo over the size limit. */
+class FileTooLargeException(message: String) :
+    ApiException(HttpStatusCode.PayloadTooLarge, message)
+
+/** 415: an uploaded file has an unsupported type, e.g. a PNG where only JPEG is allowed. */
+class UnsupportedFileTypeException(message: String) :
+    ApiException(HttpStatusCode.UnsupportedMediaType, message)
+
 /** 422: the request is well-formed but cannot be processed, e.g. incomplete RDW data. */
 class UnprocessableException(message: String) :
     ApiException(HttpStatusCode.UnprocessableEntity, message)

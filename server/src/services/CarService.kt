@@ -2,11 +2,14 @@ package services
 
 import clients.GeminiClient
 import clients.RdwClient
-import mappers.RdwCarMapper
+import mappers.toCar
 import repositories.CarRepository
 import dto.*
 import models.*
+import config.PhotoStorage
 import repositories.LocationRepository
+import repositories.PhotoRepository
+import repositories.RentalTermsRepository
 import repositories.UserRepository
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -15,7 +18,10 @@ class CarService(
     private val geminiClient: GeminiClient,
     private val carRepository: CarRepository,
     private val locationRepository: LocationRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val photoRepository: PhotoRepository,
+    private val photoStorage: PhotoStorage,
+    private val rentalTermsRepository: RentalTermsRepository
 ) {
     suspend fun importCar(request: CarDto): Car {
         request.validate()
@@ -27,8 +33,7 @@ class CarService(
 
         val brandstoffen = callRdw { rdwClient.getFuel(request.licensePlate) }
 
-        val car = RdwCarMapper.toCar(
-            voertuig = voertuig,
+        val car = voertuig.toCar(
             brandstoffen = brandstoffen,
             id = 0,
             userId = request.userId,
@@ -79,20 +84,25 @@ class CarService(
             ?: throw ResourceNotFoundException("Auto met kenteken $licensePlate niet gevonden")
 
     suspend fun deleteCar(carId: Int) {
+        val photoFileNames = photoRepository.getFileNamesByCarId(carId)
+
         if (!carRepository.deleteCar(carId)) {
             throw carNotFound(carId)
         }
+
+        photoFileNames.forEach(photoStorage::delete)
     }
 
     suspend fun getCars(filter: CarFilter): List<Car> {
         filter.validate()
 
         val cars = carRepository.getAllCars()
-        if (filter.maxDistanceKm == null) return cars // add `&& filter.maxPrice == null` once matchesPrice is enabled
+        if (filter.maxDistanceKm == null && filter.maxPrice == null) return cars
 
         return cars.filter { car ->
             val location = locationRepository.getLatestLocationByCarId(car.id)
-            filter.matches(location)
+            val rentalTerms = rentalTermsRepository.getRentalTermsByCarId(car.id)
+            filter.matches(location, rentalTerms)
         }
     }
 
