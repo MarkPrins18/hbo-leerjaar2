@@ -21,6 +21,7 @@ import tables.FcevCarTable
 import tables.IceCarTable
 import tables.LocationTable
 import tables.PhotoTable
+import tables.RentalTermsTable
 
 class ExposedCarRepository : CarRepository {
 
@@ -170,6 +171,7 @@ class ExposedCarRepository : CarRepository {
         // Important! Delete subtype and references first, they reference car.
         LocationTable.deleteWhere { LocationTable.carId eq carId }
         PhotoTable.deleteWhere { PhotoTable.carId eq carId }
+        RentalTermsTable.deleteWhere { RentalTermsTable.carId eq carId }
         IceCarTable.deleteWhere { IceCarTable.carId eq carId }
         BevCarTable.deleteWhere { BevCarTable.carId eq carId }
         FcevCarTable.deleteWhere { FcevCarTable.carId eq carId }

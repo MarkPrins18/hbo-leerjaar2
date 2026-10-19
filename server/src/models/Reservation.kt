@@ -12,3 +12,7 @@ data class Reservation(
     val endTime: Instant,
     val status: ReservationStatus
 )
+@Serializable
+enum class ReservationStatus {
+    PENDING, CONFIRMED, CANCELLED, COMPLETED
+}

@@ -9,10 +9,12 @@ import io.ktor.server.plugins.swagger.*
 import repositories.ExposedCarRepository
 import repositories.ExposedLocationRepository
 import repositories.ExposedPhotoRepository
+import repositories.ExposedRentalTermsRepository
 import repositories.ExposedReservationRepository
 import repositories.ExposedUserRepository
 import services.AuthService
 import services.PhotoService
+import services.RentalTermsService
 import services.ReservationService
 import repositories.ExposedRideRepository
 import services.RideService
@@ -25,14 +27,17 @@ fun Application.configureRouting() {
     val locationRepository = ExposedLocationRepository()
     val photoRepository = ExposedPhotoRepository()
     val photoStorage = photoStorage()
+    val rentalTermsRepository = ExposedRentalTermsRepository()
     val carService = CarService(
         rdwClient,
         carRepository,
         locationRepository,
         photoRepository,
-        photoStorage
+        photoStorage,
+        rentalTermsRepository
     )
     val photoService = PhotoService(photoRepository, carRepository, photoStorage)
+    val rentalTermsService = RentalTermsService(rentalTermsRepository)
     val reservationRepository = ExposedReservationRepository()
     val reservationService = ReservationService(reservationRepository)
     val rideRepository = ExposedRideRepository()
@@ -45,6 +50,7 @@ fun Application.configureRouting() {
         carRoutes(carService)
         photoRoutes(photoService)
         mapsRoutes(locationRepository)
+        rentalTermsRoutes(rentalTermsService)
         reservationRoutes(reservationService)
         rideRoutes(rideService)
         userRoutes(userService, authService)

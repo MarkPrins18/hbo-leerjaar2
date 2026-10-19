@@ -1,0 +1,25 @@
+package routes
+
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.request.receive
+import io.ktor.server.response.respond
+import io.ktor.server.routing.*
+import io.ktor.server.util.getOrFail
+import dto.RentalTermsRequest
+import services.RentalTermsService
+
+fun Route.rentalTermsRoutes(rentalTermsService: RentalTermsService) {
+    route("/cars/{id}/rental-terms") {
+        get {
+            val carId = call.parameters.getOrFail<Int>("id")
+            val rentalTerms = rentalTermsService.getRentalTerms(carId)
+            call.respond(HttpStatusCode.OK, rentalTerms)
+        }
+        put {
+            val carId = call.parameters.getOrFail<Int>("id")
+            val request = call.receive<RentalTermsRequest>()
+            val rentalTerms = rentalTermsService.setRentalTerms(carId, request)
+            call.respond(HttpStatusCode.OK, rentalTerms)
+        }
+    }
+}

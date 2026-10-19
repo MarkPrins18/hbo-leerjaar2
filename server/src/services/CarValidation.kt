@@ -1,5 +1,6 @@
 package services
 
+import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 import mappers.normalizeLicensePlate
@@ -20,6 +21,8 @@ private val TANK_CAPACITY_L = 0.01..9999.99
 private val BATTERY_CAPACITY_KWH = 0.01..99999.99
 private val TANK_CAPACITY_KG_H2 = 0.01..9999.99
 private const val MAX_PHOTO_BYTES = 5 * 1024 * 1024
+private const val LOCATION_MAX_LENGTH = 255
+private val PRICE_PER_DAY = 0.01..999999.99
 
 fun CarDto.validate() {
     checkText("licensePlate", normalizeLicensePlate(licensePlate), LICENSE_PLATE_MAX_LENGTH)
@@ -95,6 +98,23 @@ fun ByteArray.validatePhoto() {
     val isJpeg = size >= 3 && this[0] == 0xFF.toByte() && this[1] == 0xD8.toByte() && this[2] == 0xFF.toByte()
     if (!isJpeg) {
         throw UnsupportedFileTypeException("Alleen JPEG-foto's zijn toegestaan")
+    }
+}
+
+fun RentalTermsRequest.validate() {
+    checkRange("pricePerDay", pricePerDay, PRICE_PER_DAY)
+    checkText("pickupLocation", pickupLocation, LOCATION_MAX_LENGTH)
+    returnLocation?.let { checkText("returnLocation", it, LOCATION_MAX_LENGTH) }
+    checkTimeWindow("pickupTime", pickupTimeStart, pickupTimeEnd)
+    checkTimeWindow("returnTime", returnTimeStart, returnTimeEnd)
+}
+
+private fun checkTimeWindow(name: String, start: LocalTime?, end: LocalTime?) {
+    if ((start == null) != (end == null)) {
+        throw ValidationException("'${name}Start' en '${name}End' moeten samen worden opgegeven")
+    }
+    if (start != null && end != null && start >= end) {
+        throw ValidationException("'${name}End' moet na '${name}Start' liggen")
     }
 }
 

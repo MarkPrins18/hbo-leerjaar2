@@ -5,9 +5,10 @@ import mappers.toCar
 import repositories.CarRepository
 import dto.*
 import models.*
+import config.PhotoStorage
 import repositories.LocationRepository
 import repositories.PhotoRepository
-import config.PhotoStorage
+import repositories.RentalTermsRepository
 import kotlin.coroutines.cancellation.CancellationException
 
 class CarService(
@@ -15,7 +16,8 @@ class CarService(
     private val carRepository: CarRepository,
     private val locationRepository: LocationRepository,
     private val photoRepository: PhotoRepository,
-    private val photoStorage: PhotoStorage
+    private val photoStorage: PhotoStorage,
+    private val rentalTermsRepository: RentalTermsRepository
 ) {
     suspend fun importCar(request: CarDto): Car {
         request.validate()
@@ -70,11 +72,12 @@ class CarService(
         filter.validate()
 
         val cars = carRepository.getAllCars()
-        if (filter.maxDistanceKm == null) return cars // add `&& filter.maxPrice == null` once matchesPrice is enabled
+        if (filter.maxDistanceKm == null && filter.maxPrice == null) return cars
 
         return cars.filter { car ->
             val location = locationRepository.getLatestLocationByCarId(car.id)
-            filter.matches(location)
+            val rentalTerms = rentalTermsRepository.getRentalTermsByCarId(car.id)
+            filter.matches(location, rentalTerms)
         }
     }
 
