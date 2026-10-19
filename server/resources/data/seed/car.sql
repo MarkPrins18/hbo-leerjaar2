@@ -28,7 +28,7 @@ VALUES
     (
         3, 3, 'GVT21R', 'TOYOTA', 'MIRAI', 2017,
         'FCV', 'BLAUW', 4, 4,
-        'PASSENGER_CAR', 1925, NULL, NULL
+        'PASSENGER_CAR', 1925, 0.76, NULL
     ),
     (
         4, 1, 'P519LV', 'VOLKSWAGEN', 'GOLF', 2021,
@@ -48,12 +48,12 @@ VALUES
     (
         7, 2, 'N455GK', 'TESLA', 'MODEL 3', 2023,
         'Long Range', 'WIT', 5, 4,
-        'PASSENGER_CAR', 1844, NULL, NULL
+        'PASSENGER_CAR', 1844, 14.5, NULL
     ),
     (
-        8, 1, 'VKG04D', 'FORD', 'TRANSIT CUSTOM', 2019,
-        '2.0 TDCI Trend', 'WIT', 3, 4,
-        'LIGHT_COMMERCIAL_VEHICLE', 1997, 6.9, 181
+        8, 1, 'J712ST', 'VOLKSWAGEN', 'PASSAT', 2019,
+        '1.5 TSI 150pk', 'GRIJS', 5, 5,
+        'PASSENGER_CAR', 1465, 5.5, 126
     );
 
 INSERT INTO ice_car (
@@ -75,7 +75,7 @@ VALUES (
            6, 'LPG', 40.00, false
        ),
        (
-           8, 'DIESEL', 70.00, false
+           8, 'PETROL', 66.00, false
        );
 
 INSERT INTO bev_car (

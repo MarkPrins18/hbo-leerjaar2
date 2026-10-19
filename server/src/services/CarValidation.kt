@@ -25,10 +25,10 @@ private val TANK_CAPACITY_KG_H2 = 0.01..9999.99
 private const val MAX_PHOTO_BYTES = 5 * 1024 * 1024
 private const val LOCATION_MAX_LENGTH = 255
 private val PRICE_PER_DAY = 0.01..999999.99
+private val DISTANCE_KM = 0.0..1_000_000.0
 
 fun CarDto.validate() {
     checkText("licensePlate", normalizeLicensePlate(licensePlate), LICENSE_PLATE_MAX_LENGTH)
-    checkRange("userId", userId, 1..Int.MAX_VALUE)
     trim?.let { checkText("trim", it, NAME_MAX_LENGTH) }
     tankCapacityL?.let { checkRange("tankCapacityL", it, TANK_CAPACITY_L) }
     batteryCapacityKWh?.let { checkRange("batteryCapacityKWh", it, BATTERY_CAPACITY_KWH) }
@@ -41,7 +41,6 @@ fun CarChangeDto.validate(car: Car) {
     checkFieldsMatchSubtype(car)
 
     licensePlate?.let { checkText("licensePlate", normalizeLicensePlate(it), LICENSE_PLATE_MAX_LENGTH) }
-    userId?.let { checkRange("userId", it, 1..Int.MAX_VALUE) }
     brand?.let { checkText("brand", it, NAME_MAX_LENGTH) }
     model?.let { checkText("model", it, NAME_MAX_LENGTH) }
     trim?.let { checkText("trim", it, NAME_MAX_LENGTH) }
@@ -97,6 +96,15 @@ fun CarCostEstimate.validate() {
 }
 
 private fun Double?.isNullOrIn(range: ClosedFloatingPointRange<Double>) = this == null || this in range
+
+/** NaN and infinity fall outside the range as well. */
+fun validateDistanceKm(distanceKm: Double) {
+    checkRange("distanceKm", distanceKm, DISTANCE_KM)
+}
+
+fun validateAnnualKm(annualKm: Double) {
+    checkRange("annualKm", annualKm, DISTANCE_KM)
+}
 
 fun CarFilter.validate() {
     maxPrice?.let { checkNotNegative("maxPrice", it) }

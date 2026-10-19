@@ -11,6 +11,8 @@ import repositories.LocationRepository
 import repositories.PhotoRepository
 import repositories.RentalTermsRepository
 import repositories.UserRepository
+import responses.FuelCostResponse
+import responses.TcoResponse
 import kotlin.coroutines.cancellation.CancellationException
 
 class CarService(
@@ -23,10 +25,10 @@ class CarService(
     private val photoStorage: PhotoStorage,
     private val rentalTermsRepository: RentalTermsRepository
 ) {
-    suspend fun importCar(request: CarDto): Car {
+    suspend fun importCar(request: CarDto, userId: Int): Car {
         request.validate()
         checkLicensePlateAvailable(request.licensePlate)
-        checkUserExists(request.userId)
+        checkUserExists(userId)
 
         val voertuig = callRdw { rdwClient.getVehicle(request.licensePlate) }
             ?: throw UnprocessableException("Geen voertuig gevonden bij de RDW voor kenteken ${request.licensePlate}")
@@ -36,7 +38,7 @@ class CarService(
         val car = voertuig.toCar(
             brandstoffen = brandstoffen,
             id = 0,
-            userId = request.userId,
+            userId = userId,
             trim = request.trim,
             tankCapacityL = request.tankCapacityL,
             automaticTransmission = request.automaticTransmission,
@@ -49,22 +51,19 @@ class CarService(
         return carRepository.createCar(car)
     }
 
-    suspend fun updateCar(carId: Int, change: CarChangeDto): Car {
-        val car = carRepository.getCarById(carId)
-            ?: throw carNotFound(carId)
+    suspend fun updateCar(carId: Int, userId: Int, change: CarChangeDto): Car {
+        val car = getOwnedCar(carId, userId)
 
         change.validate(car)
         change.licensePlate?.let { checkLicensePlateAvailable(it, carId) }
-        change.userId?.let { checkUserExists(it) }
 
         return carRepository.updateCar(carId, change)
             ?: throw carNotFound(carId)
     }
 
     /** Asks Gemini for the cost values that are still missing on the car and stores them. */
-    suspend fun fillMissingCostData(carId: Int): Car {
-        val car = carRepository.getCarById(carId)
-            ?: throw carNotFound(carId)
+    suspend fun fillMissingCostData(carId: Int, userId: Int): Car {
+        val car = getOwnedCar(carId, userId)
 
         if (car.roadTaxPerQuarter != null && car.consumptionCombined != null) return car
 
@@ -79,11 +78,34 @@ class CarService(
             ?: throw carNotFound(carId)
     }
 
+    /** A missing consumption is first filled in by Gemini; if it is still missing, the cost cannot be calculated. */
+    suspend fun getFuelCost(carId: Int, userId: Int, distanceKm: Double): FuelCostResponse {
+        val car = getOwnedCar(carId, userId)
+
+        validateDistanceKm(distanceKm)
+
+        val carWithConsumption = if (car.consumptionCombined == null) fillMissingCostData(carId, userId) else car
+        return calculateFuelCost(carWithConsumption, distanceKm)
+    }
+
+    /** Missing consumption or road tax is first filled in by Gemini, just like for the fuel cost. */
+    suspend fun getTco(carId: Int, userId: Int, annualKm: Double): TcoResponse {
+        val car = getOwnedCar(carId, userId)
+
+        validateAnnualKm(annualKm)
+
+        val completeCar =
+            if (car.consumptionCombined == null || car.roadTaxPerQuarter == null) fillMissingCostData(carId, userId) else car
+        return calculateTco(completeCar, annualKm)
+    }
+
     suspend fun getCarByLicensePlate(licensePlate: String): Car =
         carRepository.getCarByLicensePlate(licensePlate)
             ?: throw ResourceNotFoundException("Auto met kenteken $licensePlate niet gevonden")
 
-    suspend fun deleteCar(carId: Int) {
+    suspend fun deleteCar(carId: Int, userId: Int) {
+        getOwnedCar(carId, userId)
+
         val photoFileNames = photoRepository.getFileNamesByCarId(carId)
 
         if (!carRepository.deleteCar(carId)) {
@@ -107,6 +129,14 @@ class CarService(
     }
 
     private fun carNotFound(carId: Int) = ResourceNotFoundException("Auto $carId niet gevonden")
+
+    private suspend fun getOwnedCar(carId: Int, userId: Int): Car {
+        val car = carRepository.getCarById(carId)
+            ?: throw carNotFound(carId)
+
+        if (car.userId != userId) throw ForbiddenException()
+        return car
+    }
 
     /** [carId] is the car being changed; it may keep its own license plate. */
     private suspend fun checkLicensePlateAvailable(licensePlate: String, carId: Int? = null) {

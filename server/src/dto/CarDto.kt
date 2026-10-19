@@ -7,7 +7,6 @@ import models.VehicleType
 @Serializable
 data class CarDto(
     val licensePlate: String,
-    val userId: Int,
     val trim: String? = null,
     val tankCapacityL: Double? = null,
     val automaticTransmission: Boolean? = null,
@@ -20,7 +19,6 @@ data class CarDto(
 @Serializable
 data class CarChangeDto(
     val licensePlate: String? = null,
-    val userId: Int? = null,
     val brand: String? = null,
     val model: String? = null,
     val productionYear: Int? = null,
