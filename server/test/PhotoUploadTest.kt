@@ -54,7 +54,7 @@ private fun jpegOfSize(size: Int): ByteArray = ByteArray(size).also { jpegHeader
 
 private fun testCar(id: Int = CAR_ID, ownerId: Int = OWNER_ID): Car = BEVCar(
     id = id,
-    ownerId = ownerId,
+    userId = ownerId,
     licensePlate = "AB-123-C",
     brand = "Tesla",
     model = "Model 3",
@@ -67,6 +67,7 @@ private fun testCar(id: Int = CAR_ID, ownerId: Int = OWNER_ID): Car = BEVCar(
     readyToDriveWeightKg = 1800,
     consumptionCombined = 15.0,
     co2EmissionCombined = 0.0,
+    roadTaxPerQuarter = null,
     batteryCapacityKWh = 60.0
 )
 

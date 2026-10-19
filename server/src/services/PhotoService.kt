@@ -15,7 +15,7 @@ class PhotoService(
         val car = carRepository.getCarById(carId)
             ?: throw carNotFound(carId)
 
-        if (car.ownerId != userId) throw ForbiddenException()
+        if (car.userId != userId) throw ForbiddenException()
 
         data.validatePhoto()
 

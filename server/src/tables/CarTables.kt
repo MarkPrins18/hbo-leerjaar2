@@ -8,7 +8,7 @@ val carTables = listOf(CarTable, IceCarTable, BevCarTable, FcevCarTable)
 
 object CarTable : Table("car") {
     val id = integer("id").autoIncrement()
-    val ownerId = integer("owner_id") references UserTable.id
+    val userId = integer("user_id") references UserTable.id
     val licensePlate = varchar("license_plate", 20).uniqueIndex()
     val brand = varchar("brand", 100)
     val model = varchar("model", 100)
@@ -21,6 +21,7 @@ object CarTable : Table("car") {
     val readyToDriveWeightKg = integer("ready_to_drive_weight_kg")
     val consumptionCombined = decimal("consumption_combined", 6, 2).nullable()
     val co2EmissionCombined = decimal("co2_emission_combined", 7, 2).nullable()
+    val roadTaxPerQuarter = decimal("road_tax_per_quarter", 7, 2).nullable()
 
     override val primaryKey = PrimaryKey(id)
 }

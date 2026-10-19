@@ -18,7 +18,6 @@ dependencies:
   - $libs.exposed.jdbc
   - $libs.h2database.h2
   - $libs.logback.classic
-  - $libs.mysql.connector.j
   - $libs.jbcrypt
 
 test-dependencies:

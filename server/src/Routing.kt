@@ -1,3 +1,4 @@
+import config.configureGemini
 import config.configureRdw
 import config.jwtConfig
 import config.photoStorage
@@ -25,13 +26,16 @@ fun Application.configureRouting() {
     val rdwClient = configureRdw()
     val carRepository = ExposedCarRepository()
     val locationRepository = ExposedLocationRepository()
+    val userRepository = ExposedUserRepository()
     val photoRepository = ExposedPhotoRepository()
     val photoStorage = photoStorage()
     val rentalTermsRepository = ExposedRentalTermsRepository()
     val carService = CarService(
         rdwClient,
+        configureGemini(),
         carRepository,
         locationRepository,
+        userRepository,
         photoRepository,
         photoStorage,
         rentalTermsRepository
@@ -42,7 +46,6 @@ fun Application.configureRouting() {
     val reservationService = ReservationService(reservationRepository)
     val rideRepository = ExposedRideRepository()
     val rideService = RideService(rideRepository, reservationRepository)
-    val userRepository = ExposedUserRepository()
     val userService = UserService(userRepository)
     val authService = AuthService(userRepository, TokenService(jwtConfig()))
     routing {

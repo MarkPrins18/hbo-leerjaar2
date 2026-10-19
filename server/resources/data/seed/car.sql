@@ -1,6 +1,6 @@
 INSERT INTO car (
     id,
-    owner_id,
+    user_id,
     license_plate,
     brand,
     model,

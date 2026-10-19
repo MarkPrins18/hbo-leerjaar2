@@ -7,21 +7,23 @@ import services.UnprocessableException
 
 
 /**
- * Normalizes a license plate to the RDW notation: no dashes, uppercase.
- * For example "r-816-lf" becomes "R816LF".
+ * Normalizes a license plate to the RDW notation: no dashes or spaces, uppercase.
+ * For example "r-816-lf" or "r 816 lf" becomes "R816LF".
  */
 fun normalizeLicensePlate(licensePlate: String): String =
-    licensePlate.replace("-", "").uppercase()
+    licensePlate.filterNot { it == '-' || it.isWhitespace() }.uppercase()
 
 fun RdwVehicleDto.toCar(
     brandstoffen: List<RdwFuelDto>,
     id: Int,
-    ownerId: Int,
+    userId: Int,
     trim: String?,
     tankCapacityL: Double? = null,
     automaticTransmission: Boolean? = null,
     batteryCapacityKWh: Double? = null,
-    tankCapacityKgH2: Double? = null
+    tankCapacityKgH2: Double? = null,
+    consumptionCombined: Double? = null,
+    roadTaxPerQuarter: Double? = null
 ): Car {
     val hoofdbrandstof = if (brandstoffen.size > 1) {
         // Hybrid: multiple fuel rows (incl. Elektriciteit). We treat hybrids
@@ -39,7 +41,8 @@ fun RdwVehicleDto.toCar(
     val readyToDriveWeightKg = this.readyToDriveWeightKg?.toIntOrNull()
         ?: throw UnprocessableException("Geen massa rijklaar bekend voor kenteken $licensePlate")
 
-    val consumptionCombined = hoofdbrandstof.consumptionCombined?.toDoubleOrNull() //No throw!!
+    // A user-provided value overrides the RDW value
+    val combinedConsumption = consumptionCombined ?: hoofdbrandstof.consumptionCombined?.toDoubleOrNull() //No throw!!
     val co2EmissionCombined = hoofdbrandstof.co2EmissionCombined?.toDoubleOrNull()
 
     val productionYear = parseProductionYear(firstAdmissionDate)
@@ -48,38 +51,41 @@ fun RdwVehicleDto.toCar(
 
     return when (val fuelDescription = hoofdbrandstof.fuelDescription) {
         "Elektriciteit" -> BEVCar(
-            id = id, ownerId = ownerId,
+            id = id, userId = userId,
             licensePlate = licensePlate,
             brand = brand, model = model,
             productionYear = productionYear, trim = trim, color = color,
             seats = seats, doors = doors, vehicleType = vehicleType,
             readyToDriveWeightKg = readyToDriveWeightKg,
-            consumptionCombined = consumptionCombined,
+            consumptionCombined = combinedConsumption,
             co2EmissionCombined = co2EmissionCombined,
+            roadTaxPerQuarter = roadTaxPerQuarter,
             batteryCapacityKWh = batteryCapacityKWh
                 ?: throw UnprocessableException("batteryCapacityKWh is verplicht voor een BEV")
         )
         "Waterstof" -> FCEVCar(
-            id = id, ownerId = ownerId,
+            id = id, userId = userId,
             licensePlate = licensePlate,
             brand = brand, model = model,
             productionYear = productionYear, trim = trim, color = color,
             seats = seats, doors = doors, vehicleType = vehicleType,
             readyToDriveWeightKg = readyToDriveWeightKg,
-            consumptionCombined = consumptionCombined,
+            consumptionCombined = combinedConsumption,
             co2EmissionCombined = co2EmissionCombined,
+            roadTaxPerQuarter = roadTaxPerQuarter,
             tankCapacityKgH2 = tankCapacityKgH2
                 ?: throw UnprocessableException("tankCapacityKgH2 is verplicht voor een FCEV")
         )
         "Benzine", "Diesel", "LPG" -> ICECar(
-            id = id, ownerId = ownerId,
+            id = id, userId = userId,
             licensePlate = licensePlate,
             brand = brand, model = model,
             productionYear = productionYear, trim = trim, color = color,
             seats = seats, doors = doors, vehicleType = vehicleType,
             readyToDriveWeightKg = readyToDriveWeightKg,
-            consumptionCombined = consumptionCombined,
+            consumptionCombined = combinedConsumption,
             co2EmissionCombined = co2EmissionCombined,
+            roadTaxPerQuarter = roadTaxPerQuarter,
             fuelType = mapFuelType(fuelDescription),
             tankCapacityL = tankCapacityL
                 ?: throw UnprocessableException("tankCapacityL is verplicht voor een ICE-auto"),
