@@ -1,8 +1,4 @@
-INSERT INTO users (
-    email,
-    password_hash
-) VALUES
-('jan@example.com', '$2a$10$cVNGx2bIsX/587l8hqC3ZeHizKcpCctcuqgxAPrWPWn1eScHgXUnu'),
-('sanne@example.com', '$2a$10$aUulpDbR7VAQHmBShpM7De1Upkn9PxUqffGTrsHbSNfxitFXQNKIW'),
-('ahmed@example.com', '$2a$10$eAx/1jRMLNMBZHvT143ceOpe9P2hzZpuACS2Ss4DO2mM4OU2IE4cO'),
-('docent@example.com', '$2a$10$RuCjobvxeyn967F.IF4TZO6ulOXmRLE0p.KY8Aq22Pzx03UqGJup.');
+-- Password for all seed users: Welkom123!
+INSERT INTO users (id, email, password_hash) VALUES (1, 'eigenaar1@carshare.nl', '$2a$10$FJmQ/8TwlXG/5f6Loeb9beWIe0k70teDRvMtxigj9d2nAt45IJFVa');
+INSERT INTO users (id, email, password_hash) VALUES (2, 'eigenaar2@carshare.nl', '$2a$10$FJmQ/8TwlXG/5f6Loeb9beWIe0k70teDRvMtxigj9d2nAt45IJFVa');
+INSERT INTO users (id, email, password_hash) VALUES (3, 'eigenaar3@carshare.nl', '$2a$10$FJmQ/8TwlXG/5f6Loeb9beWIe0k70teDRvMtxigj9d2nAt45IJFVa');

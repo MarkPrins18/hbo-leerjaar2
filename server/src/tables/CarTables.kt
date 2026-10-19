@@ -8,7 +8,7 @@ val carTables = listOf(CarTable, IceCarTable, BevCarTable, FcevCarTable)
 
 object CarTable : Table("car") {
     val id = integer("id").autoIncrement()
-    val ownerId = integer("owner_id") references OwnerTable.id
+    val ownerId = integer("owner_id") references UserTable.id
     val licensePlate = varchar("license_plate", 20).uniqueIndex()
     val brand = varchar("brand", 100)
     val model = varchar("model", 100)

@@ -1,0 +1,30 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/JetBrains
+          key: kotlin-${{ runner.os }}-${{ hashFiles('kotlin', 'libs.versions.toml', 'server/module.yaml') }}
+
+      - name: Run tests
+        run: bash ./kotlin test
+
+      - name: Test report
+        uses: mikepenz/action-junit-report@v5
+        if: always()
+        with:
+          report_paths: build/reports/server/jvm/TEST-*.xml

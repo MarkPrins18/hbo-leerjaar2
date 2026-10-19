@@ -13,7 +13,8 @@ import services.ApiException
 
 /**
  * Translates exceptions into HTTP responses.
- * - Exceptions from services/Exception.kt are handled via ApiException.
+ * - Exceptions from services/Exception.kt are handled via ApiException, including our own 413 and 415
+ *   for uploaded files (FileTooLargeException, UnsupportedFileTypeException).
  * - Thrown by Ktor itself, never throw these yourself: BadRequestException and parameter exceptions (400,
  *   from receive() and getOrFail()), NotFoundException (404), PayloadTooLargeException (413)
  *   and UnsupportedMediaTypeException (415).

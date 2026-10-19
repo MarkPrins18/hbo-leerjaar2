@@ -15,6 +15,8 @@ Schoolproject: Kotlin/Ktor Web API voor een autodeelplatform, gebouwd door een t
 - Validatie in `services/CarValidation.kt`.
 - Fouten: gooi alleen exceptions uit `services/Exception.kt`, niet die van Ktor. `StatusPages.kt` handelt ze af. Nooit zelf foutcodes responden.
 - Repository-functies zijn `suspend` met `suspendTransaction`; ids zijn `Int`.
+- Auth: beveilig routes met `requireAuthentication { }` en haal de gebruiker op met `call.authenticatedUserId()` (beide uit `Authentication.kt`). Neem nooit een user-id uit de request over.
+- Eigendomscontrole hoort in de service: geef `userId` door en gooi `ForbiddenException` als het niet klopt.
 
 ## Database
 - H2-bestand (`MODE=MySQL`) via Exposed. Bij elke start wordt het schema gereset en opnieuw geseed.
@@ -23,3 +25,6 @@ Schoolproject: Kotlin/Ktor Web API voor een autodeelplatform, gebouwd door een t
 
 ## Ontwerpkeuzes
 Lees `.claude/decisions.md` voordat je iets wijzigt aan de RDW-import, mappers of datamodellen.
+
+## Testen
+Lees `.claude/testing.md` voordat je tests schrijft.

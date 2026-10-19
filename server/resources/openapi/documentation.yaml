@@ -168,6 +168,105 @@ paths:
           description: Kenteken onbekend bij de RDW, of RDW-gegevens niet te verwerken
         "502":
           description: De RDW API is niet bereikbaar of gaf een ongeldig antwoord
+  /cars/{id}/photos:
+    post:
+      summary: Upload een foto van een auto
+      description: Alleen de ingelogde eigenaar van de auto mag een foto uploaden. Alleen JPEG, maximaal 5 MB.
+      operationId: uploadCarPhoto
+      tags:
+        - Photos
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Het id van de auto
+          schema:
+            type: integer
+            format: int32
+          example: 1
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - photo
+              properties:
+                photo:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Foto succesvol opgeslagen
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Photo"
+        "400":
+          description: Geen foto meegestuurd of het bestand is leeg
+        "401":
+          description: Niet ingelogd
+        "403":
+          description: De ingelogde gebruiker is geen eigenaar van deze auto
+        "404":
+          description: Auto niet gevonden
+        "413":
+          description: Foto is groter dan 5 MB
+        "415":
+          description: Foto is geen JPEG
+    get:
+      summary: Haal de foto's van een auto op
+      operationId: getCarPhotos
+      tags:
+        - Photos
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Het id van de auto
+          schema:
+            type: integer
+            format: int32
+          example: 1
+      responses:
+        "200":
+          description: Lijst met foto's van de auto
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Photo"
+        "404":
+          description: Auto niet gevonden
+  /photos/{id}:
+    get:
+      summary: Haal een foto op
+      operationId: getPhoto
+      tags:
+        - Photos
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Het id van de foto
+          schema:
+            type: integer
+            format: int32
+          example: 1
+      responses:
+        "200":
+          description: De foto
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Foto niet gevonden
   /cars/{carId}/maps:
     get:
       summary: Open de locatie van een auto in Google Maps
@@ -788,11 +887,11 @@ components:
         email:
           type: string
           format: email
-          example: jan@example.com
+          example: eigenaar1@carshare.nl
         password:
           type: string
           format: password
-          example: Geheim123!
+          example: Welkom123!
     LoginResponse:
       type: object
       required:
@@ -816,6 +915,26 @@ components:
           format: password
           minLength: 8
           example: Geheim123!
+    Photo:
+      type: object
+      required:
+        - id
+        - carId
+        - url
+        - uploadedAt
+      properties:
+        id:
+          type: integer
+          format: int32
+        carId:
+          type: integer
+          format: int32
+        url:
+          type: string
+          example: /photos/1
+        uploadedAt:
+          type: string
+          format: date-time
     User:
       type: object
       required:

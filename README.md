@@ -1,5 +1,7 @@
 # Kotlin KTOR
 
+![Tests](https://github.com/MarkPrins18/hbo-leerjaar2/actions/workflows/test.yml/badge.svg?branch=main)
+
 This project was created using the [Ktor Project Generator](https://start.ktor.io).
 
 Here are some useful links to get you started:
