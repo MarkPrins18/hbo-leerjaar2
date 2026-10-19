@@ -1,0 +1,43 @@
+@startuml RegisterUser
+title Sequentiediagram #1: registreren (POST /users/register)
+
+actor Bezoeker as g
+participant "Android-app" as app
+participant "userRoutes" as rt
+participant "UserService" as svc
+participant "UserRepository" as repo
+database "H2-database" as db
+
+g -> app : registreer()
+app -> rt : POST /users/register {email, password}
+rt -> svc : register(request)
+svc -> svc : request.validate()
+
+group flow 4a [ongeldig e-mailadres of zwak wachtwoord]
+    svc --> rt : throw ValidationException
+    rt --> app : 400 Bad Request (StatusPages)
+    app --> g : toont foutmelding
+end
+
+svc -> svc : email.trim().lowercase()
+svc -> repo : findByEmail(email)
+repo -> db : SELECT FROM users WHERE email
+db --> repo : 0 of 1 rij
+repo --> svc : User?
+
+group flow 5a [e-mailadres bestaat al]
+    svc --> rt : throw ConflictException
+    rt --> app : 409 Conflict (StatusPages)
+    app --> g : toont foutmelding
+end
+
+svc -> svc : BCrypt.hashpw(password, gensalt())
+svc -> repo : create(email, passwordHash)
+repo -> db : INSERT INTO users
+db --> repo : id
+repo --> svc : User
+svc --> rt : User
+rt --> app : 201 Created + UserResponse
+app --> g : account aangemaakt
+
+@enduml
