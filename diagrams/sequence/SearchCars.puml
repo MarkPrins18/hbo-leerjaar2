@@ -1,0 +1,52 @@
+@startuml SearchCars
+title Sequentiediagram #8: auto's zoeken en filteren (GET /cars)
+
+actor Huurder as g
+participant "Android-app" as app
+participant "carRoutes" as rt
+participant "CarService" as svc
+participant "CarRepository" as car
+participant "LocationRepository" as loc
+participant "RentalTermsRepository" as terms
+database "H2-database" as db
+
+g -> app : zoek auto's()
+app -> rt : GET /cars?maxPrice&maxDistanceKm&latitude&longitude
+rt -> rt : toCarFilter()
+rt -> svc : getCars(filter)
+svc -> svc : filter.validate()
+
+group flow 3a [ongeldige filterwaarde]
+    svc --> rt : throw ValidationException
+    rt --> app : 400 Bad Request (StatusPages)
+    app --> g : foutmelding (stap 2)
+end
+
+svc -> car : getAllCars()
+car -> db : SELECT car + subtabellen
+db --> car : rijen
+car --> svc : List<Car>
+
+loop voor elke auto
+    svc -> loc : getLatestLocationByCarId(car.id)
+    loc -> db : SELECT location (nieuwste)
+    db --> loc : 0 of 1 rij
+    loc --> svc : Location?
+    svc -> terms : getRentalTermsByCarId(car.id)
+    terms -> db : SELECT rental_terms
+    db --> terms : 0 of 1 rij
+    terms --> svc : RentalTerms?
+    svc -> svc : filter.matches(location, rentalTerms)
+end
+
+group flow 4a [geen auto voldoet aan de filters]
+    svc --> rt : lege List<Car>
+    rt --> app : 200 OK + []
+    app --> g : geen auto's (stap 2)
+end
+
+svc --> rt : gefilterde List<Car>
+rt --> app : 200 OK + List<Car>
+app --> g : lijst of kaart
+
+@enduml
