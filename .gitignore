@@ -4,3 +4,5 @@
 /*.db/
 /.claude/settings.local.json
 /server/resources/data/database/
+
+/server/server/resources/data/database/
