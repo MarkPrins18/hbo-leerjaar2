@@ -12,10 +12,13 @@ class RideService(
     private val rideRepository: RideRepository,
     private val reservationRepository: ReservationRepository
 ) {
-    suspend fun startRide(reservationId: Int): Ride {
+    suspend fun startRide(reservationId: Int, userId: Int): Ride {
         val reservation = reservationRepository.getReservationById(reservationId)
             ?: throw ResourceNotFoundException("Reservering $reservationId niet gevonden")
 
+        if (reservation.userId != userId) {
+            throw ForbiddenException()
+        }
         if (reservation.status != ReservationStatus.CONFIRMED) {
             throw ConflictException("Reservering $reservationId is ${reservation.status}")
         }
@@ -29,12 +32,18 @@ class RideService(
         return rideRepository.startRide(reservationId, now)
     }
 
-    suspend fun finishRide(rideId: Int, request: RideFinishRequest): Ride {
+    suspend fun finishRide(rideId: Int, userId: Int, request: RideFinishRequest): Ride {
         if (request.distanceM < 0 || request.avgAcceleration < 0 || request.avgDeceleration < 0) {
             throw ValidationException("Afstand en acceleraties mogen niet negatief zijn")
         }
         val ride = rideRepository.getRideById(rideId)
             ?: throw ResourceNotFoundException("Rit $rideId niet gevonden")
+        val reservation = reservationRepository.getReservationById(ride.reservationId)
+            ?: throw ResourceNotFoundException("Reservering ${ride.reservationId} niet gevonden")
+
+        if (reservation.userId != userId) {
+            throw ForbiddenException()
+        }
 
         if (ride.status != RideStatus.IN_PROGRESS) {
             throw ConflictException("Rit $rideId is al afgerond")
