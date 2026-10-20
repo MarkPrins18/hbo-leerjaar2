@@ -9,7 +9,7 @@ import kotlin.time.Clock
 class ReservationService(
     private val reservationRepository: ReservationRepository
 ) {
-    suspend fun createReservation(request: ReservationRequest): Reservation {
+    suspend fun createReservation(userId: Int, request: ReservationRequest): Reservation {
         if (request.startTime <= Clock.System.now()) {
             throw ValidationException("Starttijd ligt in het verleden")
         }
@@ -19,21 +19,25 @@ class ReservationService(
         if (!reservationRepository.carExists(request.carId)) {
             throw ResourceNotFoundException("Auto ${request.carId} niet gevonden")
         }
-        if (!reservationRepository.userExists(request.userId)) {
-            throw ResourceNotFoundException("Gebruiker ${request.userId} niet gevonden")
+        if (!reservationRepository.userExists(userId)) {
+            throw ResourceNotFoundException("Gebruiker ${userId} niet gevonden")
         }
         if (reservationRepository.hasActiveOverlap(request.carId, request.startTime, request.endTime)) {
             throw ConflictException("Auto ${request.carId} is in dit tijdsblok al gereserveerd")
         }
         return reservationRepository.createReservation(
-            request.carId, request.userId, request.startTime, request.endTime, ReservationStatus.CONFIRMED
+            request.carId, userId, request.startTime, request.endTime, ReservationStatus.CONFIRMED
         )
     }
 
 
-    suspend fun cancelReservation(id: Int): Reservation {
+    suspend fun cancelReservation(id: Int, userId: Int): Reservation {
         val reservation = reservationRepository.getReservationById(id)
             ?: throw ResourceNotFoundException("Reservering $id niet gevonden")
+
+        if (reservation.userId != userId) {
+            throw ForbiddenException()
+        }
 
         if (reservation.status != ReservationStatus.PENDING && reservation.status != ReservationStatus.CONFIRMED) {
             throw ConflictException("Reservering $id is al ${reservation.status}")
