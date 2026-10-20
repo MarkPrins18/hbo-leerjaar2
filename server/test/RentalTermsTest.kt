@@ -16,7 +16,7 @@ private const val SEED_CAR_ID = 1
 
 // ==================== 1. Validation: RentalTermsRequest.validate() ====================
 
-class RentalTermsTimeValidationTest {
+class RentalTermsValidationTest {
     @Test
     fun `alleen een ophaalstarttijd zonder eindtijd geeft ValidationException`() {
         val request = RentalTermsRequest(
@@ -29,9 +29,9 @@ class RentalTermsTimeValidationTest {
     }
 }
 
-// ==================== 3. E2E: rental terms times ====================
+// ==================== 3. E2E: rental terms routes ====================
 
-class RentalTermsTimeRoutesTest {
+class RentalTermsRoutesTest {
     // ---------- GET /cars/{id}/rental-terms ----------
 
     @Test

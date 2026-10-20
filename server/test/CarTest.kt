@@ -18,7 +18,7 @@ private fun rentalTerms(pricePerDay: Double): RentalTerms = RentalTerms(
 
 // ==================== 1. Validation: CarFilter.matches() ====================
 
-class CarFilterPriceTest {
+class CarFilterValidationTest {
     private val filter = CarFilter(maxPrice = MAX_PRICE)
 
     @Test
