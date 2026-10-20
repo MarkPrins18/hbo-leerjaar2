@@ -1,6 +1,7 @@
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.BadRequestException
+import io.ktor.server.plugins.CannotTransformContentToTypeException
 import io.ktor.server.plugins.MissingRequestParameterException
 import io.ktor.server.plugins.NotFoundException
 import io.ktor.server.plugins.ParameterConversionException
@@ -17,7 +18,7 @@ import services.ApiException
  *   for uploaded files (FileTooLargeException, UnsupportedFileTypeException).
  * - Thrown by Ktor itself, never throw these yourself: BadRequestException and parameter exceptions (400,
  *   from receive() and getOrFail()), NotFoundException (404), PayloadTooLargeException (413)
- *   and UnsupportedMediaTypeException (415).
+ *   and UnsupportedMediaTypeException / CannotTransformContentToTypeException (415).
  * - Duplicate keys and foreign key errors from the database become 409.
  * - 500: everything else. The details are logged, not sent to the client.
  */
@@ -30,17 +31,25 @@ fun Application.configureStatusPages() {
         exception<ParameterConversionException> { call, cause ->
             call.respondError(HttpStatusCode.BadRequest, "Parameter '${cause.parameterName}' heeft een ongeldige waarde")
         }
-        exception<BadRequestException> { call, cause ->
-            call.respondError(HttpStatusCode.BadRequest, cause.message)
+        // Thrown by receive() when the body is not valid JSON or a field is missing or has the wrong type
+        exception<BadRequestException> { call, _ ->
+            call.respondError(
+                HttpStatusCode.BadRequest,
+                "Ongeldige body: controleer of het geldige JSON is met alle verplichte velden en geldige waarden"
+            )
         }
-        exception<NotFoundException> { call, cause ->
-            call.respondError(HttpStatusCode.NotFound, cause.message)
+        exception<NotFoundException> { call, _ ->
+            call.respondError(HttpStatusCode.NotFound, "Niet gevonden")
         }
-        exception<PayloadTooLargeException> { call, cause ->
-            call.respondError(HttpStatusCode.PayloadTooLarge, cause.message)
+        exception<PayloadTooLargeException> { call, _ ->
+            call.respondError(HttpStatusCode.PayloadTooLarge, "De body is te groot")
         }
-        exception<UnsupportedMediaTypeException> { call, cause ->
-            call.respondError(HttpStatusCode.UnsupportedMediaType, cause.message)
+        exception<UnsupportedMediaTypeException> { call, _ ->
+            call.respondError(HttpStatusCode.UnsupportedMediaType, "Content-Type wordt niet ondersteund: gebruik application/json, of multipart/form-data voor foto's")
+        }
+        // Thrown by receive() when the body has a Content-Type without a JSON converter, e.g. text/plain
+        exception<CannotTransformContentToTypeException> { call, _ ->
+            call.respondError(HttpStatusCode.UnsupportedMediaType, "Content-Type wordt niet ondersteund: gebruik application/json, of multipart/form-data voor foto's")
         }
         exception<ApiException> { call, cause ->
             if (cause.status.value >= 500) {

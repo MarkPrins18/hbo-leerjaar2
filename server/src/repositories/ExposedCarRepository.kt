@@ -113,7 +113,7 @@ class ExposedCarRepository : CarRepository {
 
         // An update without any columns would produce invalid SQL
         val carChanged = listOf(
-            change.userId, change.licensePlate, change.brand, change.model,
+            change.licensePlate, change.brand, change.model,
             change.productionYear, change.trim, change.color, change.seats,
             change.doors, change.vehicleType, change.readyToDriveWeightKg,
             change.consumptionCombined, change.co2EmissionCombined, change.roadTaxPerQuarter
@@ -121,7 +121,6 @@ class ExposedCarRepository : CarRepository {
 
         if (carChanged) {
             CarTable.update({ CarTable.id eq carId }) {
-                change.userId?.let { value -> it[userId] = value }
                 change.licensePlate?.let { value -> it[licensePlate] = normalizeLicensePlate(value) }
                 change.brand?.let { value -> it[brand] = value }
                 change.model?.let { value -> it[model] = value }

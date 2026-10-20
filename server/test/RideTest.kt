@@ -54,6 +54,7 @@ private class FakeRideReservationRepository(vararg reservations: Reservation) : 
         carId: Int, userId: Int, startTime: Instant, endTime: Instant, status: ReservationStatus
     ): Reservation = TODO()
     override suspend fun updateStatus(id: Int, status: ReservationStatus): Reservation? = TODO()
+    override suspend fun getReservationsByCarAndUser(carId: Int, userId: Int): List<Reservation> = TODO()
 }
 
 private class FakeRideRepository : RideRepository {

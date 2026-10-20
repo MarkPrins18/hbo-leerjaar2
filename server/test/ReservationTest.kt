@@ -66,6 +66,8 @@ private class FakeReservationRepository(
         reservations[index] = reservations[index].copy(status = status)
         return reservations[index]
     }
+
+    override suspend fun getReservationsByCarAndUser(carId: Int, userId: Int): List<Reservation> = TODO()
 }
 
 // ==================== 2. Service: ReservationService ====================
