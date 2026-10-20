@@ -16,7 +16,6 @@ import repositories.ExposedRentalTermsRepository
 import repositories.ExposedReservationRepository
 import repositories.ExposedUserRepository
 import services.AuthService
-import services.MapService
 import services.PhotoService
 import services.RentalTermsService
 import services.ReservationService
@@ -24,6 +23,7 @@ import repositories.ExposedRideRepository
 import services.RideService
 import services.TokenService
 import services.UserService
+import services.LocationService
 
 fun Application.configureRouting() {
     val rdwClient = configureRdw()
@@ -42,14 +42,14 @@ fun Application.configureRouting() {
     val reservationService = ReservationService(reservationRepository)
     val rideRepository = ExposedRideRepository()
     val rideService = RideService(rideRepository, reservationRepository)
-    val mapService = MapService(carRepository, locationRepository, reservationRepository)
+    val locationService = LocationService(carRepository, locationRepository, reservationRepository)
     val userService = UserService(userRepository)
     val authService = AuthService(userRepository, TokenService(jwtConfig()))
     routing {
         swaggerUI(path = "swagger", swaggerFile = "openapi/documentation.yaml")
         carRoutes(carService, carImportService, carCostService)
         photoRoutes(photoService)
-        mapsRoutes(mapService)
+        mapRoutes(locationService)
         rentalTermsRoutes(rentalTermsService)
         reservationRoutes(reservationService)
         rideRoutes(rideService)

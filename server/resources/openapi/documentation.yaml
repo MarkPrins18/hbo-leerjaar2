@@ -443,7 +443,7 @@ paths:
                 format: binary
         "404":
           description: Foto niet gevonden
-  /cars/{id}/maps:
+  /cars/{carId}/maps:
     get:
       summary: Open de locatie van een auto in Google Maps
       description: Geeft een Google Maps-URL met de laatst bekende locatie van de auto. Alleen voor de eigenaar of een huurder met een bevestigde reservering die nu loopt.
@@ -453,7 +453,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: id
+        - name: carId
           in: path
           required: true
           description: Het id van de auto
@@ -469,6 +469,7 @@ paths:
               schema:
                 type: string
                 format: uri
+              example: https://www.google.com/maps/dir/?api=1&destination=51.6436,4.86044
         "400":
           description: Ongeldig auto-id
         "401":
@@ -544,9 +545,12 @@ paths:
   /reservations:
     post:
       summary: Maak een reservering aan
+      description: De reservering komt op naam van de ingelogde gebruiker.
       operationId: createReservation
       tags:
         - Reservations
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -562,6 +566,8 @@ paths:
                 $ref: "#/components/schemas/Reservation"
         "400":
           description: Ongeldige request, starttijd ligt in het verleden of eindtijd ligt niet na de starttijd
+        "401":
+          description: Niet ingelogd
         "404":
           description: Auto of gebruiker niet gevonden
         "409":
@@ -569,9 +575,12 @@ paths:
   /reservations/{id}/cancel:
     patch:
       summary: Annuleer een reservering via het id
+      description: Alleen de huurder van de reservering mag annuleren.
       operationId: cancelReservation
       tags:
         - Reservations
+      security:
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -590,6 +599,10 @@ paths:
                 $ref: "#/components/schemas/Reservation"
         "400":
           description: Ongeldig reservering-id
+        "401":
+          description: Niet ingelogd
+        "403":
+          description: De reservering is van een andere gebruiker
         "404":
           description: Reservering niet gevonden
         "409":
@@ -597,9 +610,12 @@ paths:
   /reservations/{id}/rides:
     post:
       summary: Start een rit voor een reservering
+      description: Alleen de huurder van de reservering mag een rit starten.
       operationId: startRide
       tags:
         - Rides
+      security:
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -618,6 +634,10 @@ paths:
                 $ref: "#/components/schemas/Ride"
         "400":
           description: Ongeldig reservering-id
+        "401":
+          description: Niet ingelogd
+        "403":
+          description: De reservering is van een andere gebruiker
         "404":
           description: Reservering niet gevonden
         "409":
@@ -628,9 +648,12 @@ paths:
       description: |
         Slaat de ritgegevens op, zet de status op COMPLETED en kent bonuspunten
         toe voor rustig rijgedrag (zie het veld bonusPoints in het schema Ride).
+        Alleen de huurder van de bijbehorende reservering mag de rit afronden.
       operationId: finishRide
       tags:
         - Rides
+      security:
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -655,6 +678,10 @@ paths:
                 $ref: "#/components/schemas/Ride"
         "400":
           description: Ongeldig rit-id, ongeldige request body of negatieve waarde
+        "401":
+          description: Niet ingelogd
+        "403":
+          description: De rit hoort bij een reservering van een andere gebruiker
         "404":
           description: Rit niet gevonden
         "409":
@@ -905,14 +932,10 @@ components:
       type: object
       required:
         - carId
-        - userId
         - startTime
         - endTime
       properties:
         carId:
-          type: integer
-          format: int32
-        userId:
           type: integer
           format: int32
         startTime:

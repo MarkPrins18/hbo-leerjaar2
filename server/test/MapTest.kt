@@ -16,7 +16,7 @@ import repositories.CarRepository
 import repositories.LocationRepository
 import repositories.ReservationRepository
 import services.ForbiddenException
-import services.MapService
+import services.LocationService
 import services.ResourceNotFoundException
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -114,13 +114,13 @@ private class FakeMapReservationRepository(vararg reservations: Reservation) : R
     override suspend fun updateStatus(id: Int, status: ReservationStatus): Reservation? = TODO()
 }
 
-// ==================== 2. Service: MapService ====================
+// ==================== 2. Service: LocationService ====================
 
-class MapServiceTest {
+class LocationServiceTest {
     private fun service(
         vararg reservations: Reservation,
         locationRepository: LocationRepository = FakeMapLocationRepository(testLocation())
-    ) = MapService(
+    ) = LocationService(
         FakeMapCarRepository(testCar(), testCar(OTHER_CAR_ID)),
         locationRepository,
         FakeMapReservationRepository(*reservations)
@@ -206,7 +206,7 @@ class MapRoutesTest {
     private suspend fun HttpClient.getMaps(carId: Any, token: String? = null): HttpResponse =
         get("/cars/$carId/maps") { token?.let { bearerAuth(it) } }
 
-    // ---------- GET /cars/{id}/maps ----------
+    // ---------- GET /cars/{carId}/maps ----------
 
     @Test
     fun `eigenaar krijgt de maps-url van de laatste seedlocatie`() = e2eTest { client ->

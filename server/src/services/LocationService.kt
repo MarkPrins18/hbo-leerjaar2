@@ -8,7 +8,7 @@ import repositories.ReservationRepository
 import kotlin.time.Clock
 import kotlin.time.Instant
 
-class MapService(
+class LocationService(
     private val carRepository: CarRepository,
     private val locationRepository: LocationRepository,
     private val reservationRepository: ReservationRepository

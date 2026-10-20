@@ -1,0 +1,48 @@
+@startuml SetRentalTerms
+title Sequentiediagram #5: verhuurvoorwaarden instellen (PUT /cars/{id}/rental-terms)
+
+actor Eigenaar as g
+participant "Android-app" as app
+participant "rentalTermsRoutes" as rt
+participant "RentalTermsService" as svc
+participant "RentalTermsRepository" as repo
+database "H2-database" as db
+
+g -> app : sla voorwaarden op()
+app -> rt : PUT /cars/{id}/rental-terms {pricePerDay, ...}
+rt -> svc : setRentalTerms(carId, request)
+svc -> svc : request.validate()
+
+group flow 3a [ongeldige prijs, locatie of tijdvenster]
+    svc --> rt : throw ValidationException
+    rt --> app : 400 Bad Request (StatusPages)
+    app --> g : toont foutmelding
+end
+
+svc -> repo : carExists(carId)
+repo -> db : SELECT FROM car WHERE id
+db --> repo : 0 of 1 rij
+repo --> svc : Boolean
+
+group flow 4a [auto bestaat niet]
+    svc --> rt : throw ResourceNotFoundException
+    rt --> app : 404 Not Found (StatusPages)
+    app --> g : toont foutmelding
+end
+
+svc -> repo : saveRentalTerms(carId, request)
+repo -> db : SELECT FROM rental_terms WHERE car_id
+db --> repo : 0 of 1 rij
+alt voorwaarden bestaan al
+    repo -> db : UPDATE rental_terms
+else nog geen voorwaarden
+    repo -> db : INSERT INTO rental_terms
+end
+repo -> db : SELECT FROM rental_terms WHERE car_id
+db --> repo : 1 rij
+repo --> svc : RentalTerms
+svc --> rt : RentalTerms
+rt --> app : 200 OK + RentalTerms
+app --> g : toont de voorwaarden
+
+@enduml
