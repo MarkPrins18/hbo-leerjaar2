@@ -1,64 +1,47 @@
 package services
 
-import clients.RdwClient
-import mappers.RdwCarMapper
 import repositories.CarRepository
 import dto.*
 import models.*
+import config.PhotoStorage
 import repositories.LocationRepository
+import repositories.PhotoRepository
 import repositories.RentalTermsRepository
-import kotlin.coroutines.cancellation.CancellationException
 
 class CarService(
-    private val rdwClient: RdwClient,
     private val carRepository: CarRepository,
     private val locationRepository: LocationRepository,
+    private val photoRepository: PhotoRepository,
+    private val photoStorage: PhotoStorage,
     private val rentalTermsRepository: RentalTermsRepository
 ) {
-    suspend fun importCar(request: CarDto): Car {
-        request.validate()
-
-        if (carRepository.getCarByLicensePlate(request.licensePlate) != null) {
-            throw ConflictException("Kenteken ${request.licensePlate} bestaat al")
-        }
-
-        val voertuig = callRdw { rdwClient.getVehicle(request.licensePlate) }
-            ?: throw UnprocessableException("Geen voertuig gevonden bij de RDW voor kenteken ${request.licensePlate}")
-
-        val brandstoffen = callRdw { rdwClient.getFuel(request.licensePlate) }
-
-        val car = RdwCarMapper.toCar(
-            voertuig = voertuig,
-            brandstoffen = brandstoffen,
-            id = 0,
-            ownerId = request.ownerId,
-            trim = request.trim,
-            tankCapacityL = request.tankCapacityL,
-            automaticTransmission = request.automaticTransmission,
-            batteryCapacityKWh = request.batteryCapacityKWh,
-            tankCapacityKgH2 = request.tankCapacityKgH2
-        )
-        return carRepository.createCar(car)
-    }
-
-    suspend fun updateCar(carId: Int, change: CarChangeDto): Car {
-        val car = carRepository.getCarById(carId)
-            ?: throw carNotFound(carId)
+    suspend fun updateCar(carId: Int, userId: Int, change: CarChangeDto): Car {
+        val car = carRepository.getOwnedCar(carId, userId)
 
         change.validate(car)
+        change.licensePlate?.let { carRepository.checkLicensePlateAvailable(it, carId) }
 
         return carRepository.updateCar(carId, change)
             ?: throw carNotFound(carId)
     }
 
+    suspend fun getCarById(carId: Int): Car =
+        carRepository.getCarById(carId) ?: throw carNotFound(carId)
+
     suspend fun getCarByLicensePlate(licensePlate: String): Car =
         carRepository.getCarByLicensePlate(licensePlate)
             ?: throw ResourceNotFoundException("Auto met kenteken $licensePlate niet gevonden")
 
-    suspend fun deleteCar(carId: Int) {
+    suspend fun deleteCar(carId: Int, userId: Int) {
+        carRepository.getOwnedCar(carId, userId)
+
+        val photoFileNames = photoRepository.getFileNamesByCarId(carId)
+
         if (!carRepository.deleteCar(carId)) {
             throw carNotFound(carId)
         }
+
+        photoFileNames.forEach(photoStorage::delete)
     }
 
     suspend fun getCars(filter: CarFilter): List<Car> {
@@ -73,15 +56,4 @@ class CarService(
             filter.matches(location, rentalTerms)
         }
     }
-
-    private fun carNotFound(carId: Int) = ResourceNotFoundException("Auto $carId niet gevonden")
-
-    private suspend fun <T> callRdw(block: suspend () -> T): T =
-        try {
-            block()
-        } catch (exception: CancellationException) {
-            throw exception
-        } catch (exception: Exception) {
-            throw ExternalServiceException("De RDW API is niet bereikbaar of gaf een ongeldig antwoord", exception)
-        }
 }

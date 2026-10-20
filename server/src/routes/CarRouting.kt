@@ -1,8 +1,13 @@
 package routes
 
+import authenticatedUserId
+import requireAuthentication
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import services.CarCostService
+import services.CarImportService
 import services.CarService
+import services.DEFAULT_ANNUAL_KM
 import services.ValidationException
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Parameters
@@ -11,37 +16,69 @@ import io.ktor.server.util.getOrFail
 import dto.*
 
 fun Route.carRoutes(
-    carService: CarService
+    carService: CarService,
+    carImportService: CarImportService,
+    carCostService: CarCostService
 ) {
     route("/cars") {
         get {
             val filter = call.request.queryParameters.toCarFilter()
             call.respond(carService.getCars(filter))
         }
-        get("/{licensePlate}") {
+        get("/{id}") {
+            val carId = call.parameters.getOrFail<Int>("id")
+
+            call.respond(carService.getCarById(carId))
+        }
+        get("/license-plate/{licensePlate}") {
             val licensePlate = call.parameters.getOrFail("licensePlate")
 
             call.respond(carService.getCarByLicensePlate(licensePlate))
         }
-        delete("/{id}") {
-            val carId = call.parameters.getOrFail<Int>("id")
+        requireAuthentication {
+            delete("/{id}") {
+                val carId = call.parameters.getOrFail<Int>("id")
+                val userId = call.authenticatedUserId()
 
-            carService.deleteCar(carId)
+                carService.deleteCar(carId, userId)
 
-            call.respond(HttpStatusCode.NoContent)
-        }
-        patch("/{id}"){ //is put needed?
-            val carId = call.parameters.getOrFail<Int>("id")
-            val change = call.receive<CarChangeDto>()
+                call.respond(HttpStatusCode.NoContent)
+            }
+            patch("/{id}"){ //is put needed?
+                val carId = call.parameters.getOrFail<Int>("id")
+                val userId = call.authenticatedUserId()
+                val change = call.receive<CarChangeDto>()
 
-            call.respond(carService.updateCar(carId, change))
-        }
-        post("/import") {
-            val request = call.receive<CarDto>()
+                call.respond(carService.updateCar(carId, userId, change))
+            }
+            get("/{id}/fuel-cost") {
+                val carId = call.parameters.getOrFail<Int>("id")
+                val distanceKm = call.request.queryParameters.getOrFail<Double>("distanceKm")
+                val userId = call.authenticatedUserId()
 
-            val car = carService.importCar(request)
+                call.respond(carCostService.getFuelCost(carId, userId, distanceKm))
+            }
+            get("/{id}/tco") {
+                val carId = call.parameters.getOrFail<Int>("id")
+                val annualKm = call.request.queryParameters.optionalDouble("annualKm") ?: DEFAULT_ANNUAL_KM
+                val userId = call.authenticatedUserId()
 
-            call.respond(HttpStatusCode.Created, car)
+                call.respond(carCostService.getTco(carId, userId, annualKm))
+            }
+            post("/{id}/cost-data") { //remove: test route until the total cost calculation exists
+                val carId = call.parameters.getOrFail<Int>("id")
+                val userId = call.authenticatedUserId()
+
+                call.respond(carCostService.fillMissingCostData(carId, userId))
+            }
+            post("/import") {
+                val userId = call.authenticatedUserId()
+                val request = call.receive<CarDto>()
+
+                val car = carImportService.importCar(request, userId)
+
+                call.respond(HttpStatusCode.Created, car)
+            }
         }
     }
 }

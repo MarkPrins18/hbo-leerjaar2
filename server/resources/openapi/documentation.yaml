@@ -64,7 +64,7 @@ paths:
                   $ref: "#/components/schemas/Car"
         "400":
           description: Ongeldige filterwaarde (geen getal of buiten bereik), of maxDistanceKm, latitude en longitude niet alle drie opgegeven
-  /cars/{licensePlate}:
+  /cars/license-plate/{licensePlate}:
     get:
       summary: Haal een auto op via het kenteken
       operationId: getCarByLicensePlate
@@ -89,11 +89,38 @@ paths:
           description: Auto niet gevonden
 
   /cars/{id}:
+    get:
+      summary: Haal een auto op via het id
+      operationId: getCarById
+      tags:
+        - Cars
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Het id van de auto
+          schema:
+            type: integer
+            format: int32
+          example: 1
+      responses:
+        "200":
+          description: Auto gevonden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Car"
+        "400":
+          description: Ongeldig auto-id
+        "404":
+          description: Auto niet gevonden
     patch:
       summary: Werk een auto bij via het id
       operationId: updateCar
       tags:
         - Cars
+      security:
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -118,15 +145,21 @@ paths:
                 $ref: "#/components/schemas/Car"
         "400":
           description: Ongeldige waarde of veld hoort niet bij het type auto
+        "401":
+          description: Niet ingelogd
+        "403":
+          description: Ingelogde gebruiker is niet de eigenaar van de auto
         "404":
           description: Auto niet gevonden
         "409":
-          description: Kenteken bestaat al of eigenaar bestaat niet
+          description: Kenteken bestaat al
     delete:
       summary: Verwijder een auto via het id
       operationId: deleteCar
       tags:
         - Cars
+      security:
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -139,14 +172,155 @@ paths:
       responses:
         "204":
           description: Auto succesvol verwijderd
+        "401":
+          description: Niet ingelogd
+        "403":
+          description: Ingelogde gebruiker is niet de eigenaar van de auto
         "404":
           description: Auto niet gevonden
+  /cars/{id}/cost-data:
+    post:
+      summary: "Testroute: vul ontbrekende MRB en verbruik aan via Gemini"
+      description: >
+        Vraagt Gemini alleen om de waardes die nog leeg zijn (roadTaxPerQuarter, consumptionCombined)
+        en slaat ze op bij de auto. Zijn beide al ingevuld, dan wordt Gemini niet aangeroepen.
+        Alleen de ingelogde eigenaar van de auto mag dit doen.
+        Seedauto 2 (BEV, eigenaar 2) heeft geen verbruik en is daarom handig om mee te testen.
+      operationId: fillMissingCostData
+      tags:
+        - Cars
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Het id van de auto
+          schema:
+            type: integer
+            format: int32
+          example: 2
+      responses:
+        "200":
+          description: Auto met de aangevulde waardes
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Car"
+        "401":
+          description: Niet ingelogd
+        "403":
+          description: Ingelogde gebruiker is niet de eigenaar van de auto
+        "404":
+          description: Auto niet gevonden
+        "502":
+          description: De Gemini API is niet bereikbaar of gaf een ongeldig antwoord
+  /cars/{id}/fuel-cost:
+    get:
+      summary: Bereken de geschatte verbruikskosten voor een afstand
+      description: >
+        Alleen de ingelogde eigenaar van de auto mag de kosten opvragen. De berekening hangt af van de categorie:
+        ICE (liter brandstof), BEV (kWh stroom) of FCEV (kg waterstof), met vaste prijzen per eenheid.
+        Is het verbruik van de auto onbekend, dan wordt het eerst via Gemini aangevuld.
+      operationId: getFuelCost
+      tags:
+        - Cars
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Het id van de auto
+          schema:
+            type: integer
+            format: int32
+          example: 1
+        - name: distanceKm
+          in: query
+          required: true
+          description: De afstand in km (0 tot en met 1.000.000)
+          schema:
+            type: number
+            format: double
+          example: 100
+      responses:
+        "200":
+          description: Geschatte verbruikskosten
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FuelCost"
+        "400":
+          description: distanceKm ontbreekt, is geen getal of is negatief
+        "401":
+          description: Niet ingelogd
+        "403":
+          description: De ingelogde gebruiker is geen eigenaar van deze auto
+        "404":
+          description: Auto niet gevonden
+        "422":
+          description: Het verbruik van de auto is onbekend, ook na aanvullen via Gemini
+        "502":
+          description: De Gemini API is niet bereikbaar of gaf een ongeldig antwoord
+  /cars/{id}/tco:
+    get:
+      summary: Bereken de Total Cost of Ownership per jaar en per maand
+      description: >
+        Alleen de ingelogde eigenaar van de auto mag de TCO opvragen. De TCO bestaat uit de verbruikskosten
+        voor annualKm (dezelfde berekening als fuel-cost) plus de wegenbelasting (roadTaxPerQuarter x 4).
+        Zijn het verbruik of de wegenbelasting onbekend, dan worden ze eerst via Gemini aangevuld.
+      operationId: getTco
+      tags:
+        - Cars
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Het id van de auto
+          schema:
+            type: integer
+            format: int32
+          example: 1
+        - name: annualKm
+          in: query
+          required: false
+          description: Aantal km per jaar (0 tot en met 1.000.000), standaard 15.000
+          schema:
+            type: number
+            format: double
+            default: 15000
+          example: 15000
+      responses:
+        "200":
+          description: De jaarlijkse en maandelijkse TCO
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tco"
+        "400":
+          description: annualKm is geen getal, is negatief of is te groot
+        "401":
+          description: Niet ingelogd
+        "403":
+          description: De ingelogde gebruiker is geen eigenaar van deze auto
+        "404":
+          description: Auto niet gevonden
+        "422":
+          description: Het verbruik of de wegenbelasting van de auto is onbekend, ook na aanvullen via Gemini
+        "502":
+          description: De Gemini API is niet bereikbaar of gaf een ongeldig antwoord
   /cars/import:
     post:
       summary: Importeer een auto via het kenteken
+      description: De ingelogde gebruiker wordt de eigenaar van de auto.
       operationId: importCar
       tags:
         - Cars
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -162,19 +336,122 @@ paths:
                 $ref: "#/components/schemas/Car"
         "400":
           description: Ongeldige waarde in de request
+        "401":
+          description: Niet ingelogd
         "409":
-          description: Kenteken bestaat al of eigenaar bestaat niet
+          description: Kenteken bestaat al
         "422":
           description: Kenteken onbekend bij de RDW, of RDW-gegevens niet te verwerken
         "502":
           description: De RDW API is niet bereikbaar of gaf een ongeldig antwoord
+  /cars/{id}/photos:
+    post:
+      summary: Upload een foto van een auto
+      description: Alleen de ingelogde eigenaar van de auto mag een foto uploaden. Alleen JPEG, maximaal 5 MB.
+      operationId: uploadCarPhoto
+      tags:
+        - Photos
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Het id van de auto
+          schema:
+            type: integer
+            format: int32
+          example: 1
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - photo
+              properties:
+                photo:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Foto succesvol opgeslagen
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Photo"
+        "400":
+          description: Geen foto meegestuurd of het bestand is leeg
+        "401":
+          description: Niet ingelogd
+        "403":
+          description: De ingelogde gebruiker is geen eigenaar van deze auto
+        "404":
+          description: Auto niet gevonden
+        "413":
+          description: Foto is groter dan 5 MB
+        "415":
+          description: Foto is geen JPEG
+    get:
+      summary: Haal de foto's van een auto op
+      operationId: getCarPhotos
+      tags:
+        - Photos
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Het id van de auto
+          schema:
+            type: integer
+            format: int32
+          example: 1
+      responses:
+        "200":
+          description: Lijst met foto's van de auto
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Photo"
+        "404":
+          description: Auto niet gevonden
+  /photos/{id}:
+    get:
+      summary: Haal een foto op
+      operationId: getPhoto
+      tags:
+        - Photos
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Het id van de foto
+          schema:
+            type: integer
+            format: int32
+          example: 1
+      responses:
+        "200":
+          description: De foto
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Foto niet gevonden
   /cars/{carId}/maps:
     get:
       summary: Open de locatie van een auto in Google Maps
-      description: Stuurt door naar Google Maps met de laatst bekende locatie van de auto.
+      description: Geeft een Google Maps-URL met de laatst bekende locatie van de auto. Alleen voor de eigenaar of een huurder met een bevestigde reservering die nu loopt.
       operationId: getCarLocationInMaps
       tags:
         - Maps
+      security:
+        - bearerAuth: []
       parameters:
         - name: carId
           in: path
@@ -186,17 +463,21 @@ paths:
           example: 1
       responses:
         "200":
-          description: Doorverwijzing naar de laatst bekende locatie in Google Maps
-          headers:
-            Location:
-              description: URL van de locatie in Google Maps
+          description: URL van de laatst bekende locatie in Google Maps
+          content:
+            text/plain:
               schema:
                 type: string
                 format: uri
+              example: https://www.google.com/maps/dir/?api=1&destination=51.6436,4.86044
         "400":
           description: Ongeldig auto-id
+        "401":
+          description: Niet ingelogd
+        "403":
+          description: De ingelogde gebruiker is geen eigenaar en heeft geen actieve reservering voor deze auto
         "404":
-          description: Geen locatie bekend voor deze auto
+          description: Auto niet gevonden of geen locatie bekend voor deze auto
   /cars/{id}/rental-terms:
     get:
       summary: Haal de verhuurvoorwaarden van een auto op
@@ -225,10 +506,12 @@ paths:
           description: Auto niet gevonden of geen verhuurvoorwaarden bekend
     put:
       summary: Stel de verhuurvoorwaarden van een auto in
-      description: Maakt de verhuurvoorwaarden aan, of overschrijft ze als ze al bestaan.
+      description: Alleen de ingelogde eigenaar van de auto mag dit. Maakt de verhuurvoorwaarden aan, of overschrijft ze als ze al bestaan.
       operationId: setRentalTerms
       tags:
         - RentalTerms
+      security:
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -253,14 +536,21 @@ paths:
                 $ref: "#/components/schemas/RentalTerms"
         "400":
           description: Ongeldige waarde, bijvoorbeeld een prijs van 0 of lager
+        "401":
+          description: Niet ingelogd
+        "403":
+          description: Ingelogde gebruiker is niet de eigenaar van de auto
         "404":
           description: Auto niet gevonden
   /reservations:
     post:
       summary: Maak een reservering aan
+      description: De reservering komt op naam van de ingelogde gebruiker.
       operationId: createReservation
       tags:
         - Reservations
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -276,6 +566,8 @@ paths:
                 $ref: "#/components/schemas/Reservation"
         "400":
           description: Ongeldige request, starttijd ligt in het verleden of eindtijd ligt niet na de starttijd
+        "401":
+          description: Niet ingelogd
         "404":
           description: Auto of gebruiker niet gevonden
         "409":
@@ -283,9 +575,12 @@ paths:
   /reservations/{id}/cancel:
     patch:
       summary: Annuleer een reservering via het id
+      description: Alleen de huurder van de reservering mag annuleren.
       operationId: cancelReservation
       tags:
         - Reservations
+      security:
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -304,6 +599,10 @@ paths:
                 $ref: "#/components/schemas/Reservation"
         "400":
           description: Ongeldig reservering-id
+        "401":
+          description: Niet ingelogd
+        "403":
+          description: De reservering is van een andere gebruiker
         "404":
           description: Reservering niet gevonden
         "409":
@@ -311,9 +610,12 @@ paths:
   /reservations/{id}/rides:
     post:
       summary: Start een rit voor een reservering
+      description: Alleen de huurder van de reservering mag een rit starten.
       operationId: startRide
       tags:
         - Rides
+      security:
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -332,6 +634,10 @@ paths:
                 $ref: "#/components/schemas/Ride"
         "400":
           description: Ongeldig reservering-id
+        "401":
+          description: Niet ingelogd
+        "403":
+          description: De reservering is van een andere gebruiker
         "404":
           description: Reservering niet gevonden
         "409":
@@ -342,9 +648,12 @@ paths:
       description: |
         Slaat de ritgegevens op, zet de status op COMPLETED en kent bonuspunten
         toe voor rustig rijgedrag (zie het veld bonusPoints in het schema Ride).
+        Alleen de huurder van de bijbehorende reservering mag de rit afronden.
       operationId: finishRide
       tags:
         - Rides
+      security:
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -369,6 +678,10 @@ paths:
                 $ref: "#/components/schemas/Ride"
         "400":
           description: Ongeldig rit-id, ongeldige request body of negatieve waarde
+        "401":
+          description: Niet ingelogd
+        "403":
+          description: De rit hoort bij een reservering van een andere gebruiker
         "404":
           description: Rit niet gevonden
         "409":
@@ -465,7 +778,7 @@ components:
       type: object
       required:
         - id
-        - ownerId
+        - userId
         - licensePlate
         - brand
         - model
@@ -479,7 +792,7 @@ components:
       properties:
         id:
           type: integer
-        ownerId:
+        userId:
           type: integer
         licensePlate:
           type: string
@@ -512,6 +825,11 @@ components:
         co2EmissionCombined:
           type: number
           format: double
+        roadTaxPerQuarter:
+          type: number
+          format: double
+          nullable: true
+          description: "MRB per kwartaal in euro (provincie Noord-Brabant)"
 
     ICECar:
       allOf:
@@ -566,15 +884,20 @@ components:
               format: double
     CarRequest:
       type: object
+      example:
+        licensePlate: "R-816-LF"
+        trim: null
+        tankCapacityL: null
+        automaticTransmission: true
+        batteryCapacityKWh: null
+        tankCapacityKgH2: null
+        consumptionCombined: null
+        roadTaxPerQuarter: null
       required:
         - licensePlate
-        - ownerId
       properties:
         licensePlate:
           type: string
-        ownerId:
-          type: integer
-          format: int32
         trim:
           type: string
           nullable: true
@@ -585,6 +908,8 @@ components:
         automaticTransmission:
           type: boolean
           nullable: true
+          default: true
+          description: "Alleen voor ICE-auto's. Niet opgegeven = automaat."
         batteryCapacityKWh:
           type: number
           format: double
@@ -593,19 +918,24 @@ components:
           type: number
           format: double
           nullable: true
+        consumptionCombined:
+          type: number
+          format: double
+          nullable: true
+        roadTaxPerQuarter:
+          type: number
+          format: double
+          nullable: true
+          description: "MRB per kwartaal in euro (provincie Noord-Brabant)"
 
     ReservationRequest:
       type: object
       required:
         - carId
-        - userId
         - startTime
         - endTime
       properties:
         carId:
-          type: integer
-          format: int32
-        userId:
           type: integer
           format: int32
         startTime:
@@ -645,10 +975,6 @@ components:
       properties:
         licensePlate:
           type: string
-          nullable: true
-        ownerId:
-          type: integer
-          format: int32
           nullable: true
         brand:
           type: string
@@ -692,6 +1018,11 @@ components:
           type: number
           format: double
           nullable: true
+        roadTaxPerQuarter:
+          type: number
+          format: double
+          nullable: true
+          description: "MRB per kwartaal in euro (provincie Noord-Brabant)"
         fuelType:
           type: string
           enum: [PETROL, DIESEL, LPG]
@@ -788,11 +1119,11 @@ components:
         email:
           type: string
           format: email
-          example: jan@example.com
+          example: eigenaar1@carshare.nl
         password:
           type: string
           format: password
-          example: Geheim123!
+          example: Welkom123!
     LoginResponse:
       type: object
       required:
@@ -816,6 +1147,103 @@ components:
           format: password
           minLength: 8
           example: Geheim123!
+    Photo:
+      type: object
+      required:
+        - id
+        - carId
+        - url
+        - uploadedAt
+      properties:
+        id:
+          type: integer
+          format: int32
+        carId:
+          type: integer
+          format: int32
+        url:
+          type: string
+          example: /photos/1
+        uploadedAt:
+          type: string
+          format: date-time
+    Tco:
+      type: object
+      required:
+        - carId
+        - annualKm
+        - annualFuelCost
+        - annualRoadTax
+        - annualTotal
+        - monthlyTotal
+      properties:
+        carId:
+          type: integer
+          format: int32
+          example: 1
+        annualKm:
+          type: number
+          format: double
+          example: 15000
+        annualFuelCost:
+          type: number
+          format: double
+          description: Verbruikskosten per jaar in EUR
+          example: 2369.25
+        annualRoadTax:
+          type: number
+          format: double
+          description: Wegenbelasting per jaar in EUR
+          example: 600.0
+        annualTotal:
+          type: number
+          format: double
+          description: Totale kosten per jaar in EUR
+          example: 2969.25
+        monthlyTotal:
+          type: number
+          format: double
+          description: Totale kosten per maand in EUR
+          example: 247.44
+
+    FuelCost:
+      type: object
+      required:
+        - carId
+        - category
+        - distanceKm
+        - consumptionPer100Km
+        - unit
+        - pricePerUnit
+        - estimatedCost
+      properties:
+        carId:
+          type: integer
+          format: int32
+        category:
+          type: string
+          enum: [ICE, BEV, FCEV]
+        distanceKm:
+          type: number
+          format: double
+          example: 100
+        consumptionPer100Km:
+          type: number
+          format: double
+          example: 8.1
+        unit:
+          type: string
+          enum: [L, kWh, kg]
+        pricePerUnit:
+          type: number
+          format: double
+          description: Prijs in EUR per eenheid
+          example: 1.95
+        estimatedCost:
+          type: number
+          format: double
+          description: Geschatte kosten in EUR, afgerond op 2 decimalen
+          example: 15.8
     User:
       type: object
       required:

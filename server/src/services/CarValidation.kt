@@ -6,10 +6,12 @@ import kotlinx.datetime.todayIn
 import mappers.normalizeLicensePlate
 import models.*
 import dto.*
+import models.gemini.CarCostEstimate
 import kotlin.time.Clock
 
 // Upper limits follow the database columns: decimal(6,2) = 9999.99, decimal(7,2) = 99999.99
 private const val LICENSE_PLATE_MAX_LENGTH = 20
+private val DUTCH_LICENSE_PLATE = Regex("[A-Z0-9]{6}")
 private const val NAME_MAX_LENGTH = 100
 private const val COLOR_MAX_LENGTH = 50
 private val SEATS = 1..9
@@ -17,26 +19,34 @@ private val DOORS = 0..9
 private val READY_TO_DRIVE_WEIGHT_KG = 1..10_000
 private val CONSUMPTION_COMBINED = 0.0..9999.99
 private val CO2_EMISSION_COMBINED = 0.0..99999.99
+private val ROAD_TAX_PER_QUARTER = 0.0..99999.99
 private val TANK_CAPACITY_L = 0.01..9999.99
 private val BATTERY_CAPACITY_KWH = 0.01..99999.99
 private val TANK_CAPACITY_KG_H2 = 0.01..9999.99
+internal const val MAX_PHOTO_BYTES = 5 * 1024 * 1024
 private const val LOCATION_MAX_LENGTH = 255
 private val PRICE_PER_DAY = 0.01..999999.99
+private val DISTANCE_KM = 0.0..1_000_000.0
 
+/** The RDW only knows Dutch license plates, so check the format before calling it. */
 fun CarDto.validate() {
-    checkText("licensePlate", normalizeLicensePlate(licensePlate), LICENSE_PLATE_MAX_LENGTH)
-    checkRange("ownerId", ownerId, 1..Int.MAX_VALUE)
+    val normalizedLicensePlate = normalizeLicensePlate(licensePlate)
+    checkText("licensePlate", normalizedLicensePlate, LICENSE_PLATE_MAX_LENGTH)
+    if (!normalizedLicensePlate.matches(DUTCH_LICENSE_PLATE)) {
+        throw ValidationException("'licensePlate' moet een Nederlands kenteken zijn van 6 letters en cijfers, bijvoorbeeld AB-123-C")
+    }
     trim?.let { checkText("trim", it, NAME_MAX_LENGTH) }
     tankCapacityL?.let { checkRange("tankCapacityL", it, TANK_CAPACITY_L) }
     batteryCapacityKWh?.let { checkRange("batteryCapacityKWh", it, BATTERY_CAPACITY_KWH) }
     tankCapacityKgH2?.let { checkRange("tankCapacityKgH2", it, TANK_CAPACITY_KG_H2) }
+    consumptionCombined?.let { checkRange("consumptionCombined", it, CONSUMPTION_COMBINED) }
+    roadTaxPerQuarter?.let { checkRange("roadTaxPerQuarter", it, ROAD_TAX_PER_QUARTER) }
 }
 
 fun CarChangeDto.validate(car: Car) {
     checkFieldsMatchSubtype(car)
 
     licensePlate?.let { checkText("licensePlate", normalizeLicensePlate(it), LICENSE_PLATE_MAX_LENGTH) }
-    ownerId?.let { checkRange("ownerId", it, 1..Int.MAX_VALUE) }
     brand?.let { checkText("brand", it, NAME_MAX_LENGTH) }
     model?.let { checkText("model", it, NAME_MAX_LENGTH) }
     trim?.let { checkText("trim", it, NAME_MAX_LENGTH) }
@@ -49,6 +59,7 @@ fun CarChangeDto.validate(car: Car) {
 
     consumptionCombined?.let { checkRange("consumptionCombined", it, CONSUMPTION_COMBINED) }
     co2EmissionCombined?.let { checkRange("co2EmissionCombined", it, CO2_EMISSION_COMBINED) }
+    roadTaxPerQuarter?.let { checkRange("roadTaxPerQuarter", it, ROAD_TAX_PER_QUARTER) }
     tankCapacityL?.let { checkRange("tankCapacityL", it, TANK_CAPACITY_L) }
     batteryCapacityKWh?.let { checkRange("batteryCapacityKWh", it, BATTERY_CAPACITY_KWH) }
     tankCapacityKgH2?.let { checkRange("tankCapacityKgH2", it, TANK_CAPACITY_KG_H2) }
@@ -74,6 +85,33 @@ private fun CarChangeDto.checkFieldsMatchSubtype(car: Car) {
     }
 }
 
+/** RDW values that don't fit the database columns are the RDW data's fault, not the client's. */
+fun Car.validateRdwData() {
+    val valid = brand.length <= NAME_MAX_LENGTH && model.length <= NAME_MAX_LENGTH && color.length <= COLOR_MAX_LENGTH
+    if (!valid) {
+        throw UnprocessableException("De RDW-gegevens van kenteken $licensePlate passen niet in de database")
+    }
+}
+
+/** Basic sanity check on the Gemini answer: an out-of-range value is the AI's fault, not the client's. */
+fun CarCostEstimate.validate() {
+    val valid = roadTaxPerQuarter.isNullOrIn(ROAD_TAX_PER_QUARTER) && consumptionCombined.isNullOrIn(CONSUMPTION_COMBINED)
+    if (!valid) {
+        throw ExternalServiceException("Gemini gaf een ongeldig antwoord")
+    }
+}
+
+private fun Double?.isNullOrIn(range: ClosedFloatingPointRange<Double>) = this == null || this in range
+
+/** NaN and infinity fall outside the range as well. */
+fun validateDistanceKm(distanceKm: Double) {
+    checkRange("distanceKm", distanceKm, DISTANCE_KM)
+}
+
+fun validateAnnualKm(annualKm: Double) {
+    checkRange("annualKm", annualKm, DISTANCE_KM)
+}
+
 fun CarFilter.validate() {
     maxPrice?.let { checkNotNegative("maxPrice", it) }
     maxDistanceKm?.let { checkNotNegative("maxDistanceKm", it) }
@@ -83,6 +121,20 @@ fun CarFilter.validate() {
     val distanceParameters = listOf(maxDistanceKm, latitude, longitude)
     if (distanceParameters.any { it != null } && distanceParameters.any { it == null }) {
         throw ValidationException("'maxDistanceKm', 'latitude' en 'longitude' moeten samen worden opgegeven")
+    }
+}
+
+/** Accepts JPEG only (Android camera default), recognised by its FF D8 FF signature. */
+fun ByteArray.validatePhoto() {
+    if (isEmpty()) {
+        throw ValidationException("Foto is leeg")
+    }
+    if (size > MAX_PHOTO_BYTES) {
+        throw FileTooLargeException("Foto mag maximaal ${MAX_PHOTO_BYTES / (1024 * 1024)} MB zijn")
+    }
+    val isJpeg = size >= 3 && this[0] == 0xFF.toByte() && this[1] == 0xD8.toByte() && this[2] == 0xFF.toByte()
+    if (!isJpeg) {
+        throw UnsupportedFileTypeException("Alleen JPEG-foto's zijn toegestaan")
     }
 }
 

@@ -1,6 +1,6 @@
 INSERT INTO car (
     id,
-    owner_id,
+    user_id,
     license_plate,
     brand,
     model,
@@ -28,7 +28,32 @@ VALUES
     (
         3, 3, 'GVT21R', 'TOYOTA', 'MIRAI', 2017,
         'FCV', 'BLAUW', 4, 4,
-        'PASSENGER_CAR', 1925, NULL, NULL
+        'PASSENGER_CAR', 1925, 0.76, NULL
+    ),
+    (
+        4, 1, 'P519LV', 'VOLKSWAGEN', 'GOLF', 2021,
+        'Life 1.0 eTSI', 'GRIJS', 5, 5,
+        'PASSENGER_CAR', 1255, 5.3, 121
+    ),
+    (
+        5, 2, 'ZG283T', 'SKODA', 'OCTAVIA COMBI', 2020,
+        '2.0 TDI Style', 'ZWART', 5, 5,
+        'PASSENGER_CAR', 1450, 4.4, 116
+    ),
+    (
+        6, 3, 'L702RX', 'DACIA', 'SANDERO', 2022,
+        'TCe 100 Bi-Fuel', 'ORANJE', 5, 5,
+        'PASSENGER_CAR', 1150, 7.3, 118
+    ),
+    (
+        7, 2, 'N455GK', 'TESLA', 'MODEL 3', 2023,
+        'Long Range', 'WIT', 5, 4,
+        'PASSENGER_CAR', 1844, 14.5, NULL
+    ),
+    (
+        8, 1, 'J712ST', 'VOLKSWAGEN', 'PASSAT', 2019,
+        '1.5 TSI 150pk', 'GRIJS', 5, 5,
+        'PASSENGER_CAR', 1465, 5.5, 126
     );
 
 INSERT INTO ice_car (
@@ -39,6 +64,18 @@ INSERT INTO ice_car (
 )
 VALUES (
            1, 'PETROL', 55.00, false
+       ),
+       (
+           4, 'PETROL', 50.00, true
+       ),
+       (
+           5, 'DIESEL', 45.00, false
+       ),
+       (
+           6, 'LPG', 40.00, false
+       ),
+       (
+           8, 'PETROL', 66.00, false
        );
 
 INSERT INTO bev_car (
@@ -47,6 +84,9 @@ INSERT INTO bev_car (
 )
 VALUES (
            2, 54.00
+       ),
+       (
+           7, 75.00
        );
 
 INSERT INTO fcev_car (

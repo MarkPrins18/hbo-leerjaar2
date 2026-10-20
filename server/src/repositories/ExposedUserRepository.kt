@@ -18,6 +18,10 @@ class ExposedUserRepository : UserRepository {
         UserTable.selectAll().orderBy(UserTable.id).map { it.toUser() }
     }
 
+    override suspend fun userExists(userId: Int): Boolean = suspendTransaction {
+        !UserTable.selectAll().where { UserTable.id eq userId }.empty()
+    }
+
     override suspend fun create(email: String, passwordHash: String): User = suspendTransaction {
         val inserted = UserTable.insert {
             it[UserTable.email] = email
