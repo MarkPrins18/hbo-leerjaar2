@@ -1,25 +1,14 @@
 package clients
 
-import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
-import io.ktor.serialization.kotlinx.json.json
-import kotlinx.serialization.json.Json
 import models.rdw.RdwFuelDto
 import models.rdw.RdwVehicleDto
 import mappers.normalizeLicensePlate
 
-class RdwClient(private val appToken: String) : VehicleRegistry {
-
-    private val httpClient = HttpClient(CIO) {
-        install(ContentNegotiation) {
-            json(Json { ignoreUnknownKeys = true })
-        }
-    }
+class RdwClient(private val appToken: String) : JsonApiClient(), VehicleRegistry {
 
     override suspend fun getVehicle(licensePlate: String): RdwVehicleDto? {
         val response: List<RdwVehicleDto> = httpClient.get("https://opendata.rdw.nl/resource/m9d7-ebf2.json") {

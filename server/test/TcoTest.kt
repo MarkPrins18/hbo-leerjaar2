@@ -19,6 +19,7 @@ import services.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 // ==================== Test data ====================
 
@@ -75,7 +76,6 @@ private class FakeTcoCarRepository(vararg cars: Car) : CarRepository {
 
     override suspend fun getCarById(carId: Int): Car? = cars[carId]
 
-    /** Only the cost data is filled in by the Gemini fallback. */
     override suspend fun updateCar(carId: Int, change: CarChangeDto): Car? {
         val car = cars[carId] as? ICECar ?: return null
         return car.copy(
@@ -90,7 +90,6 @@ private class FakeTcoCarRepository(vararg cars: Car) : CarRepository {
     override suspend fun deleteCar(carId: Int): Boolean = TODO()
 }
 
-/** Returns [estimate], or fails like an unreachable Gemini API when [fail] is set. */
 private class FakeTcoCostEstimator(
     private val estimate: CarCostEstimate? = null,
     private val fail: Boolean = false
@@ -191,6 +190,19 @@ class TcoServiceTest {
         val result = service.getTco(CAR_ID, OWNER_ID, 15_000.0)
 
         assertEquals(calculateTco(iceCar(), 15_000.0), result)
+        assertEquals(0, costEstimator.calls)
+    }
+
+    @Test
+    fun `auto met alle kostendata wordt zelf teruggegeven zonder Gemini`() = runBlocking {
+        val car = iceCar()
+        val carRepository = FakeTcoCarRepository().apply { cars[CAR_ID] = car }
+        val service = CarCostService(costEstimator, carRepository)
+
+        val result = service.fillMissingCostData(CAR_ID, OWNER_ID)
+
+        // Same object, not just an equal copy
+        assertTrue(result === car)
         assertEquals(0, costEstimator.calls)
     }
 

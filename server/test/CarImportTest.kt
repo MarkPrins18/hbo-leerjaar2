@@ -96,7 +96,6 @@ private class FakeImportUserRepository(private vararg val userIds: Int) : UserRe
     override suspend fun create(email: String, passwordHash: String): User = TODO()
 }
 
-/** Knows only [vehicle], or fails like an unreachable RDW API when [fail] is set. */
 private class FakeVehicleRegistry(
     private val vehicle: RdwVehicleDto? = rdwVehicle(),
     private val fail: Boolean = false

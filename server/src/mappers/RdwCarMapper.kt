@@ -5,11 +5,6 @@ import models.rdw.RdwFuelDto
 import models.rdw.RdwVehicleDto
 import services.UnprocessableException
 
-
-/**
- * Normalizes a license plate to the RDW notation: no dashes or spaces, uppercase.
- * For example "r-816-lf" or "r 816 lf" becomes "R816LF".
- */
 fun normalizeLicensePlate(licensePlate: String): String =
     licensePlate.filterNot { it == '-' || it.isWhitespace() }.uppercase()
 
@@ -31,7 +26,6 @@ fun RdwVehicleDto.toCar(
         brandstoffen.firstOrNull { it.fuelDescription != "Elektriciteit" }
             ?: throw UnprocessableException("Geen niet-elektrische brandstof gevonden voor hybride kenteken $licensePlate")
     } else {
-        // Not a hybrid: just take the main fuel at sequence number 1
         brandstoffen.firstOrNull { it.fuelSequenceNumber == "1" }
             ?: throw UnprocessableException("Geen hoofdbrandstof gevonden voor kenteken $licensePlate")
     }
@@ -41,8 +35,7 @@ fun RdwVehicleDto.toCar(
     val readyToDriveWeightKg = this.readyToDriveWeightKg?.toIntOrNull()
         ?: throw UnprocessableException("Geen massa rijklaar bekend voor kenteken $licensePlate")
 
-    // A user-provided value overrides the RDW value
-    val combinedConsumption = consumptionCombined ?: hoofdbrandstof.consumptionCombined?.toDoubleOrNull() //No throw!!
+    val combinedConsumption = consumptionCombined ?: hoofdbrandstof.consumptionCombined?.toDoubleOrNull()
     val co2EmissionCombined = hoofdbrandstof.co2EmissionCombined?.toDoubleOrNull()
 
     val productionYear = parseProductionYear(firstAdmissionDate)

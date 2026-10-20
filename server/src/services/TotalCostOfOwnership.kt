@@ -8,7 +8,6 @@ const val DEFAULT_ANNUAL_KM = 15_000.0
 private const val QUARTERS_PER_YEAR = 4
 private const val MONTHS_PER_YEAR = 12
 
-/** Yearly and monthly cost of owning [car]: energy for [annualKm] (see [calculateFuelCost]) plus road tax. */
 fun calculateTco(car: Car, annualKm: Double): TcoResponse {
     val roadTaxPerQuarter = car.roadTaxPerQuarter
         ?: throw UnprocessableException("Geen wegenbelasting bekend voor auto ${car.id}")

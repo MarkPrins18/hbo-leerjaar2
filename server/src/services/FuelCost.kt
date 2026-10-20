@@ -11,7 +11,6 @@ const val LPG_PRICE_PER_L = 0.85
 const val ELECTRICITY_PRICE_PER_KWH = 0.45
 const val HYDROGEN_PRICE_PER_KG = 18.00
 
-/** Estimated energy cost for [distanceKm], based on [Car.consumptionCombined] (per 100 km) and the prices above. */
 fun calculateFuelCost(car: Car, distanceKm: Double): FuelCostResponse {
     val consumption = car.consumptionCombined
         ?: throw UnprocessableException("Geen verbruik bekend voor auto ${car.id}")

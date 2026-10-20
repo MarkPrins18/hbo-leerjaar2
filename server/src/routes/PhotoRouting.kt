@@ -26,8 +26,9 @@ fun Route.photoRoutes(
 
             var data: ByteArray? = null
             call.receiveMultipart().forEachPart { part ->
-                if (part is PartData.FileItem && part.name == "photo" && data == null) {
-                    data = part.provider().readRemaining(MAX_PHOTO_BYTES + 1L).readByteArray()
+                val file = part as? PartData.FileItem
+                if (file != null && file.name == "photo" && data == null) {
+                    data = file.provider().readRemaining(MAX_PHOTO_BYTES + 1L).readByteArray()
                 }
                 part.release()
             }

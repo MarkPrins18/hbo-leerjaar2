@@ -12,16 +12,6 @@ import io.ktor.server.response.*
 import org.jetbrains.exposed.v1.exceptions.ExposedSQLException
 import services.ApiException
 
-/**
- * Translates exceptions into HTTP responses.
- * - Exceptions from services/Exception.kt are handled via ApiException, including our own 413 and 415
- *   for uploaded files (FileTooLargeException, UnsupportedFileTypeException).
- * - Thrown by Ktor itself, never throw these yourself: BadRequestException and parameter exceptions (400,
- *   from receive() and getOrFail()), NotFoundException (404), PayloadTooLargeException (413)
- *   and UnsupportedMediaTypeException / CannotTransformContentToTypeException (415).
- * - Duplicate keys and foreign key errors from the database become 409.
- * - 500: everything else. The details are logged, not sent to the client.
- */
 fun Application.configureStatusPages() {
     install(StatusPages) {
         // Thrown by getOrFail(); Ktor's own messages are English

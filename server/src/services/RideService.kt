@@ -14,7 +14,7 @@ class RideService(
 ) {
     suspend fun startRide(reservationId: Int, userId: Int): Ride {
         val reservation = reservationRepository.getReservationById(reservationId)
-            ?: throw ResourceNotFoundException("Reservering $reservationId niet gevonden")
+            ?: throw ResourceNotFoundException("Reservering", reservationId)
 
         if (reservation.userId != userId) {
             throw ForbiddenException()
@@ -37,9 +37,9 @@ class RideService(
             throw ValidationException("Afstand en acceleraties mogen niet negatief zijn")
         }
         val ride = rideRepository.getRideById(rideId)
-            ?: throw ResourceNotFoundException("Rit $rideId niet gevonden")
+            ?: throw ResourceNotFoundException("Rit", rideId)
         val reservation = reservationRepository.getReservationById(ride.reservationId)
-            ?: throw ResourceNotFoundException("Reservering ${ride.reservationId} niet gevonden")
+            ?: throw ResourceNotFoundException("Reservering", ride.reservationId)
 
         if (reservation.userId != userId) {
             throw ForbiddenException()
@@ -51,6 +51,6 @@ class RideService(
         val bonusPoints = calculateBonusPoints(request.distanceM, request.avgAcceleration, request.avgDeceleration)
         return rideRepository.finishRide(
             rideId, Clock.System.now(), request.distanceM, request.avgAcceleration, request.avgDeceleration, bonusPoints
-        ) ?: throw ResourceNotFoundException("Rit $rideId niet gevonden")
+        ) ?: throw ResourceNotFoundException("Rit", rideId)
     }
 }

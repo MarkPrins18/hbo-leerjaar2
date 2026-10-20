@@ -91,7 +91,6 @@ private class FakeFuelCostCarRepository(vararg cars: Car) : CarRepository {
 
     override suspend fun getCarById(carId: Int): Car? = cars[carId]
 
-    /** Only the consumption is filled in by the Gemini fallback. */
     override suspend fun updateCar(carId: Int, change: CarChangeDto): Car? {
         val car = cars[carId] as? BEVCar ?: return null
         return car.copy(consumptionCombined = change.consumptionCombined ?: car.consumptionCombined)
@@ -104,7 +103,6 @@ private class FakeFuelCostCarRepository(vararg cars: Car) : CarRepository {
     override suspend fun deleteCar(carId: Int): Boolean = TODO()
 }
 
-/** Returns [estimate], or fails like an unreachable Gemini API when [fail] is set. */
 private class FakeFuelCostEstimator(
     private val estimate: CarCostEstimate? = null,
     private val fail: Boolean = false

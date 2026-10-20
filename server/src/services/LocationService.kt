@@ -13,10 +13,9 @@ class LocationService(
     private val locationRepository: LocationRepository,
     private val reservationRepository: ReservationRepository
 ) {
-    /** Only the owner and a renter with a confirmed reservation that is active right now may see the location. */
     suspend fun getMapsUrl(carId: Int, userId: Int): String {
         val car = carRepository.getCarById(carId)
-            ?: throw ResourceNotFoundException("Auto $carId niet gevonden")
+            ?: throw ResourceNotFoundException("Auto", carId)
 
         if (car.userId != userId && !hasActiveReservation(carId, userId)) throw ForbiddenException()
 

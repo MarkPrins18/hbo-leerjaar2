@@ -19,6 +19,5 @@ interface CarRepository {
     /** Returns the updated car, or null if no car exists with id [carId]. */
     suspend fun updateCar(carId: Int, change: CarChangeDto): Car?
 
-    /** Returns true if a car was deleted. */
     suspend fun deleteCar(carId: Int): Boolean
 }
