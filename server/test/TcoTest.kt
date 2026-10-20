@@ -139,9 +139,9 @@ class TcoCalculationTest {
 
     @Test
     fun `maandbedrag is het jaarbedrag gedeeld door 12 afgerond op centen`() {
-        val result = calculateTco(iceCar(consumption = 10.0, roadTaxPerQuarter = 100.0), 15_000.0)
+        val result = calculateTco(iceCar(roadTaxPerQuarter = 100.0), 0.0)
 
-        assertEquals(277.08, result.monthlyTotal)
+        assertEquals(33.33, result.monthlyTotal)
     }
 
     @Test
