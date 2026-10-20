@@ -44,7 +44,9 @@ fun Application.configureRouting() {
     val rideService = RideService(rideRepository, reservationRepository)
     val locationService = LocationService(carRepository, locationRepository, reservationRepository)
     val userService = UserService(userRepository)
-    val authService = AuthService(userRepository, TokenService(jwtConfig()))
+    val tokenService = TokenService(jwtConfig())
+    val authService = AuthService(userRepository, tokenService)
+    configureAuthentication(tokenService)
     routing {
         swaggerUI(path = "swagger", swaggerFile = "openapi/documentation.yaml")
         carRoutes(carService, carImportService, carCostService)
