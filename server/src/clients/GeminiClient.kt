@@ -16,7 +16,7 @@ import models.*
 import models.gemini.*
 import services.ExternalServiceException
 
-class GeminiClient(private val apiKey: String, private val model: String) {
+class GeminiClient(private val apiKey: String, private val model: String) : CostEstimator {
 
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -41,7 +41,7 @@ class GeminiClient(private val apiKey: String, private val model: String) {
         required = listOf("roadTaxPerQuarter", "consumptionCombined")
     )
 
-    suspend fun estimateCarCosts(car: Car): CarCostEstimate {
+    override suspend fun estimateCarCosts(car: Car): CarCostEstimate {
         val request = GeminiRequest(
             contents = listOf(GeminiContent(parts = listOf(GeminiPart(text = buildPrompt(car))))),
             generationConfig = GeminiGenerationConfig(

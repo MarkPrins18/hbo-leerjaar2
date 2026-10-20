@@ -12,6 +12,7 @@ import io.ktor.server.util.getOrFail
 import io.ktor.utils.io.readRemaining
 import kotlinx.io.readByteArray
 import requireAuthentication
+import services.MAX_PHOTO_BYTES
 import services.PhotoService
 import services.ValidationException
 
@@ -26,7 +27,7 @@ fun Route.photoRoutes(
             var data: ByteArray? = null
             call.receiveMultipart().forEachPart { part ->
                 if (part is PartData.FileItem && part.name == "photo" && data == null) {
-                    data = part.provider().readRemaining().readByteArray()
+                    data = part.provider().readRemaining(MAX_PHOTO_BYTES + 1L).readByteArray()
                 }
                 part.release()
             }

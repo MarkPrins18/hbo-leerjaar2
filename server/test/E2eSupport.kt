@@ -21,20 +21,22 @@ import kotlin.uuid.Uuid
 const val SEED_PASSWORD = "Welkom123!"
 
 /**
- * Starts the full app from application.yaml, but with its own in-memory database and
- * photo directory, so tests never touch the local data in resources/data/database/.
+ * Starts the full app from application.yaml, but with its own database file and photo directory
+ * in a temporary directory, so tests never touch the local data in resources/data/database/.
  * The app resets and seeds that database on start, so every test begins with the seed data.
+ * Not in-memory: an in-memory H2 database stays open after its first session closes, which breaks
+ * the check constraints of that session's tables (see chk_reservation_status).
  */
 fun e2eTest(block: suspend (HttpClient) -> Unit) {
-    val name = "e2e-${Uuid.random()}"
-    val photoDirectory = Path(SystemTemporaryDirectory, name)
+    val directory = Path(SystemTemporaryDirectory, "e2e-${Uuid.random()}")
+    val photoDirectory = Path(directory, "photos")
 
     try {
         testApplication {
             environment {
                 config = ApplicationConfig("application.yaml").mergeWith(
                     MapApplicationConfig(
-                        "database.url" to "jdbc:h2:mem:$name;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1",
+                        "database.url" to "jdbc:h2:file:$directory/carshare;MODE=MySQL;DATABASE_TO_LOWER=TRUE;TRACE_LEVEL_FILE=0",
                         "photos.directory" to photoDirectory.toString()
                     )
                 )
@@ -44,6 +46,8 @@ fun e2eTest(block: suspend (HttpClient) -> Unit) {
     } finally {
         PhotoStorage(photoDirectory).clear()
         SystemFileSystem.delete(photoDirectory, mustExist = false)
+        PhotoStorage(directory).clear()
+        SystemFileSystem.delete(directory, mustExist = false)
     }
 }
 

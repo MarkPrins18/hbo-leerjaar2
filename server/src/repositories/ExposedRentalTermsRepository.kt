@@ -4,6 +4,7 @@ import dto.RentalTermsRequest
 import mappers.toRentalTerms
 import models.RentalTerms
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.statements.UpdateBuilder
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
@@ -25,26 +26,24 @@ class ExposedRentalTermsRepository : RentalTermsRepository {
         val exists = !RentalTermsTable.selectAll().where { RentalTermsTable.carId eq carId }.empty()
         if (exists) {
             RentalTermsTable.update({ RentalTermsTable.carId eq carId }) {
-                it[RentalTermsTable.pricePerDay] = request.pricePerDay.toBigDecimal()
-                it[RentalTermsTable.pickupLocation] = request.pickupLocation
-                it[RentalTermsTable.pickupTimeStart] = request.pickupTimeStart
-                it[RentalTermsTable.pickupTimeEnd] = request.pickupTimeEnd
-                it[RentalTermsTable.returnLocation] = request.returnLocation
-                it[RentalTermsTable.returnTimeStart] = request.returnTimeStart
-                it[RentalTermsTable.returnTimeEnd] = request.returnTimeEnd
+                it.setRentalTerms(request)
             }
         } else {
             RentalTermsTable.insert {
                 it[RentalTermsTable.carId] = carId
-                it[RentalTermsTable.pricePerDay] = request.pricePerDay.toBigDecimal()
-                it[RentalTermsTable.pickupLocation] = request.pickupLocation
-                it[RentalTermsTable.pickupTimeStart] = request.pickupTimeStart
-                it[RentalTermsTable.pickupTimeEnd] = request.pickupTimeEnd
-                it[RentalTermsTable.returnLocation] = request.returnLocation
-                it[RentalTermsTable.returnTimeStart] = request.returnTimeStart
-                it[RentalTermsTable.returnTimeEnd] = request.returnTimeEnd
+                it.setRentalTerms(request)
             }
         }
         RentalTermsTable.selectAll().where { RentalTermsTable.carId eq carId }.single().toRentalTerms()
+    }
+
+    private fun UpdateBuilder<*>.setRentalTerms(request: RentalTermsRequest) {
+        this[RentalTermsTable.pricePerDay] = request.pricePerDay.toBigDecimal()
+        this[RentalTermsTable.pickupLocation] = request.pickupLocation
+        this[RentalTermsTable.pickupTimeStart] = request.pickupTimeStart
+        this[RentalTermsTable.pickupTimeEnd] = request.pickupTimeEnd
+        this[RentalTermsTable.returnLocation] = request.returnLocation
+        this[RentalTermsTable.returnTimeStart] = request.returnTimeStart
+        this[RentalTermsTable.returnTimeEnd] = request.returnTimeEnd
     }
 }

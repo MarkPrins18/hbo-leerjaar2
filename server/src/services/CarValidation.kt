@@ -11,6 +11,7 @@ import kotlin.time.Clock
 
 // Upper limits follow the database columns: decimal(6,2) = 9999.99, decimal(7,2) = 99999.99
 private const val LICENSE_PLATE_MAX_LENGTH = 20
+private val DUTCH_LICENSE_PLATE = Regex("[A-Z0-9]{6}")
 private const val NAME_MAX_LENGTH = 100
 private const val COLOR_MAX_LENGTH = 50
 private val SEATS = 1..9
@@ -22,13 +23,18 @@ private val ROAD_TAX_PER_QUARTER = 0.0..99999.99
 private val TANK_CAPACITY_L = 0.01..9999.99
 private val BATTERY_CAPACITY_KWH = 0.01..99999.99
 private val TANK_CAPACITY_KG_H2 = 0.01..9999.99
-private const val MAX_PHOTO_BYTES = 5 * 1024 * 1024
+internal const val MAX_PHOTO_BYTES = 5 * 1024 * 1024
 private const val LOCATION_MAX_LENGTH = 255
 private val PRICE_PER_DAY = 0.01..999999.99
+private val DISTANCE_KM = 0.0..1_000_000.0
 
+/** The RDW only knows Dutch license plates, so check the format before calling it. */
 fun CarDto.validate() {
-    checkText("licensePlate", normalizeLicensePlate(licensePlate), LICENSE_PLATE_MAX_LENGTH)
-    checkRange("userId", userId, 1..Int.MAX_VALUE)
+    val normalizedLicensePlate = normalizeLicensePlate(licensePlate)
+    checkText("licensePlate", normalizedLicensePlate, LICENSE_PLATE_MAX_LENGTH)
+    if (!normalizedLicensePlate.matches(DUTCH_LICENSE_PLATE)) {
+        throw ValidationException("'licensePlate' moet een Nederlands kenteken zijn van 6 letters en cijfers, bijvoorbeeld AB-123-C")
+    }
     trim?.let { checkText("trim", it, NAME_MAX_LENGTH) }
     tankCapacityL?.let { checkRange("tankCapacityL", it, TANK_CAPACITY_L) }
     batteryCapacityKWh?.let { checkRange("batteryCapacityKWh", it, BATTERY_CAPACITY_KWH) }
@@ -41,7 +47,6 @@ fun CarChangeDto.validate(car: Car) {
     checkFieldsMatchSubtype(car)
 
     licensePlate?.let { checkText("licensePlate", normalizeLicensePlate(it), LICENSE_PLATE_MAX_LENGTH) }
-    userId?.let { checkRange("userId", it, 1..Int.MAX_VALUE) }
     brand?.let { checkText("brand", it, NAME_MAX_LENGTH) }
     model?.let { checkText("model", it, NAME_MAX_LENGTH) }
     trim?.let { checkText("trim", it, NAME_MAX_LENGTH) }
@@ -97,6 +102,15 @@ fun CarCostEstimate.validate() {
 }
 
 private fun Double?.isNullOrIn(range: ClosedFloatingPointRange<Double>) = this == null || this in range
+
+/** NaN and infinity fall outside the range as well. */
+fun validateDistanceKm(distanceKm: Double) {
+    checkRange("distanceKm", distanceKm, DISTANCE_KM)
+}
+
+fun validateAnnualKm(annualKm: Double) {
+    checkRange("annualKm", annualKm, DISTANCE_KM)
+}
 
 fun CarFilter.validate() {
     maxPrice?.let { checkNotNegative("maxPrice", it) }

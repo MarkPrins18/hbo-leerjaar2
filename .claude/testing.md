@@ -33,11 +33,11 @@ Begin bij de laagste laag waar het gedrag zit. Test een regel niet opnieuw in ee
 
 ## Laag 3: route / e2e
 - Gebruik altijd `e2eTest { client -> ... }` uit `server/test/E2eSupport.kt`, nooit een kale `testApplication`.
-- `e2eTest` start de hele app vanuit `application.yaml`, maar zet `database.url` op een unieke in-memory H2-database en `photos.directory` op een tijdelijke map. Zo blijft je lokale data in `server/resources/data/database/` onaangeraakt. Er is geen aparte test-config of aanpassing in `module.yaml` nodig.
+- `e2eTest` start de hele app vanuit `application.yaml`, maar zet `database.url` op een eigen H2-bestand en `photos.directory` op een map, beide in een tijdelijke map die na de test wordt opgeruimd. Geen in-memory H2: daarbij breken de check-constraints (zie `E2eSupport.kt`). Zo blijft je lokale data in `server/resources/data/database/` onaangeraakt. Er is geen aparte test-config of aanpassing in `module.yaml` nodig.
 - Elke test start een eigen app; de database is dus altijd gereset en geseed. Tests zijn onafhankelijk, maar trager dan laag 1 en 2.
 - De `client` heeft JSON (ContentNegotiation) al ingesteld, dus `response.body<Photo>()` werkt direct.
 - Auth: `val token = client.login(userId)` logt in als seed-gebruiker `eigenaar<id>@carshare.nl` (zie `resources/data/seed/users.sql`). Stuur het token mee met `bearerAuth(token)`.
-- Seed-gebruiker 1 is eigenaar van auto 1, gebruiker 2 van auto 2, enzovoort. Elke seed-auto heeft één seedfoto. Gebruik een andere gebruiker dan de eigenaar om 403 te testen, en geen token om 401 te testen.
+- Een gebruiker kan meerdere auto's hebben. Auto 1 t/m 3 zijn van gebruiker 1 t/m 3; zoek voor andere auto's de eigenaar op in `resources/data/seed/car.sql` (`user_id`). Elke seed-auto heeft één seedfoto. Gebruik een andere gebruiker dan de eigenaar om 403 te testen, en geen token om 401 te testen.
 - Multipart (foto-upload):
   ```kotlin
   setBody(MultiPartFormDataContent(formData {

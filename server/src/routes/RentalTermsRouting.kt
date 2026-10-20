@@ -1,5 +1,7 @@
 package routes
 
+import authenticatedUserId
+import requireAuthentication
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
@@ -15,11 +17,14 @@ fun Route.rentalTermsRoutes(rentalTermsService: RentalTermsService) {
             val rentalTerms = rentalTermsService.getRentalTerms(carId)
             call.respond(HttpStatusCode.OK, rentalTerms)
         }
-        put {
-            val carId = call.parameters.getOrFail<Int>("id")
-            val request = call.receive<RentalTermsRequest>()
-            val rentalTerms = rentalTermsService.setRentalTerms(carId, request)
-            call.respond(HttpStatusCode.OK, rentalTerms)
+        requireAuthentication {
+            put {
+                val carId = call.parameters.getOrFail<Int>("id")
+                val userId = call.authenticatedUserId()
+                val request = call.receive<RentalTermsRequest>()
+                val rentalTerms = rentalTermsService.setRentalTerms(carId, userId, request)
+                call.respond(HttpStatusCode.OK, rentalTerms)
+            }
         }
     }
 }

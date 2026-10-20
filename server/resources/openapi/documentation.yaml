@@ -64,7 +64,7 @@ paths:
                   $ref: "#/components/schemas/Car"
         "400":
           description: Ongeldige filterwaarde (geen getal of buiten bereik), of maxDistanceKm, latitude en longitude niet alle drie opgegeven
-  /cars/{licensePlate}:
+  /cars/license-plate/{licensePlate}:
     get:
       summary: Haal een auto op via het kenteken
       operationId: getCarByLicensePlate
@@ -89,11 +89,38 @@ paths:
           description: Auto niet gevonden
 
   /cars/{id}:
+    get:
+      summary: Haal een auto op via het id
+      operationId: getCarById
+      tags:
+        - Cars
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Het id van de auto
+          schema:
+            type: integer
+            format: int32
+          example: 1
+      responses:
+        "200":
+          description: Auto gevonden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Car"
+        "400":
+          description: Ongeldig auto-id
+        "404":
+          description: Auto niet gevonden
     patch:
       summary: Werk een auto bij via het id
       operationId: updateCar
       tags:
         - Cars
+      security:
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -118,15 +145,21 @@ paths:
                 $ref: "#/components/schemas/Car"
         "400":
           description: Ongeldige waarde of veld hoort niet bij het type auto
+        "401":
+          description: Niet ingelogd
+        "403":
+          description: Ingelogde gebruiker is niet de eigenaar van de auto
         "404":
           description: Auto niet gevonden
         "409":
-          description: Kenteken bestaat al of eigenaar bestaat niet
+          description: Kenteken bestaat al
     delete:
       summary: Verwijder een auto via het id
       operationId: deleteCar
       tags:
         - Cars
+      security:
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -139,6 +172,10 @@ paths:
       responses:
         "204":
           description: Auto succesvol verwijderd
+        "401":
+          description: Niet ingelogd
+        "403":
+          description: Ingelogde gebruiker is niet de eigenaar van de auto
         "404":
           description: Auto niet gevonden
   /cars/{id}/cost-data:
@@ -147,10 +184,13 @@ paths:
       description: >
         Vraagt Gemini alleen om de waardes die nog leeg zijn (roadTaxPerQuarter, consumptionCombined)
         en slaat ze op bij de auto. Zijn beide al ingevuld, dan wordt Gemini niet aangeroepen.
-        Seedauto 2 (BEV) heeft geen verbruik en is daarom handig om mee te testen.
+        Alleen de ingelogde eigenaar van de auto mag dit doen.
+        Seedauto 2 (BEV, eigenaar 2) heeft geen verbruik en is daarom handig om mee te testen.
       operationId: fillMissingCostData
       tags:
         - Cars
+      security:
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -167,16 +207,120 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Car"
+        "401":
+          description: Niet ingelogd
+        "403":
+          description: Ingelogde gebruiker is niet de eigenaar van de auto
         "404":
           description: Auto niet gevonden
+        "502":
+          description: De Gemini API is niet bereikbaar of gaf een ongeldig antwoord
+  /cars/{id}/fuel-cost:
+    get:
+      summary: Bereken de geschatte verbruikskosten voor een afstand
+      description: >
+        Alleen de ingelogde eigenaar van de auto mag de kosten opvragen. De berekening hangt af van de categorie:
+        ICE (liter brandstof), BEV (kWh stroom) of FCEV (kg waterstof), met vaste prijzen per eenheid.
+        Is het verbruik van de auto onbekend, dan wordt het eerst via Gemini aangevuld.
+      operationId: getFuelCost
+      tags:
+        - Cars
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Het id van de auto
+          schema:
+            type: integer
+            format: int32
+          example: 1
+        - name: distanceKm
+          in: query
+          required: true
+          description: De afstand in km (0 tot en met 1.000.000)
+          schema:
+            type: number
+            format: double
+          example: 100
+      responses:
+        "200":
+          description: Geschatte verbruikskosten
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FuelCost"
+        "400":
+          description: distanceKm ontbreekt, is geen getal of is negatief
+        "401":
+          description: Niet ingelogd
+        "403":
+          description: De ingelogde gebruiker is geen eigenaar van deze auto
+        "404":
+          description: Auto niet gevonden
+        "422":
+          description: Het verbruik van de auto is onbekend, ook na aanvullen via Gemini
+        "502":
+          description: De Gemini API is niet bereikbaar of gaf een ongeldig antwoord
+  /cars/{id}/tco:
+    get:
+      summary: Bereken de Total Cost of Ownership per jaar en per maand
+      description: >
+        Alleen de ingelogde eigenaar van de auto mag de TCO opvragen. De TCO bestaat uit de verbruikskosten
+        voor annualKm (dezelfde berekening als fuel-cost) plus de wegenbelasting (roadTaxPerQuarter x 4).
+        Zijn het verbruik of de wegenbelasting onbekend, dan worden ze eerst via Gemini aangevuld.
+      operationId: getTco
+      tags:
+        - Cars
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Het id van de auto
+          schema:
+            type: integer
+            format: int32
+          example: 1
+        - name: annualKm
+          in: query
+          required: false
+          description: Aantal km per jaar (0 tot en met 1.000.000), standaard 15.000
+          schema:
+            type: number
+            format: double
+            default: 15000
+          example: 15000
+      responses:
+        "200":
+          description: De jaarlijkse en maandelijkse TCO
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tco"
+        "400":
+          description: annualKm is geen getal, is negatief of is te groot
+        "401":
+          description: Niet ingelogd
+        "403":
+          description: De ingelogde gebruiker is geen eigenaar van deze auto
+        "404":
+          description: Auto niet gevonden
+        "422":
+          description: Het verbruik of de wegenbelasting van de auto is onbekend, ook na aanvullen via Gemini
         "502":
           description: De Gemini API is niet bereikbaar of gaf een ongeldig antwoord
   /cars/import:
     post:
       summary: Importeer een auto via het kenteken
+      description: De ingelogde gebruiker wordt de eigenaar van de auto.
       operationId: importCar
       tags:
         - Cars
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -192,8 +336,10 @@ paths:
                 $ref: "#/components/schemas/Car"
         "400":
           description: Ongeldige waarde in de request
+        "401":
+          description: Niet ingelogd
         "409":
-          description: Kenteken bestaat al of eigenaar bestaat niet
+          description: Kenteken bestaat al
         "422":
           description: Kenteken onbekend bij de RDW, of RDW-gegevens niet te verwerken
         "502":
@@ -299,8 +445,8 @@ paths:
           description: Foto niet gevonden
   /cars/{carId}/maps:
     get:
-      summary: Haal de Google Maps-route naar een auto op
-      description: Geeft een Google Maps-link terug met de laatst bekende locatie van de auto als bestemming. Alleen voor ingelogde gebruikers.
+      summary: Open de locatie van een auto in Google Maps
+      description: Geeft een Google Maps-URL met de laatst bekende locatie van de auto. Alleen voor de eigenaar of een huurder met een bevestigde reservering die nu loopt.
       operationId: getCarLocationInMaps
       tags:
         - Maps
@@ -317,7 +463,7 @@ paths:
           example: 1
       responses:
         "200":
-          description: Google Maps-link naar de laatst bekende locatie van de auto
+          description: URL van de laatst bekende locatie in Google Maps
           content:
             text/plain:
               schema:
@@ -328,8 +474,10 @@ paths:
           description: Ongeldig auto-id
         "401":
           description: Niet ingelogd
+        "403":
+          description: De ingelogde gebruiker is geen eigenaar en heeft geen actieve reservering voor deze auto
         "404":
-          description: Geen locatie bekend voor deze auto
+          description: Auto niet gevonden of geen locatie bekend voor deze auto
   /cars/{id}/rental-terms:
     get:
       summary: Haal de verhuurvoorwaarden van een auto op
@@ -358,10 +506,12 @@ paths:
           description: Auto niet gevonden of geen verhuurvoorwaarden bekend
     put:
       summary: Stel de verhuurvoorwaarden van een auto in
-      description: Maakt de verhuurvoorwaarden aan, of overschrijft ze als ze al bestaan.
+      description: Alleen de ingelogde eigenaar van de auto mag dit. Maakt de verhuurvoorwaarden aan, of overschrijft ze als ze al bestaan.
       operationId: setRentalTerms
       tags:
         - RentalTerms
+      security:
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -386,6 +536,10 @@ paths:
                 $ref: "#/components/schemas/RentalTerms"
         "400":
           description: Ongeldige waarde, bijvoorbeeld een prijs van 0 of lager
+        "401":
+          description: Niet ingelogd
+        "403":
+          description: Ingelogde gebruiker is niet de eigenaar van de auto
         "404":
           description: Auto niet gevonden
   /reservations:
@@ -732,7 +886,6 @@ components:
       type: object
       example:
         licensePlate: "R-816-LF"
-        userId: 1
         trim: null
         tankCapacityL: null
         automaticTransmission: true
@@ -742,13 +895,9 @@ components:
         roadTaxPerQuarter: null
       required:
         - licensePlate
-        - userId
       properties:
         licensePlate:
           type: string
-        userId:
-          type: integer
-          format: int32
         trim:
           type: string
           nullable: true
@@ -826,10 +975,6 @@ components:
       properties:
         licensePlate:
           type: string
-          nullable: true
-        userId:
-          type: integer
-          format: int32
           nullable: true
         brand:
           type: string
@@ -1022,6 +1167,83 @@ components:
         uploadedAt:
           type: string
           format: date-time
+    Tco:
+      type: object
+      required:
+        - carId
+        - annualKm
+        - annualFuelCost
+        - annualRoadTax
+        - annualTotal
+        - monthlyTotal
+      properties:
+        carId:
+          type: integer
+          format: int32
+          example: 1
+        annualKm:
+          type: number
+          format: double
+          example: 15000
+        annualFuelCost:
+          type: number
+          format: double
+          description: Verbruikskosten per jaar in EUR
+          example: 2369.25
+        annualRoadTax:
+          type: number
+          format: double
+          description: Wegenbelasting per jaar in EUR
+          example: 600.0
+        annualTotal:
+          type: number
+          format: double
+          description: Totale kosten per jaar in EUR
+          example: 2969.25
+        monthlyTotal:
+          type: number
+          format: double
+          description: Totale kosten per maand in EUR
+          example: 247.44
+
+    FuelCost:
+      type: object
+      required:
+        - carId
+        - category
+        - distanceKm
+        - consumptionPer100Km
+        - unit
+        - pricePerUnit
+        - estimatedCost
+      properties:
+        carId:
+          type: integer
+          format: int32
+        category:
+          type: string
+          enum: [ICE, BEV, FCEV]
+        distanceKm:
+          type: number
+          format: double
+          example: 100
+        consumptionPer100Km:
+          type: number
+          format: double
+          example: 8.1
+        unit:
+          type: string
+          enum: [L, kWh, kg]
+        pricePerUnit:
+          type: number
+          format: double
+          description: Prijs in EUR per eenheid
+          example: 1.95
+        estimatedCost:
+          type: number
+          format: double
+          description: Geschatte kosten in EUR, afgerond op 2 decimalen
+          example: 15.8
     User:
       type: object
       required:
