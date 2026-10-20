@@ -11,6 +11,7 @@ import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
@@ -30,6 +31,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import kotlin.uuid.Uuid
 
 // ==================== Test data ====================
@@ -536,6 +538,40 @@ class CarRoutesTest {
         }
 
         assertEquals(HttpStatusCode.BadRequest, response.status)
+    }
+
+    @Test
+    fun `ongeldig kenteken importeren geeft 400 zonder de RDW te vragen`() = e2eTest { client ->
+        val token = client.login(OWNER_ID)
+
+        assertEquals(HttpStatusCode.BadRequest, client.importCar(CarDto(licensePlate = "!!"), token).status)
+    }
+
+    @Test
+    fun `ongeldige JSON geeft 400 met een Nederlandse melding`() = e2eTest { client ->
+        val token = client.login(OWNER_ID)
+
+        val response = client.post("/cars/import") {
+            bearerAuth(token)
+            contentType(ContentType.Application.Json)
+            setBody("geen json")
+        }
+
+        assertEquals(HttpStatusCode.BadRequest, response.status)
+        assertTrue(response.bodyAsText().startsWith("400: Ongeldige body"))
+    }
+
+    @Test
+    fun `body zonder JSON-content-type geeft 415`() = e2eTest { client ->
+        val token = client.login(OWNER_ID)
+
+        val response = client.post("/cars/import") {
+            bearerAuth(token)
+            contentType(ContentType.Text.Plain)
+            setBody("AB123C")
+        }
+
+        assertEquals(HttpStatusCode.UnsupportedMediaType, response.status)
     }
 
     @Test

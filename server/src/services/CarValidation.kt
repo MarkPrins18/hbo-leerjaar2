@@ -11,6 +11,7 @@ import kotlin.time.Clock
 
 // Upper limits follow the database columns: decimal(6,2) = 9999.99, decimal(7,2) = 99999.99
 private const val LICENSE_PLATE_MAX_LENGTH = 20
+private val DUTCH_LICENSE_PLATE = Regex("[A-Z0-9]{6}")
 private const val NAME_MAX_LENGTH = 100
 private const val COLOR_MAX_LENGTH = 50
 private val SEATS = 1..9
@@ -27,8 +28,13 @@ private const val LOCATION_MAX_LENGTH = 255
 private val PRICE_PER_DAY = 0.01..999999.99
 private val DISTANCE_KM = 0.0..1_000_000.0
 
+/** The RDW only knows Dutch license plates, so check the format before calling it. */
 fun CarDto.validate() {
-    checkText("licensePlate", normalizeLicensePlate(licensePlate), LICENSE_PLATE_MAX_LENGTH)
+    val normalizedLicensePlate = normalizeLicensePlate(licensePlate)
+    checkText("licensePlate", normalizedLicensePlate, LICENSE_PLATE_MAX_LENGTH)
+    if (!normalizedLicensePlate.matches(DUTCH_LICENSE_PLATE)) {
+        throw ValidationException("'licensePlate' moet een Nederlands kenteken zijn van 6 letters en cijfers, bijvoorbeeld AB-123-C")
+    }
     trim?.let { checkText("trim", it, NAME_MAX_LENGTH) }
     tankCapacityL?.let { checkRange("tankCapacityL", it, TANK_CAPACITY_L) }
     batteryCapacityKWh?.let { checkRange("batteryCapacityKWh", it, BATTERY_CAPACITY_KWH) }

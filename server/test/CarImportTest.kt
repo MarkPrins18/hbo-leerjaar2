@@ -16,6 +16,8 @@ import services.ConflictException
 import services.ExternalServiceException
 import services.ResourceNotFoundException
 import services.UnprocessableException
+import services.ValidationException
+import services.validate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -110,6 +112,40 @@ private class FakeVehicleRegistry(
     override suspend fun getFuel(licensePlate: String): List<RdwFuelDto> {
         calls++
         return listOf(rdwFuel())
+    }
+}
+
+// ==================== 1. Validation: CarDto.validate() ====================
+
+class CarDtoValidationTest {
+    @Test
+    fun `kenteken van 6 letters en cijfers is geldig`() {
+        importRequest("AB123C").validate()
+    }
+
+    @Test
+    fun `kenteken met streepjes en kleine letters is geldig`() {
+        importRequest("ab-12-3c").validate()
+    }
+
+    @Test
+    fun `kenteken van 5 tekens geeft ValidationException`() {
+        assertFailsWith<ValidationException> { importRequest("AB123").validate() }
+    }
+
+    @Test
+    fun `kenteken van 7 tekens geeft ValidationException`() {
+        assertFailsWith<ValidationException> { importRequest("AB123CD").validate() }
+    }
+
+    @Test
+    fun `kenteken met speciale tekens geeft ValidationException`() {
+        assertFailsWith<ValidationException> { importRequest("AB!23C").validate() }
+    }
+
+    @Test
+    fun `leeg kenteken geeft ValidationException`() {
+        assertFailsWith<ValidationException> { importRequest(" - ").validate() }
     }
 }
 
