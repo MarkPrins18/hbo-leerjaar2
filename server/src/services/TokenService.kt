@@ -3,12 +3,13 @@ package services
 import com.auth0.jwt.JWT
 import com.auth0.jwt.JWTVerifier
 import com.auth0.jwt.algorithms.Algorithm
+import com.auth0.jwt.RegisteredClaims
 import config.JwtConfig
 import models.User
-import java.util.Date
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 
-class TokenService(private val config: JwtConfig) {
+class TokenService(val config: JwtConfig) {
     private val algorithm = Algorithm.HMAC256(config.secret)
 
     val verifier: JWTVerifier = JWT.require(algorithm)
@@ -17,13 +18,13 @@ class TokenService(private val config: JwtConfig) {
         .build()
 
     fun createToken(user: User): String {
-        val expiresAt = System.currentTimeMillis() + config.expirationMinutes.minutes.inWholeMilliseconds
+        val expiresAt = Clock.System.now() + config.expirationMinutes.minutes
         return JWT.create()
             .withIssuer(config.issuer)
             .withAudience(config.audience)
             .withSubject(user.id.toString())
             .withClaim(EMAIL_CLAIM, user.email)
-            .withExpiresAt(Date(expiresAt))
+            .withClaim(RegisteredClaims.EXPIRES_AT, expiresAt.epochSeconds)
             .sign(algorithm)
     }
 
