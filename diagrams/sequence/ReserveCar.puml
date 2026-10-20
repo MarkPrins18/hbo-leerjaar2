@@ -1,0 +1,56 @@
+@startuml ReserveCar
+title Sequentiediagram #9: auto reserveren (POST /reservations)
+
+actor Huurder as g
+participant "Android-app" as app
+participant "reservationRoutes" as rt
+participant "ReservationService" as svc
+participant "ReservationRepository" as repo
+database "H2-database" as db
+
+g -> app : reserveer()
+app -> rt : POST /reservations {carId, userId, startTime, endTime}
+rt -> svc : createReservation(request)
+svc -> svc : startTime > nu en endTime > startTime?
+
+group flow 3a [starttijd in het verleden of eindtijd niet na starttijd]
+    svc --> rt : throw ValidationException
+    rt --> app : 400 Bad Request (StatusPages)
+    app --> g : foutmelding (stap 1)
+end
+
+svc -> repo : carExists(carId)
+repo -> db : SELECT FROM car WHERE id
+db --> repo : 0 of 1 rij
+repo --> svc : Boolean
+svc -> repo : userExists(userId)
+repo -> db : SELECT FROM users WHERE id
+db --> repo : 0 of 1 rij
+repo --> svc : Boolean
+
+group flow 4a [auto of huurder bestaat niet]
+    svc --> rt : throw ResourceNotFoundException
+    rt --> app : 404 Not Found (StatusPages)
+    app --> g : foutmelding (einde)
+end
+
+svc -> repo : hasActiveOverlap(carId, startTime, endTime)
+repo -> db : SELECT FROM reservation (actief + overlap)
+db --> repo : rijen
+repo --> svc : Boolean
+
+group flow 5a [tijdsblok overlapt met actieve reservering]
+    svc --> rt : throw ConflictException
+    rt --> app : 409 Conflict (StatusPages)
+    app --> g : ander tijdsblok (stap 1)
+end
+
+svc -> repo : createReservation(..., CONFIRMED)
+repo -> db : INSERT INTO reservation
+db --> repo : id, daarna SELECT van de nieuwe rij
+repo --> svc : Reservation
+svc --> rt : Reservation
+rt --> app : 201 Created + Reservation
+app --> g : toont bevestiging
+
+@enduml
