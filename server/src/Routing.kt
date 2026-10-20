@@ -2,6 +2,8 @@ import config.configureGemini
 import config.configureRdw
 import config.jwtConfig
 import config.photoStorage
+import services.CarCostService
+import services.CarImportService
 import services.CarService
 import routes.*
 import io.ktor.server.application.*
@@ -14,6 +16,7 @@ import repositories.ExposedRentalTermsRepository
 import repositories.ExposedReservationRepository
 import repositories.ExposedUserRepository
 import services.AuthService
+import services.MapService
 import services.PhotoService
 import services.RentalTermsService
 import services.ReservationService
@@ -30,29 +33,23 @@ fun Application.configureRouting() {
     val photoRepository = ExposedPhotoRepository()
     val photoStorage = photoStorage()
     val rentalTermsRepository = ExposedRentalTermsRepository()
-    val carService = CarService(
-        rdwClient,
-        configureGemini(),
-        carRepository,
-        locationRepository,
-        userRepository,
-        photoRepository,
-        photoStorage,
-        rentalTermsRepository
-    )
+    val carService = CarService(carRepository, locationRepository, photoRepository, photoStorage, rentalTermsRepository)
+    val carImportService = CarImportService(rdwClient, carRepository, userRepository)
+    val carCostService = CarCostService(configureGemini(), carRepository)
     val photoService = PhotoService(photoRepository, carRepository, photoStorage)
     val rentalTermsService = RentalTermsService(rentalTermsRepository, carRepository)
     val reservationRepository = ExposedReservationRepository()
     val reservationService = ReservationService(reservationRepository)
     val rideRepository = ExposedRideRepository()
     val rideService = RideService(rideRepository, reservationRepository)
+    val mapService = MapService(carRepository, locationRepository, reservationRepository)
     val userService = UserService(userRepository)
     val authService = AuthService(userRepository, TokenService(jwtConfig()))
     routing {
         swaggerUI(path = "swagger", swaggerFile = "openapi/documentation.yaml")
-        carRoutes(carService)
+        carRoutes(carService, carImportService, carCostService)
         photoRoutes(photoService)
-        mapsRoutes(locationRepository)
+        mapsRoutes(mapService)
         rentalTermsRoutes(rentalTermsService)
         reservationRoutes(reservationService)
         rideRoutes(rideService)

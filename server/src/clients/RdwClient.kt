@@ -13,7 +13,7 @@ import models.rdw.RdwFuelDto
 import models.rdw.RdwVehicleDto
 import mappers.normalizeLicensePlate
 
-class RdwClient(private val appToken: String) {
+class RdwClient(private val appToken: String) : VehicleRegistry {
 
     private val httpClient = HttpClient(CIO) {
         install(ContentNegotiation) {
@@ -21,7 +21,7 @@ class RdwClient(private val appToken: String) {
         }
     }
 
-    suspend fun getVehicle(licensePlate: String): RdwVehicleDto? {
+    override suspend fun getVehicle(licensePlate: String): RdwVehicleDto? {
         val response: List<RdwVehicleDto> = httpClient.get("https://opendata.rdw.nl/resource/m9d7-ebf2.json") {
             parameter("kenteken", normalizeLicensePlate(licensePlate))
             header("X-App-Token", appToken)
@@ -29,7 +29,7 @@ class RdwClient(private val appToken: String) {
         return response.firstOrNull()
     }
 
-    suspend fun getFuel(licensePlate: String): List<RdwFuelDto> {
+    override suspend fun getFuel(licensePlate: String): List<RdwFuelDto> {
         val result: List<RdwFuelDto> = httpClient.get(
             "https://opendata.rdw.nl/resource/8ys7-d773.json"
         ) {

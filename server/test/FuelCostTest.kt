@@ -1,8 +1,5 @@
-import clients.GeminiClient
-import clients.RdwClient
-import config.PhotoStorage
+import clients.CostEstimator
 import dto.CarChangeDto
-import dto.RentalTermsRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
@@ -10,9 +7,8 @@ import io.ktor.client.request.get
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.runBlocking
-import kotlinx.io.files.Path
-import kotlinx.io.files.SystemTemporaryDirectory
 import models.*
+import models.gemini.CarCostEstimate
 import repositories.*
 import responses.FuelCostResponse
 import services.*
@@ -20,7 +16,6 @@ import kotlin.math.round
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.uuid.Uuid
 
 // ==================== Test data ====================
 
@@ -92,39 +87,35 @@ private fun fcevCar(consumption: Double? = 0.8): Car = FCEVCar(
 // ==================== Fakes ====================
 
 private class FakeFuelCostCarRepository(vararg cars: Car) : CarRepository {
-    private val cars = cars.associateBy { it.id }
+    val cars = cars.associateBy { it.id }.toMutableMap()
 
     override suspend fun getCarById(carId: Int): Car? = cars[carId]
+
+    /** Only the consumption is filled in by the Gemini fallback. */
+    override suspend fun updateCar(carId: Int, change: CarChangeDto): Car? {
+        val car = cars[carId] as? BEVCar ?: return null
+        return car.copy(consumptionCombined = change.consumptionCombined ?: car.consumptionCombined)
+            .also { cars[carId] = it }
+    }
 
     override suspend fun getAllCars(): List<Car> = TODO()
     override suspend fun getCarByLicensePlate(licensePlate: String): Car? = TODO()
     override suspend fun createCar(car: Car): Car = TODO()
-    override suspend fun updateCar(carId: Int, change: CarChangeDto): Car? = TODO()
     override suspend fun deleteCar(carId: Int): Boolean = TODO()
 }
 
-private class UnusedLocationRepository : LocationRepository {
-    override suspend fun getLatestLocationByCarId(carId: Int): Location? = TODO()
-}
+/** Returns [estimate], or fails like an unreachable Gemini API when [fail] is set. */
+private class FakeFuelCostEstimator(
+    private val estimate: CarCostEstimate? = null,
+    private val fail: Boolean = false
+) : CostEstimator {
+    var calls = 0
 
-private class UnusedUserRepository : UserRepository {
-    override suspend fun findByEmail(email: String): User? = TODO()
-    override suspend fun findAll(): List<User> = TODO()
-    override suspend fun userExists(userId: Int): Boolean = TODO()
-    override suspend fun create(email: String, passwordHash: String): User = TODO()
-}
-
-private class UnusedPhotoRepository : PhotoRepository {
-    override suspend fun createPhoto(carId: Int, fileName: String): Photo = TODO()
-    override suspend fun getPhotosByCarId(carId: Int): List<Photo> = TODO()
-    override suspend fun getFileName(photoId: Int): String? = TODO()
-    override suspend fun getFileNamesByCarId(carId: Int): List<String> = TODO()
-}
-
-private class UnusedRentalTermsRepository : RentalTermsRepository {
-    override suspend fun carExists(carId: Int): Boolean = TODO()
-    override suspend fun getRentalTermsByCarId(carId: Int): RentalTerms? = TODO()
-    override suspend fun saveRentalTerms(carId: Int, request: RentalTermsRequest): RentalTerms = TODO()
+    override suspend fun estimateCarCosts(car: Car): CarCostEstimate {
+        calls++
+        if (fail) throw IllegalStateException("Gemini niet bereikbaar")
+        return estimate ?: TODO()
+    }
 }
 
 // ==================== 1. Validation: calculateFuelCost() and validateDistanceKm() ====================
@@ -212,31 +203,63 @@ class FuelCostCalculationTest {
     }
 }
 
-// ==================== 2. Service: CarService ====================
+// ==================== 2. Service: CarCostService ====================
 
-// The Gemini fallback for a missing consumption is not tested here: GeminiClient is a class
-// that calls the real API, so these tests only use cars that already have a consumption.
 class FuelCostServiceTest {
-    private fun service(vararg cars: Car) = CarService(
-        RdwClient(""),
-        GeminiClient("", ""),
-        FakeFuelCostCarRepository(*cars),
-        UnusedLocationRepository(),
-        UnusedUserRepository(),
-        UnusedPhotoRepository(),
-        PhotoStorage(Path(SystemTemporaryDirectory, "fuel-cost-test-${Uuid.random()}")),
-        UnusedRentalTermsRepository()
-    )
+    private fun service(vararg cars: Car, costEstimator: CostEstimator = FakeFuelCostEstimator()) =
+        CarCostService(costEstimator, FakeFuelCostCarRepository(*cars))
 
     // ---------- getFuelCost ----------
 
     @Test
     fun `eigenaar krijgt de verbruikskosten`() = runBlocking {
-        val result = service(iceCar(consumption = 10.0)).getFuelCost(CAR_ID, OWNER_ID, 100.0)
+        val costEstimator = FakeFuelCostEstimator()
+
+        val result = service(iceCar(consumption = 10.0), costEstimator = costEstimator).getFuelCost(CAR_ID, OWNER_ID, 100.0)
 
         assertEquals(CAR_ID, result.carId)
         assertEquals(100.0, result.distanceKm)
         assertEquals(10 * PETROL_PRICE_PER_L, result.estimatedCost, TOLERANCE)
+        assertEquals(0, costEstimator.calls)
+    }
+
+    @Test
+    fun `ontbrekend verbruik wordt aangevuld door Gemini en opgeslagen`() = runBlocking {
+        val carRepository = FakeFuelCostCarRepository(bevCar(consumption = null))
+        val costEstimator = FakeFuelCostEstimator(CarCostEstimate(roadTaxPerQuarter = 99.0, consumptionCombined = 15.0))
+        val service = CarCostService(costEstimator, carRepository)
+
+        val result = service.getFuelCost(CAR_ID, OWNER_ID, 200.0)
+
+        assertEquals(30 * ELECTRICITY_PRICE_PER_KWH, result.estimatedCost, TOLERANCE)
+        assertEquals(15.0, carRepository.cars[CAR_ID]?.consumptionCombined)
+        assertEquals(50.0, carRepository.cars[CAR_ID]?.roadTaxPerQuarter)
+    }
+
+    @Test
+    fun `Gemini onbereikbaar geeft ExternalServiceException`() = runBlocking {
+        val service = service(bevCar(consumption = null), costEstimator = FakeFuelCostEstimator(fail = true))
+
+        assertFailsWith<ExternalServiceException> { service.getFuelCost(CAR_ID, OWNER_ID, 100.0) }
+        Unit
+    }
+
+    @Test
+    fun `verbruik buiten bereik van Gemini geeft ExternalServiceException`() = runBlocking {
+        val costEstimator = FakeFuelCostEstimator(CarCostEstimate(roadTaxPerQuarter = null, consumptionCombined = -1.0))
+        val carRepository = FakeFuelCostCarRepository(bevCar(consumption = null))
+
+        assertFailsWith<ExternalServiceException> { CarCostService(costEstimator, carRepository).getFuelCost(CAR_ID, OWNER_ID, 100.0) }
+        assertEquals(null, carRepository.cars[CAR_ID]?.consumptionCombined)
+    }
+
+    @Test
+    fun `Gemini zonder verbruik geeft UnprocessableException`() = runBlocking {
+        val costEstimator = FakeFuelCostEstimator(CarCostEstimate(roadTaxPerQuarter = null, consumptionCombined = null))
+        val service = service(bevCar(consumption = null), costEstimator = costEstimator)
+
+        assertFailsWith<UnprocessableException> { service.getFuelCost(CAR_ID, OWNER_ID, 100.0) }
+        Unit
     }
 
     @Test

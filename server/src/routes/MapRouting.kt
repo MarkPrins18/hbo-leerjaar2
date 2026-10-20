@@ -1,28 +1,27 @@
 package routes
 
+import authenticatedUserId
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.util.getOrFail
-import repositories.LocationRepository
-import services.ResourceNotFoundException
+import requireAuthentication
+import services.MapService
 
 fun Route.mapsRoutes(
-    locationRepository: LocationRepository,
+    mapService: MapService,
 ) {
+    requireAuthentication {
+        get("/cars/{id}/maps") {
+            val carId = call.parameters.getOrFail<Int>("id")
+            val userId = call.authenticatedUserId()
 
-    get("/cars/{carId}/maps") {
-        val carId = call.parameters.getOrFail<Int>("carId")
+            val mapsUrl = mapService.getMapsUrl(carId, userId)
 
-        val location = locationRepository.getLatestLocationByCarId(carId)
-            ?: throw ResourceNotFoundException("Geen locatie bekend voor deze auto")
+            //automatic redirect to maps
+            // call.respondRedirect(mapsUrl)
 
-        //automatic redirect to maps
-       // call.respondRedirect("https://www.google.com/maps/dir/?api=1&destination=${location.latitude},${location.longitude}")
-
-        //Below post the url in Swagger.
-        val mapsUrl =
-            "https://www.google.com/maps/dir/?api=1&destination=${location.latitude},${location.longitude}"
-
-        call.respond(mapsUrl)
+            //Below post the url in Swagger.
+            call.respond(mapsUrl)
+        }
     }
 }

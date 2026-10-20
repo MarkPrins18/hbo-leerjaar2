@@ -1,8 +1,5 @@
-import clients.GeminiClient
-import clients.RdwClient
-import config.PhotoStorage
+import clients.CostEstimator
 import dto.CarChangeDto
-import dto.RentalTermsRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
@@ -14,16 +11,14 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import kotlinx.coroutines.runBlocking
-import kotlinx.io.files.Path
-import kotlinx.io.files.SystemTemporaryDirectory
 import models.*
+import models.gemini.CarCostEstimate
 import repositories.*
 import responses.TcoResponse
 import services.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.uuid.Uuid
 
 // ==================== Test data ====================
 
@@ -76,39 +71,37 @@ private fun bevCar(): Car = BEVCar(
 // ==================== Fakes ====================
 
 private class FakeTcoCarRepository(vararg cars: Car) : CarRepository {
-    private val cars = cars.associateBy { it.id }
+    val cars = cars.associateBy { it.id }.toMutableMap()
 
     override suspend fun getCarById(carId: Int): Car? = cars[carId]
+
+    /** Only the cost data is filled in by the Gemini fallback. */
+    override suspend fun updateCar(carId: Int, change: CarChangeDto): Car? {
+        val car = cars[carId] as? ICECar ?: return null
+        return car.copy(
+            consumptionCombined = change.consumptionCombined ?: car.consumptionCombined,
+            roadTaxPerQuarter = change.roadTaxPerQuarter ?: car.roadTaxPerQuarter
+        ).also { cars[carId] = it }
+    }
 
     override suspend fun getAllCars(): List<Car> = TODO()
     override suspend fun getCarByLicensePlate(licensePlate: String): Car? = TODO()
     override suspend fun createCar(car: Car): Car = TODO()
-    override suspend fun updateCar(carId: Int, change: CarChangeDto): Car? = TODO()
     override suspend fun deleteCar(carId: Int): Boolean = TODO()
 }
 
-private class UnusedTcoLocationRepository : LocationRepository {
-    override suspend fun getLatestLocationByCarId(carId: Int): Location? = TODO()
-}
+/** Returns [estimate], or fails like an unreachable Gemini API when [fail] is set. */
+private class FakeTcoCostEstimator(
+    private val estimate: CarCostEstimate? = null,
+    private val fail: Boolean = false
+) : CostEstimator {
+    var calls = 0
 
-private class UnusedTcoUserRepository : UserRepository {
-    override suspend fun findByEmail(email: String): User? = TODO()
-    override suspend fun findAll(): List<User> = TODO()
-    override suspend fun userExists(userId: Int): Boolean = TODO()
-    override suspend fun create(email: String, passwordHash: String): User = TODO()
-}
-
-private class UnusedTcoPhotoRepository : PhotoRepository {
-    override suspend fun createPhoto(carId: Int, fileName: String): Photo = TODO()
-    override suspend fun getPhotosByCarId(carId: Int): List<Photo> = TODO()
-    override suspend fun getFileName(photoId: Int): String? = TODO()
-    override suspend fun getFileNamesByCarId(carId: Int): List<String> = TODO()
-}
-
-private class UnusedTcoRentalTermsRepository : RentalTermsRepository {
-    override suspend fun carExists(carId: Int): Boolean = TODO()
-    override suspend fun getRentalTermsByCarId(carId: Int): RentalTerms? = TODO()
-    override suspend fun saveRentalTerms(carId: Int, request: RentalTermsRequest): RentalTerms = TODO()
+    override suspend fun estimateCarCosts(car: Car): CarCostEstimate {
+        calls++
+        if (fail) throw IllegalStateException("Gemini niet bereikbaar")
+        return estimate ?: TODO()
+    }
 }
 
 // ==================== 1. Validation: calculateTco() and validateAnnualKm() ====================
@@ -185,21 +178,11 @@ class TcoCalculationTest {
     }
 }
 
-// ==================== 2. Service: CarService ====================
+// ==================== 2. Service: CarCostService ====================
 
-// The Gemini fallback for missing cost data is not tested here: GeminiClient is a class
-// that calls the real API, so these tests only use cars that already have all cost data.
 class TcoServiceTest {
-    private val service = CarService(
-        RdwClient(""),
-        GeminiClient("", ""),
-        FakeTcoCarRepository(iceCar()),
-        UnusedTcoLocationRepository(),
-        UnusedTcoUserRepository(),
-        UnusedTcoPhotoRepository(),
-        PhotoStorage(Path(SystemTemporaryDirectory, "tco-test-${Uuid.random()}")),
-        UnusedTcoRentalTermsRepository()
-    )
+    private val costEstimator = FakeTcoCostEstimator()
+    private val service = CarCostService(costEstimator, FakeTcoCarRepository(iceCar()))
 
     // ---------- getTco ----------
 
@@ -208,6 +191,36 @@ class TcoServiceTest {
         val result = service.getTco(CAR_ID, OWNER_ID, 15_000.0)
 
         assertEquals(calculateTco(iceCar(), 15_000.0), result)
+        assertEquals(0, costEstimator.calls)
+    }
+
+    @Test
+    fun `ontbrekende wegenbelasting wordt aangevuld door Gemini en opgeslagen`() = runBlocking {
+        val carRepository = FakeTcoCarRepository(iceCar(roadTaxPerQuarter = null))
+        val costEstimator = FakeTcoCostEstimator(CarCostEstimate(roadTaxPerQuarter = 100.0, consumptionCombined = 99.0))
+
+        val result = CarCostService(costEstimator, carRepository).getTco(CAR_ID, OWNER_ID, 15_000.0)
+
+        assertEquals(calculateTco(iceCar(roadTaxPerQuarter = 100.0), 15_000.0), result)
+        assertEquals(100.0, carRepository.cars[CAR_ID]?.roadTaxPerQuarter)
+        assertEquals(10.0, carRepository.cars[CAR_ID]?.consumptionCombined)
+    }
+
+    @Test
+    fun `Gemini onbereikbaar geeft ExternalServiceException`() = runBlocking {
+        val service = CarCostService(FakeTcoCostEstimator(fail = true), FakeTcoCarRepository(iceCar(roadTaxPerQuarter = null)))
+
+        assertFailsWith<ExternalServiceException> { service.getTco(CAR_ID, OWNER_ID, 15_000.0) }
+        Unit
+    }
+
+    @Test
+    fun `Gemini zonder wegenbelasting geeft UnprocessableException`() = runBlocking {
+        val costEstimator = FakeTcoCostEstimator(CarCostEstimate(roadTaxPerQuarter = null, consumptionCombined = null))
+        val service = CarCostService(costEstimator, FakeTcoCarRepository(iceCar(roadTaxPerQuarter = null)))
+
+        assertFailsWith<UnprocessableException> { service.getTco(CAR_ID, OWNER_ID, 15_000.0) }
+        Unit
     }
 
     @Test

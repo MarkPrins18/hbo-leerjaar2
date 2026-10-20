@@ -27,6 +27,4 @@ class RentalTermsService(
 
         return rentalTermsRepository.saveRentalTerms(carId, request)
     }
-
-    private fun carNotFound(carId: Int) = ResourceNotFoundException("Auto $carId niet gevonden")
 }

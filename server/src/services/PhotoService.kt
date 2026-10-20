@@ -38,6 +38,4 @@ class PhotoService(
     suspend fun getPhotoData(photoId: Int): ByteArray =
         photoRepository.getFileName(photoId)?.let(photoStorage::read)
             ?: throw ResourceNotFoundException("Foto $photoId niet gevonden")
-
-    private fun carNotFound(carId: Int) = ResourceNotFoundException("Auto $carId niet gevonden")
 }

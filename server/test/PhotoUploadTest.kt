@@ -327,6 +327,15 @@ class PhotoRoutesTest {
         assertEquals(HttpStatusCode.PayloadTooLarge, response.status)
     }
 
+    @Test
+    fun `upload van veel meer dan de maximale grootte geeft 413`() = e2eTest { client ->
+        val token = client.login(seedOwnerId)
+
+        val response = client.uploadPhoto(seedCarId, jpegOfSize(4 * MAX_PHOTO_BYTES), token)
+
+        assertEquals(HttpStatusCode.PayloadTooLarge, response.status)
+    }
+
     // ---------- GET /cars/{id}/photos ----------
 
     @Test

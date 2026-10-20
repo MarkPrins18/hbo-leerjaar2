@@ -1,5 +1,4 @@
-import clients.GeminiClient
-import clients.RdwClient
+import clients.CostEstimator
 import config.PhotoStorage
 import dto.CarChangeDto
 import dto.CarDto
@@ -19,7 +18,9 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemTemporaryDirectory
 import models.*
+import models.gemini.CarCostEstimate
 import repositories.*
+import services.CarCostService
 import services.CarService
 import services.ForbiddenException
 import services.ResourceNotFoundException
@@ -94,15 +95,18 @@ private class FakeOwnedCarPhotoRepository : PhotoRepository {
     override suspend fun getFileName(photoId: Int): String? = TODO()
 }
 
-private class UnusedOwnedCarLocationRepository : LocationRepository {
-    override suspend fun getLatestLocationByCarId(carId: Int): Location? = TODO()
+/** Counts the calls; the tests that use it never get as far as an estimate. */
+private class FakeOwnedCarCostEstimator : CostEstimator {
+    var calls = 0
+
+    override suspend fun estimateCarCosts(car: Car): CarCostEstimate {
+        calls++
+        return TODO()
+    }
 }
 
-private class UnusedOwnedCarUserRepository : UserRepository {
-    override suspend fun findByEmail(email: String): User? = TODO()
-    override suspend fun findAll(): List<User> = TODO()
-    override suspend fun userExists(userId: Int): Boolean = TODO()
-    override suspend fun create(email: String, passwordHash: String): User = TODO()
+private class UnusedOwnedCarLocationRepository : LocationRepository {
+    override suspend fun getLatestLocationByCarId(carId: Int): Location? = TODO()
 }
 
 private class UnusedOwnedCarRentalTermsRepository : RentalTermsRepository {
@@ -113,16 +117,12 @@ private class UnusedOwnedCarRentalTermsRepository : RentalTermsRepository {
 
 // ==================== 2. Service: CarService ownership ====================
 
-// GeminiClient and RdwClient call the real APIs; these tests never reach them.
 class CarOwnershipServiceTest {
     private val carRepository = FakeOwnedCarRepository(testCar())
 
     private val service = CarService(
-        RdwClient(""),
-        GeminiClient("", ""),
         carRepository,
         UnusedOwnedCarLocationRepository(),
-        UnusedOwnedCarUserRepository(),
         FakeOwnedCarPhotoRepository(),
         PhotoStorage(Path(SystemTemporaryDirectory, "car-test-${Uuid.random()}")),
         UnusedOwnedCarRentalTermsRepository()
@@ -173,36 +173,36 @@ class CarOwnershipServiceTest {
         assertFailsWith<ResourceNotFoundException> { service.deleteCar(999, OWNER_ID) }
         Unit
     }
+}
+
+// ==================== 2. Service: CarCostService ownership ====================
+
+class CarCostDataServiceTest {
+    private val costEstimator = FakeOwnedCarCostEstimator()
+
+    private fun service(car: BEVCar = testCar()) = CarCostService(costEstimator, FakeOwnedCarRepository(car))
 
     // ---------- fillMissingCostData ----------
 
     @Test
     fun `eigenaar krijgt een complete auto ongewijzigd terug`() = runBlocking {
-        val car = service.fillMissingCostData(CAR_ID, OWNER_ID)
+        val car = service().fillMissingCostData(CAR_ID, OWNER_ID)
 
         assertEquals(testCar(), car)
+        assertEquals(0, costEstimator.calls)
     }
 
     @Test
     fun `kostengegevens aanvullen door niet-eigenaar geeft ForbiddenException`() = runBlocking {
-        val incompleteCarService = CarService(
-            RdwClient(""),
-            GeminiClient("", ""),
-            FakeOwnedCarRepository(testCar(roadTaxPerQuarter = null)),
-            UnusedOwnedCarLocationRepository(),
-            UnusedOwnedCarUserRepository(),
-            FakeOwnedCarPhotoRepository(),
-            PhotoStorage(Path(SystemTemporaryDirectory, "car-test-${Uuid.random()}")),
-            UnusedOwnedCarRentalTermsRepository()
-        )
+        val service = service(testCar(roadTaxPerQuarter = null))
 
-        assertFailsWith<ForbiddenException> { incompleteCarService.fillMissingCostData(CAR_ID, OTHER_USER_ID) }
-        Unit
+        assertFailsWith<ForbiddenException> { service.fillMissingCostData(CAR_ID, OTHER_USER_ID) }
+        assertEquals(0, costEstimator.calls)
     }
 
     @Test
     fun `kostengegevens voor onbekende auto geeft ResourceNotFoundException`() = runBlocking {
-        assertFailsWith<ResourceNotFoundException> { service.fillMissingCostData(999, OWNER_ID) }
+        assertFailsWith<ResourceNotFoundException> { service().fillMissingCostData(999, OWNER_ID) }
         Unit
     }
 }
@@ -276,11 +276,33 @@ class CarRoutesTest {
         assertEquals(HttpStatusCode.BadRequest, client.get("/cars?maxDistanceKm=10").status)
     }
 
-    // ---------- GET /cars/{licensePlate} ----------
+    // ---------- GET /cars/{id} ----------
+
+    @Test
+    fun `auto ophalen op id`() = e2eTest { client ->
+        val response = client.get("/cars/$ICE_CAR_ID")
+
+        assertEquals(HttpStatusCode.OK, response.status)
+        val car = assertIs<ICECar>(response.body<Car>())
+        assertEquals(ICE_CAR_PLATE, car.licensePlate)
+        assertEquals("BMW", car.brand)
+    }
+
+    @Test
+    fun `onbekend auto-id geeft 404`() = e2eTest { client ->
+        assertEquals(HttpStatusCode.NotFound, client.get("/cars/999").status)
+    }
+
+    @Test
+    fun `ongeldig auto-id geeft 400`() = e2eTest { client ->
+        assertEquals(HttpStatusCode.BadRequest, client.get("/cars/abc").status)
+    }
+
+    // ---------- GET /cars/license-plate/{licensePlate} ----------
 
     @Test
     fun `auto ophalen op kenteken`() = e2eTest { client ->
-        val response = client.get("/cars/$ICE_CAR_PLATE")
+        val response = client.get("/cars/license-plate/$ICE_CAR_PLATE")
 
         assertEquals(HttpStatusCode.OK, response.status)
         val car = assertIs<ICECar>(response.body<Car>())
@@ -290,7 +312,7 @@ class CarRoutesTest {
 
     @Test
     fun `kenteken met streepjes en kleine letters wordt genormaliseerd`() = e2eTest { client ->
-        val response = client.get("/cars/ks-711-f")
+        val response = client.get("/cars/license-plate/ks-711-f")
 
         assertEquals(HttpStatusCode.OK, response.status)
         assertEquals(ICE_CAR_ID, response.body<Car>().id)
@@ -298,7 +320,7 @@ class CarRoutesTest {
 
     @Test
     fun `onbekend kenteken geeft 404`() = e2eTest { client ->
-        assertEquals(HttpStatusCode.NotFound, client.get("/cars/XX999X").status)
+        assertEquals(HttpStatusCode.NotFound, client.get("/cars/license-plate/XX999X").status)
     }
 
     // ---------- PATCH /cars/{id} ----------
@@ -313,7 +335,7 @@ class CarRoutesTest {
         val updated = response.body<Car>()
         assertEquals("ROOD", updated.color)
         assertEquals(2, updated.seats)
-        val stored = client.get("/cars/$ICE_CAR_PLATE").body<Car>()
+        val stored = client.get("/cars/$ICE_CAR_ID").body<Car>()
         assertEquals("ROOD", stored.color)
         assertEquals(2, stored.seats)
         assertEquals("BMW", stored.brand)
@@ -331,7 +353,7 @@ class CarRoutesTest {
         val response = client.patchCar(ICE_CAR_ID, CarChangeDto(color = "ROOD"), token)
 
         assertEquals(HttpStatusCode.Forbidden, response.status)
-        assertEquals("WIT", client.get("/cars/$ICE_CAR_PLATE").body<Car>().color)
+        assertEquals("WIT", client.get("/cars/$ICE_CAR_ID").body<Car>().color)
     }
 
     @Test
@@ -345,7 +367,7 @@ class CarRoutesTest {
         }
 
         assertEquals(HttpStatusCode.BadRequest, response.status)
-        assertEquals(OWNER_ID, client.get("/cars/$ICE_CAR_PLATE").body<Car>().userId)
+        assertEquals(OWNER_ID, client.get("/cars/$ICE_CAR_ID").body<Car>().userId)
     }
 
     @Test
@@ -405,7 +427,7 @@ class CarRoutesTest {
         val response = client.delete("/cars/$ICE_CAR_ID") { bearerAuth(token) }
 
         assertEquals(HttpStatusCode.NoContent, response.status)
-        assertEquals(HttpStatusCode.NotFound, client.get("/cars/$ICE_CAR_PLATE").status)
+        assertEquals(HttpStatusCode.NotFound, client.get("/cars/$ICE_CAR_ID").status)
         assertEquals(HttpStatusCode.NotFound, client.get("/cars/$ICE_CAR_ID/photos").status)
         assertEquals(HttpStatusCode.NotFound, client.get("/cars/$ICE_CAR_ID/rental-terms").status)
         assertEquals(SEED_CAR_COUNT - 1, client.get("/cars").body<List<Car>>().size)
@@ -423,7 +445,7 @@ class CarRoutesTest {
         val response = client.delete("/cars/$ICE_CAR_ID") { bearerAuth(token) }
 
         assertEquals(HttpStatusCode.Forbidden, response.status)
-        assertEquals(HttpStatusCode.OK, client.get("/cars/$ICE_CAR_PLATE").status)
+        assertEquals(HttpStatusCode.OK, client.get("/cars/$ICE_CAR_ID").status)
     }
 
     @Test
