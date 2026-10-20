@@ -11,6 +11,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import kotlinx.coroutines.runBlocking
+import kotlinx.datetime.LocalTime
 import models.*
 import repositories.CarRepository
 import repositories.RentalTermsRepository
@@ -28,12 +29,20 @@ import kotlin.test.assertNull
 private const val OWNER_ID = 1
 private const val OTHER_USER_ID = 2
 private const val CAR_ID = 10
+private const val CAR_WITHOUT_TERMS = 11
 
 // Seed: car 1 is owned by user 1 and rents for 89.00 per day
 private const val SEED_CAR_ID = 1
 private const val SEED_PRICE_PER_DAY = 89.0
 
 private val validRequest = RentalTermsRequest(pricePerDay = 60.0, pickupLocation = "Grote Markt 1, Breda")
+
+private val storedRentalTerms = RentalTerms(
+    id = 1,
+    carId = CAR_ID,
+    pricePerDay = 45.0,
+    pickupLocation = "Grote Markt 1, Breda"
+)
 
 private fun testCar(): Car = BEVCar(
     id = CAR_ID,
@@ -79,11 +88,47 @@ private class FakeRentalTermsRepository : RentalTermsRepository {
     override suspend fun getRentalTermsByCarId(carId: Int): RentalTerms? = TODO()
 }
 
+private class FakeStoredRentalTermsRepository(
+    private val carIds: Set<Int>,
+    vararg rentalTerms: RentalTerms
+) : RentalTermsRepository {
+    private val rentalTerms = rentalTerms.associateBy { it.carId }
+
+    override suspend fun carExists(carId: Int): Boolean = carId in carIds
+    override suspend fun getRentalTermsByCarId(carId: Int): RentalTerms? = rentalTerms[carId]
+
+    override suspend fun saveRentalTerms(carId: Int, request: RentalTermsRequest): RentalTerms = TODO()
+}
+
 // ==================== 2. Service: RentalTermsService ====================
 
 class RentalTermsServiceTest {
     private val rentalTermsRepository = FakeRentalTermsRepository()
     private val service = RentalTermsService(rentalTermsRepository, FakeRentalTermsCarRepository(testCar()))
+
+    private val lookupService = RentalTermsService(
+        FakeStoredRentalTermsRepository(setOf(CAR_ID, CAR_WITHOUT_TERMS), storedRentalTerms),
+        FakeRentalTermsCarRepository()
+    )
+
+    // ---------- getRentalTerms ----------
+
+    @Test
+    fun `getRentalTerms geeft de verhuurvoorwaarden van de auto`() = runBlocking {
+        assertEquals(storedRentalTerms, lookupService.getRentalTerms(CAR_ID))
+    }
+
+    @Test
+    fun `getRentalTerms voor onbekende auto geeft ResourceNotFoundException`() = runBlocking {
+        assertFailsWith<ResourceNotFoundException> { lookupService.getRentalTerms(999) }
+        Unit
+    }
+
+    @Test
+    fun `getRentalTerms voor auto zonder verhuurvoorwaarden geeft ResourceNotFoundException`() = runBlocking {
+        assertFailsWith<ResourceNotFoundException> { lookupService.getRentalTerms(CAR_WITHOUT_TERMS) }
+        Unit
+    }
 
     // ---------- setRentalTerms ----------
 
@@ -134,6 +179,19 @@ class RentalTermsRoutesTest {
 
         assertEquals(HttpStatusCode.OK, response.status)
         assertEquals(SEED_PRICE_PER_DAY, response.body<RentalTerms>().pricePerDay)
+    }
+
+    @Test
+    fun `ophaal- en inlevertijden komen terug zoals ze zijn opgeslagen`() = e2eTest { client ->
+        val response = client.get("/cars/$SEED_CAR_ID/rental-terms")
+
+        assertEquals(HttpStatusCode.OK, response.status)
+        val rentalTerms = response.body<RentalTerms>()
+        assertEquals(LocalTime(8, 0), rentalTerms.pickupTimeStart)
+        assertEquals(LocalTime(18, 0), rentalTerms.pickupTimeEnd)
+        assertEquals("Parkeergarage Kazerneplein, Gorinchem", rentalTerms.returnLocation)
+        assertEquals(LocalTime(8, 0), rentalTerms.returnTimeStart)
+        assertEquals(LocalTime(20, 0), rentalTerms.returnTimeEnd)
     }
 
     // ---------- PUT /cars/{id}/rental-terms ----------
