@@ -2,10 +2,12 @@ import dto.RentalTermsRequest
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
+import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalTime
 import models.RentalTerms
-import services.ValidationException
-import services.validate
+import repositories.RentalTermsRepository
+import services.RentalTermsService
+import services.ResourceNotFoundException
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -13,19 +15,54 @@ import kotlin.test.assertFailsWith
 // ==================== Test data ====================
 
 private const val SEED_CAR_ID = 1
+private const val CAR_WITH_TERMS = 10
+private const val CAR_WITHOUT_TERMS = 11
 
-// ==================== 1. Validation: RentalTermsRequest.validate() ====================
+private val storedRentalTerms = RentalTerms(
+    id = 1,
+    carId = CAR_WITH_TERMS,
+    pricePerDay = 45.0,
+    pickupLocation = "Grote Markt 1, Breda"
+)
 
-class RentalTermsValidationTest {
+// ==================== Fakes ====================
+
+private class FakeStoredRentalTermsRepository(
+    private val carIds: Set<Int>,
+    vararg rentalTerms: RentalTerms
+) : RentalTermsRepository {
+    private val rentalTerms = rentalTerms.associateBy { it.carId }
+
+    override suspend fun carExists(carId: Int): Boolean = carId in carIds
+    override suspend fun getRentalTermsByCarId(carId: Int): RentalTerms? = rentalTerms[carId]
+
+    override suspend fun saveRentalTerms(carId: Int, request: RentalTermsRequest): RentalTerms = TODO()
+}
+
+// ==================== 2. Service: RentalTermsService ====================
+
+class RentalTermsServiceTest {
+    private val service = RentalTermsService(
+        FakeStoredRentalTermsRepository(setOf(CAR_WITH_TERMS, CAR_WITHOUT_TERMS), storedRentalTerms)
+    )
+
+    // ---------- getRentalTerms ----------
+
     @Test
-    fun `alleen een ophaalstarttijd zonder eindtijd geeft ValidationException`() {
-        val request = RentalTermsRequest(
-            pricePerDay = 50.0,
-            pickupLocation = "Grote Markt 1, Breda",
-            pickupTimeStart = LocalTime(8, 0)
-        )
+    fun `getRentalTerms geeft de verhuurvoorwaarden van de auto`() = runBlocking {
+        assertEquals(storedRentalTerms, service.getRentalTerms(CAR_WITH_TERMS))
+    }
 
-        assertFailsWith<ValidationException> { request.validate() }
+    @Test
+    fun `getRentalTerms voor onbekende auto geeft ResourceNotFoundException`() = runBlocking {
+        assertFailsWith<ResourceNotFoundException> { service.getRentalTerms(999) }
+        Unit
+    }
+
+    @Test
+    fun `getRentalTerms voor auto zonder verhuurvoorwaarden geeft ResourceNotFoundException`() = runBlocking {
+        assertFailsWith<ResourceNotFoundException> { service.getRentalTerms(CAR_WITHOUT_TERMS) }
+        Unit
     }
 }
 
