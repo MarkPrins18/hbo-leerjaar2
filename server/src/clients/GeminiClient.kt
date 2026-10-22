@@ -1,37 +1,17 @@
 package clients
 
-import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
-import io.ktor.serialization.kotlinx.json.json
-import kotlinx.serialization.json.Json
 import models.*
 import models.gemini.*
 import services.ExternalServiceException
 
-class GeminiClient(private val apiKey: String, private val model: String) : CostEstimator {
+class GeminiClient(private val apiKey: String, private val model: String) : JsonApiClient(), CostEstimator {
 
-    private val json = Json { ignoreUnknownKeys = true }
-
-    private val httpClient = HttpClient(CIO) {
-        expectSuccess = true
-        // Gemini often needs more than the default 15 seconds
-        install(HttpTimeout) {
-            requestTimeoutMillis = 60_000
-        }
-        install(ContentNegotiation) {
-            json(json)
-        }
-    }
-
-    // Forces Gemini to answer with exactly this JSON object
     private val costEstimateSchema = GeminiSchema(
         type = "OBJECT",
         properties = mapOf(
@@ -80,17 +60,19 @@ class GeminiClient(private val apiKey: String, private val model: String) : Cost
             is FCEVCar -> "waterstof (brandstofcel)" to "kg waterstof per 100 km"
         }
 
-        return """
+        // Inside with(car), $model is car.model and not the Gemini model of this class
+        return with(car) {
+            """
             Geef een schatting voor de volgende Nederlandse auto:
-            - Merk: ${car.brand}
-            - Model: ${car.model}
-            - Uitvoering: ${car.trim ?: "onbekend"}
-            - Bouwjaar: ${car.productionYear}
-            - Voertuigsoort: ${car.vehicleType}
+            - Merk: $brand
+            - Model: $model
+            - Uitvoering: ${trim ?: "onbekend"}
+            - Bouwjaar: $productionYear
+            - Voertuigsoort: $vehicleType
             - Aandrijving: $drivetrain
             - Brandstofsoort (RDW): $fuelType
-            - Massa rijklaar (RDW): ${car.readyToDriveWeightKg} kg
-            - CO2-uitstoot gecombineerd: ${car.co2EmissionCombined?.let { "$it g/km" } ?: "onbekend"}
+            - Massa rijklaar (RDW): $readyToDriveWeightKg kg
+            - CO2-uitstoot gecombineerd: ${co2EmissionCombined?.let { "$it g/km" } ?: "onbekend"}
 
             Bepaal:
             - roadTaxPerQuarter: de motorrijtuigenbelasting (MRB) per kwartaal in euro voor een particuliere eigenaar in de provincie Noord-Brabant, volgens de tarieven van 2026 (inclusief de provinciale opcenten van 2026).
@@ -102,6 +84,7 @@ class GeminiClient(private val apiKey: String, private val model: String) : Cost
             - Als je een waarde niet kunt bepalen, geef dan null.
 
             Gebruik ALLEEN de onderstaande regels om de wegenbelasting te berekenen.
-        """.trimIndent() + "\n<regels>\n$ROAD_TAX_RULES_2026\n</regels>"
+            """.trimIndent() + "\n<regels>\n$ROAD_TAX_RULES_2026\n</regels>"
+        }
     }
 }

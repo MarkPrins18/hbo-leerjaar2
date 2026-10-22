@@ -16,3 +16,5 @@ data class Reservation(
 enum class ReservationStatus {
     PENDING, CONFIRMED, CANCELLED, COMPLETED
 }
+
+val ACTIVE_RESERVATION_STATUSES = setOf(ReservationStatus.PENDING, ReservationStatus.CONFIRMED)

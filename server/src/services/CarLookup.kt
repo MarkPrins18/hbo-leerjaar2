@@ -4,7 +4,7 @@ import models.Car
 import repositories.CarRepository
 import kotlin.coroutines.cancellation.CancellationException
 
-internal fun carNotFound(carId: Int) = ResourceNotFoundException("Auto $carId niet gevonden")
+internal fun carNotFound(carId: Int) = ResourceNotFoundException("Auto", carId)
 
 internal suspend fun CarRepository.getOwnedCar(carId: Int, userId: Int): Car {
     val car = getCarById(carId)

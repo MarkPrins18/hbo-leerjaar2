@@ -40,7 +40,7 @@ class CarImportService(
 
     private suspend fun checkUserExists(userId: Int) {
         if (!userRepository.userExists(userId)) {
-            throw ResourceNotFoundException("Gebruiker $userId niet gevonden")
+            throw ResourceNotFoundException("Gebruiker", userId)
         }
     }
 }

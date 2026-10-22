@@ -1,7 +1,6 @@
 package models
 
 import kotlin.time.Instant
-//geen import kotlinx.serialization.Serializable
 
 /**
  * userId the driver, only set during an active ride

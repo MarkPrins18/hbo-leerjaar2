@@ -11,7 +11,6 @@ class CarCostService(
     private val costEstimator: CostEstimator,
     private val carRepository: CarRepository
 ) {
-    /** Asks Gemini for the cost values that are still missing on the car and stores them. */
     suspend fun fillMissingCostData(carId: Int, userId: Int): Car {
         val car = carRepository.getOwnedCar(carId, userId)
 
@@ -28,7 +27,6 @@ class CarCostService(
             ?: throw carNotFound(carId)
     }
 
-    /** A missing consumption is first filled in by Gemini; if it is still missing, the cost cannot be calculated. */
     suspend fun getFuelCost(carId: Int, userId: Int, distanceKm: Double): FuelCostResponse {
         val car = carRepository.getOwnedCar(carId, userId)
 
@@ -38,7 +36,6 @@ class CarCostService(
         return calculateFuelCost(carWithConsumption, distanceKm)
     }
 
-    /** Missing consumption or road tax is first filled in by Gemini, just like for the fuel cost. */
     suspend fun getTco(carId: Int, userId: Int, annualKm: Double): TcoResponse {
         val car = carRepository.getOwnedCar(carId, userId)
 

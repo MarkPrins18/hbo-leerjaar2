@@ -26,7 +26,7 @@ fun Application.seedIfNeeded() {
     try {
         transaction {
             if (allTables.all { it.selectAll().empty() }) {
-                seedFilePaths.forEach { path ->
+                for (path in seedFilePaths) {
                     val seedFile = object {}.javaClass.getResource(path)
                         ?: error("Seed bestand '$path' niet gevonden.")
 

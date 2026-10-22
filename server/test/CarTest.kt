@@ -282,10 +282,10 @@ class CarRoutesTest {
 
     @Test
     fun `auto ophalen op id`() = e2eTest { client ->
-        val response = client.get("/cars/$ICE_CAR_ID")
-
-        assertEquals(HttpStatusCode.OK, response.status)
-        val car = assertIs<ICECar>(response.body<Car>())
+        val car = client.get("/cars/$ICE_CAR_ID").run {
+            assertEquals(HttpStatusCode.OK, status)
+            assertIs<ICECar>(body<Car>())
+        }
         assertEquals(ICE_CAR_PLATE, car.licensePlate)
         assertEquals("BMW", car.brand)
     }
@@ -307,7 +307,8 @@ class CarRoutesTest {
         val response = client.get("/cars/license-plate/$ICE_CAR_PLATE")
 
         assertEquals(HttpStatusCode.OK, response.status)
-        val car = assertIs<ICECar>(response.body<Car>())
+        // Unsafe cast: throws ClassCastException if it is not an ICECar
+        val car = response.body<Car>() as ICECar
         assertEquals(ICE_CAR_ID, car.id)
         assertEquals("BMW", car.brand)
     }

@@ -1,6 +1,7 @@
 package repositories
 
 import mappers.toReservation
+import models.ACTIVE_RESERVATION_STATUSES
 import models.Reservation
 import models.ReservationStatus
 import org.jetbrains.exposed.v1.core.and
@@ -31,7 +32,7 @@ class ExposedReservationRepository : ReservationRepository {
     override suspend fun hasActiveOverlap(carId: Int, startTime: Instant, endTime: Instant): Boolean = suspendTransaction {
         !ReservationTable.selectAll().where {
             (ReservationTable.carId eq carId) and
-                    (ReservationTable.status inList listOf(ReservationStatus.PENDING, ReservationStatus.CONFIRMED)) and
+                    (ReservationTable.status inList ACTIVE_RESERVATION_STATUSES) and
                     (ReservationTable.startTime less endTime) and
                     (ReservationTable.endTime greater startTime)
         }.empty()
