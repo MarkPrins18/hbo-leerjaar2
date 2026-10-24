@@ -33,7 +33,7 @@ VALUES
     (
         4, 1, 'P519LV', 'VOLKSWAGEN', 'GOLF', 2021,
         'Life 1.0 eTSI', 'GRIJS', 5, 5,
-        'PASSENGER_CAR', 1255, 5.3, 121
+        'PASSENGER_CAR', 1255, NULL, 121
     ),
     (
         5, 2, 'ZG283T', 'SKODA', 'OCTAVIA COMBI', 2020,
