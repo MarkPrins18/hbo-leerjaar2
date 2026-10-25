@@ -1,115 +1,253 @@
-@startuml Architecture
+@startuml ClassDiagramNarrow
 
+
+left to right direction
+hide empty members
+
+skinparam shadowing false
+skinparam roundCorner 10
+skinparam defaultFontName Segoe UI
+skinparam defaultFontSize 12
 skinparam packageStyle rectangle
+skinparam nodesep 30
+skinparam ranksep 400
+skinparam ArrowColor #5B6573
+skinparam ArrowThickness 1.1
+skinparam linetype polyline
+skinparam packageBorderColor #8A94A6
+skinparam packageFontSize 15
+skinparam classBorderColor #8A94A6
+skinparam classBackgroundColor #FFFFFF
+skinparam classAttributeIconSize 0
+skinparam classStereotypeFontSize 10
+skinparam classStereotypeFontColor #5B6573
+skinparam legendBackgroundColor #FFFFFF
+skinparam legendBorderColor #8A94A6
 
-package routes {
+package "routes" #DCEBFA {
     class CarRouting <<file>> {
-        +carRoutes(carService)
+        +carRoutes(carService, carImportService, carCostService)
+        --
+        GET /cars
+        GET /cars/{id}
+        GET /cars/license-plate/{licensePlate}
+        <&lock-locked> POST /cars/import
+        <&lock-locked> PATCH /cars/{id}
+        <&lock-locked> DELETE /cars/{id}
+        <&lock-locked> GET /cars/{id}/fuel-cost
+        <&lock-locked> GET /cars/{id}/tco
+        <&lock-locked> POST /cars/{id}/cost-data
+    }
+    class PhotoRouting <<file>> {
+        +photoRoutes(photoService)
+        --
+        <&lock-locked> POST /cars/{id}/photos
+        GET /cars/{id}/photos
+        GET /photos/{id}
+    }
+    class RentalTermsRouting <<file>> {
+        +rentalTermsRoutes(rentalTermsService)
+        --
+        GET /cars/{id}/rental-terms
+        <&lock-locked> PUT /cars/{id}/rental-terms
     }
     class MapRouting <<file>> {
-        +mapsRoutes(locationRepository)
+        +mapRoutes(locationService)
+        --
+        <&lock-locked> GET /cars/{carId}/maps
     }
     class ReservationRouting <<file>> {
         +reservationRoutes(reservationService)
+        --
+        <&lock-locked> POST /reservations
+        <&lock-locked> PATCH /reservations/{id}/cancel
     }
     class RideRouting <<file>> {
         +rideRoutes(rideService)
+        --
+        <&lock-locked> POST /reservations/{id}/rides
+        <&lock-locked> PATCH /rides/{id}/finish
     }
     class UserRouting <<file>> {
         +userRoutes(userService, authService)
+        --
+        GET /users
+        POST /users/register
+        POST /users/login
     }
 }
 
-package services {
-    class CarService {
-        +importCar(request): Car
-        +updateCar(carId, change): Car
-        +getCarByLicensePlate(licensePlate): Car
-        +deleteCar(carId)
+package "services" #DDF2DD {
+    class PhotoService <<service>> {
+        +uploadPhoto(carId, userId, data): Photo
+        +getPhotos(carId): List<Photo>
+        +getPhotoData(photoId): ByteArray
+    }
+    class CarService <<service>> {
         +getCars(filter): List<Car>
+        +getCarById(carId): Car
+        +getCarByLicensePlate(licensePlate): Car
+        +updateCar(carId, userId, change): Car
+        +deleteCar(carId, userId)
     }
-    class ReservationService {
-        +createReservation(request): Reservation
-        +cancelReservation(id): Reservation
+    class CarImportService <<service>> {
+        +importCar(request, userId): Car
     }
-    class RideService {
-        +startRide(reservationId): Ride
-        +finishRide(rideId, request): Ride
+    class CarCostService <<service>> {
+        +fillMissingCostData(carId, userId): Car
+        +getFuelCost(carId, userId, distanceKm): FuelCostResponse
+        +getTco(carId, userId, annualKm): TcoResponse
     }
-    class UserService {
+    class RentalTermsService <<service>> {
+        +getRentalTerms(carId): RentalTerms
+        +setRentalTerms(carId, userId, request): RentalTerms
+    }
+    class LocationService <<service>> {
+        +getMapsUrl(carId, userId): String
+    }
+    class ReservationService <<service>> {
+        +createReservation(userId, request): Reservation
+        +cancelReservation(id, userId): Reservation
+    }
+    class RideService <<service>> {
+        +startRide(reservationId, userId): Ride
+        +finishRide(rideId, userId, request): Ride
+    }
+    class UserService <<service>> {
         +register(request): User
         +getAllUsers(): List<User>
     }
-    class AuthService {
-        +login(request): String
+    together {
+        class AuthService <<service>> {
+            +login(request): String
+        }
+        class TokenService <<service>> {
+            +createToken(user): String
+        }
     }
-    class TokenService {
-        +createToken(user): String
+    class Helpers <<file>> {
+        CarValidation / UserValidation
+        CarLookup (getOwnedCar, callExternal)
+        CarFilterMatching / Distance
+        FuelCost / TotalCostOfOwnership
+        BonusPoints
     }
 }
 
-package repositories {
+
+package "clients" #F7DEE6 {
+    interface VehicleRegistry {
+        +getVehicle(licensePlate): RdwVehicleDto?
+        +getFuel(licensePlate): List<RdwFuelDto>
+    }
+    interface CostEstimator {
+        +estimateCarCosts(car): CarCostEstimate
+    }
+    class RdwClient {
+        extends JsonApiClient
+        HTTPS → RDW Open Data
+    }
+    class GeminiClient {
+        extends JsonApiClient
+        HTTPS → Google Gemini
+    }
+}
+
+package "config" #ECECEC {
+    class PhotoStorage {
+        +save(fileName, bytes)
+        +read(fileName): ByteArray?
+        +delete(fileName)
+    }
+}
+
+package "repositories" #FFF1D6 {
     interface CarRepository {
-        +getAllCars()
-        +getCarById(carId)
-        +getCarByLicensePlate(licensePlate)
-        +createCar(car)
-        +updateCar(carId, change)
-        +deleteCar(carId)
+        +getAllCars(): List<Car>
+        +getCarById(carId): Car?
+        +getCarByLicensePlate(licensePlate): Car?
+        +createCar(car): Car
+        +updateCar(carId, change): Car?
+        +deleteCar(carId): Boolean
+    }
+    interface PhotoRepository {
+        +createPhoto(carId, fileName): Photo
+        +getPhotosByCarId(carId): List<Photo>
+        +getFileName(photoId): String?
+        +getFileNamesByCarId(carId): List<String>
+    }
+    interface RentalTermsRepository {
+        +carExists(carId): Boolean
+        +getRentalTermsByCarId(carId): RentalTerms?
+        +saveRentalTerms(carId, request): RentalTerms
     }
     interface LocationRepository {
-        +getLatestLocationByCarId(carId)
+        +getLatestLocationByCarId(carId): Location?
     }
     interface ReservationRepository {
-        +carExists(carId)
-        +userExists(userId)
-        +hasActiveOverlap(carId, startTime, endTime)
-        +createReservation(...)
-        +getReservationById(id)
-        +updateStatus(id, status)
+        +carExists(carId): Boolean
+        +userExists(userId): Boolean
+        +hasActiveOverlap(carId, startTime, endTime): Boolean
+        +createReservation(carId, userId, startTime, endTime, status): Reservation
+        +getReservationById(id): Reservation?
+        +getReservationsByCarAndUser(carId, userId): List<Reservation>
+        +updateStatus(id, status): Reservation?
     }
     interface RideRepository {
-        +hasRideInProgress(reservationId)
-        +startRide(reservationId, startTime)
-        +getRideById(rideId)
-        +finishRide(...)
+        +hasRideInProgress(reservationId): Boolean
+        +startRide(reservationId, startTime): Ride
+        +getRideById(rideId): Ride?
+        +finishRide(id, endTime, distanceM, ...): Ride?
     }
     interface UserRepository {
-        +findByEmail(email)
-        +findAll()
-        +create(email, passwordHash)
+        +findByEmail(email): User?
+        +findAll(): List<User>
+        +userExists(userId): Boolean
+        +create(email, passwordHash): User
     }
 
-    class ExposedCarRepository
-    class ExposedLocationRepository
-    class ExposedReservationRepository
-    class ExposedRideRepository
-    class ExposedUserRepository
-
-    CarRepository <|.. ExposedCarRepository
-    LocationRepository <|.. ExposedLocationRepository
-    ReservationRepository <|.. ExposedReservationRepository
-    RideRepository <|.. ExposedRideRepository
-    UserRepository <|.. ExposedUserRepository
+    note "Elke interface wordt geïmplementeerd door\n<b>Exposed<Naam>Repository</b> (Exposed + H2)" as ExposedNote
 }
 
-class RdwClient <<external>>
-
 CarRouting --> CarService
+CarRouting --> CarImportService
+CarRouting --> CarCostService
+PhotoRouting --> PhotoService
+RentalTermsRouting --> RentalTermsService
+MapRouting --> LocationService
 ReservationRouting --> ReservationService
 RideRouting --> RideService
 UserRouting --> UserService
 UserRouting --> AuthService
-MapRouting --> LocationRepository
 
-CarService --> RdwClient
 CarService --> CarRepository
 CarService --> LocationRepository
+CarService --> PhotoRepository
+CarService --> RentalTermsRepository
+CarService --> PhotoStorage
+CarImportService --> CarRepository
+CarImportService --> UserRepository
+CarImportService --> VehicleRegistry
+CarCostService --> CarRepository
+CarCostService --> CostEstimator
+PhotoService --> PhotoRepository
+PhotoService --> CarRepository
+PhotoService --> PhotoStorage
+RentalTermsService --> RentalTermsRepository
+RentalTermsService --> CarRepository
+LocationService --> CarRepository
+LocationService --> LocationRepository
+LocationService --> ReservationRepository
 ReservationService --> ReservationRepository
 RideService --> RideRepository
 RideService --> ReservationRepository
 UserService --> UserRepository
 AuthService --> UserRepository
-AuthService --> TokenService
+AuthService -> TokenService
+
+
+VehicleRegistry <|. RdwClient
+CostEstimator <|. GeminiClient
+
 
 @enduml
