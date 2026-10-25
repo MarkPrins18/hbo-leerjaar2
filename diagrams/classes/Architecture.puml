@@ -4,10 +4,16 @@ skinparam packageStyle rectangle
 
 package routes {
     class CarRouting <<file>> {
-        +carRoutes(carService)
+        +carRoutes(carService, carImportService, carCostService)
+    }
+    class PhotoRouting <<file>> {
+        +photoRoutes(photoService)
     }
     class MapRouting <<file>> {
-        +mapsRoutes(locationRepository)
+        +mapRoutes(locationService)
+    }
+    class RentalTermsRouting <<file>> {
+        +rentalTermsRoutes(rentalTermsService)
     }
     class ReservationRouting <<file>> {
         +reservationRoutes(reservationService)
@@ -22,19 +28,39 @@ package routes {
 
 package services {
     class CarService {
-        +importCar(request): Car
-        +updateCar(carId, change): Car
-        +getCarByLicensePlate(licensePlate): Car
-        +deleteCar(carId)
         +getCars(filter): List<Car>
+        +getCarById(carId): Car
+        +getCarByLicensePlate(licensePlate): Car
+        +updateCar(carId, userId, change): Car
+        +deleteCar(carId, userId)
+    }
+    class CarImportService {
+        +importCar(request, userId): Car
+    }
+    class CarCostService {
+        +getFuelCost(carId, userId, distanceKm): FuelCostResponse
+        +getTco(carId, userId, annualKm): TcoResponse
+        +fillMissingCostData(carId, userId): Car
+    }
+    class PhotoService {
+        +uploadPhoto(carId, userId, data): Photo
+        +getPhotos(carId): List<Photo>
+        +getPhotoData(photoId): ByteArray
+    }
+    class RentalTermsService {
+        +getRentalTerms(carId): RentalTerms
+        +setRentalTerms(carId, userId, request): RentalTerms
+    }
+    class LocationService {
+        +getMapsUrl(carId, userId): String
     }
     class ReservationService {
-        +createReservation(request): Reservation
-        +cancelReservation(id): Reservation
+        +createReservation(userId, request): Reservation
+        +cancelReservation(id, userId): Reservation
     }
     class RideService {
-        +startRide(reservationId): Ride
-        +finishRide(rideId, request): Ride
+        +startRide(reservationId, userId): Ride
+        +finishRide(rideId, userId, request): Ride
     }
     class UserService {
         +register(request): User
@@ -45,6 +71,7 @@ package services {
     }
     class TokenService {
         +createToken(user): String
+        +verifier
     }
 }
 
@@ -60,12 +87,24 @@ package repositories {
     interface LocationRepository {
         +getLatestLocationByCarId(carId)
     }
+    interface PhotoRepository {
+        +createPhoto(carId, fileName)
+        +getPhotosByCarId(carId)
+        +getFileName(photoId)
+        +getFileNamesByCarId(carId)
+    }
+    interface RentalTermsRepository {
+        +carExists(carId)
+        +getRentalTermsByCarId(carId)
+        +saveRentalTerms(carId, request)
+    }
     interface ReservationRepository {
         +carExists(carId)
         +userExists(userId)
         +hasActiveOverlap(carId, startTime, endTime)
         +createReservation(...)
         +getReservationById(id)
+        +getReservationsByCarAndUser(carId, userId)
         +updateStatus(id, status)
     }
     interface RideRepository {
@@ -77,34 +116,82 @@ package repositories {
     interface UserRepository {
         +findByEmail(email)
         +findAll()
+        +userExists(userId)
         +create(email, passwordHash)
     }
 
     class ExposedCarRepository
     class ExposedLocationRepository
+    class ExposedPhotoRepository
+    class ExposedRentalTermsRepository
     class ExposedReservationRepository
     class ExposedRideRepository
     class ExposedUserRepository
 
     CarRepository <|.. ExposedCarRepository
     LocationRepository <|.. ExposedLocationRepository
+    PhotoRepository <|.. ExposedPhotoRepository
+    RentalTermsRepository <|.. ExposedRentalTermsRepository
     ReservationRepository <|.. ExposedReservationRepository
     RideRepository <|.. ExposedRideRepository
     UserRepository <|.. ExposedUserRepository
 }
 
-class RdwClient <<external>>
+package clients {
+    interface VehicleRegistry {
+        +getVehicle(licensePlate)
+        +getFuel(licensePlate)
+    }
+    interface CostEstimator {
+        +estimateCarCosts(car)
+    }
+    abstract class JsonApiClient
+    class RdwClient <<external>>
+    class GeminiClient <<external>>
+
+    VehicleRegistry <|.. RdwClient
+    CostEstimator <|.. GeminiClient
+    JsonApiClient <|-- RdwClient
+    JsonApiClient <|-- GeminiClient
+}
+
+package config {
+    class PhotoStorage {
+        +save(fileName, bytes)
+        +read(fileName)
+        +delete(fileName)
+    }
+}
 
 CarRouting --> CarService
+CarRouting --> CarImportService
+CarRouting --> CarCostService
+PhotoRouting --> PhotoService
+MapRouting --> LocationService
+RentalTermsRouting --> RentalTermsService
 ReservationRouting --> ReservationService
 RideRouting --> RideService
 UserRouting --> UserService
 UserRouting --> AuthService
-MapRouting --> LocationRepository
 
-CarService --> RdwClient
 CarService --> CarRepository
 CarService --> LocationRepository
+CarService --> PhotoRepository
+CarService --> RentalTermsRepository
+CarService --> PhotoStorage
+CarImportService --> VehicleRegistry
+CarImportService --> CarRepository
+CarImportService --> UserRepository
+CarCostService --> CostEstimator
+CarCostService --> CarRepository
+PhotoService --> PhotoRepository
+PhotoService --> CarRepository
+PhotoService --> PhotoStorage
+RentalTermsService --> RentalTermsRepository
+RentalTermsService --> CarRepository
+LocationService --> CarRepository
+LocationService --> LocationRepository
+LocationService --> ReservationRepository
 ReservationService --> ReservationRepository
 RideService --> RideRepository
 RideService --> ReservationRepository
