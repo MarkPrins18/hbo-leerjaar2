@@ -1,38 +1,65 @@
 @startuml FinishRide
+title Sequentiediagram #11: rit afronden (PATCH /rides/{id}/finish)
 
-actor Client
-participant RideRouting
-participant RideService
-participant RideRepository
-participant StatusPages
-database H2
+actor Huurder as g
+participant "Android-app" as app
+participant "rideRoutes" as rt
+participant "RideService" as svc
+participant "RideRepository" as riderepo
+participant "ReservationRepository" as resrepo
+database "H2-database" as db
 
-Client -> RideRouting : PATCH /rides/{id}/finish (RideFinishRequest)
-RideRouting -> RideService : finishRide(rideId, request)
+g -> app : rit beëindigen()
+app -> rt : PATCH /rides/{id}/finish {distanceM, avgAcceleration, avgDeceleration}\nAuthorization: Bearer <token>
+note right of rt
+  requireAuthentication { }: zonder geldig token
+  stopt de request hier met 401 (preconditie: #2)
+end note
+rt -> rt : call.authenticatedUserId()
+rt -> svc : finishRide(rideId, userId, request)
+svc -> svc : distanceM, avgAcceleration en\navgDeceleration niet negatief?
 
-alt afstand of acceleraties negatief
-    RideService --> StatusPages : ApiException(400)
-    StatusPages --> Client : 400 Bad Request
+group flow 7a [negatieve waarde]
+    svc --> rt : throw ValidationException
+    rt --> app : 400 Bad Request (StatusPages)
+    app --> g : foutmelding (stap 6)
 end
 
-RideService -> RideRepository : getRideById(rideId)
-RideRepository -> H2
-RideRepository --> RideService : Ride?
-alt rit niet gevonden
-    RideService --> StatusPages : ApiException(404)
-    StatusPages --> Client : 404 Not Found
+svc -> riderepo : getRideById(rideId)
+riderepo -> db : SELECT FROM ride WHERE id
+db --> riderepo : 0 of 1 rij
+riderepo --> svc : Ride?
+
+group flow 8a [rit bestaat niet]
+    svc --> rt : throw ResourceNotFoundException
+    rt --> app : 404 Not Found (StatusPages)
+    app --> g : foutmelding (einde)
 end
 
-alt rit niet IN_PROGRESS
-    RideService --> StatusPages : ApiException(409)
-    StatusPages --> Client : 409 Conflict
+svc -> resrepo : getReservationById(ride.reservationId)
+resrepo -> db : SELECT FROM reservation WHERE id
+db --> resrepo : 1 rij
+resrepo --> svc : Reservation
+
+group flow 8b [rit hoort bij een reservering van een andere gebruiker]
+    svc --> rt : throw ForbiddenException
+    rt --> app : 403 Forbidden (StatusPages)
+    app --> g : foutmelding (einde)
 end
 
-RideService -> RideService : calculateBonusPoints(distanceM, avgAcceleration, avgDeceleration)
-RideService -> RideRepository : finishRide(rideId, now, distanceM, avgAcceleration, avgDeceleration, bonusPoints)
-RideRepository -> H2 : UPDATE ride (COMPLETED)
-RideRepository --> RideService : Ride
-RideService --> RideRouting : Ride
-RideRouting --> Client : 200 OK
+group flow 8c [rit is al afgerond]
+    svc --> rt : throw ConflictException
+    rt --> app : 409 Conflict (StatusPages)
+    app --> g : foutmelding (einde)
+end
+
+svc -> svc : calculateBonusPoints(distanceM,\navgAcceleration, avgDeceleration)
+svc -> riderepo : finishRide(rideId, nu, distanceM, ..., bonusPoints)
+riderepo -> db : UPDATE ride (COMPLETED)
+db --> riderepo : daarna SELECT van de rij
+riderepo --> svc : Ride
+svc --> rt : Ride
+rt --> app : 200 OK + Ride
+app --> g : toont bonuspunten
 
 @enduml

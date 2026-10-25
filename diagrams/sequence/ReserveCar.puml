@@ -9,8 +9,13 @@ participant "ReservationRepository" as repo
 database "H2-database" as db
 
 g -> app : reserveer()
-app -> rt : POST /reservations {carId, userId, startTime, endTime}
-rt -> svc : createReservation(request)
+app -> rt : POST /reservations {carId, startTime, endTime}\nAuthorization: Bearer <token>
+note right of rt
+  requireAuthentication { }: zonder geldig token
+  stopt de request hier met 401 (preconditie: #2)
+end note
+rt -> rt : call.authenticatedUserId()
+rt -> svc : createReservation(userId, request)
 svc -> svc : startTime > nu en endTime > startTime?
 
 group flow 3a [starttijd in het verleden of eindtijd niet na starttijd]
@@ -45,7 +50,7 @@ group flow 5a [tijdsblok overlapt met actieve reservering]
     app --> g : ander tijdsblok (stap 1)
 end
 
-svc -> repo : createReservation(..., CONFIRMED)
+svc -> repo : createReservation(carId, userId, ..., CONFIRMED)
 repo -> db : INSERT INTO reservation
 db --> repo : id, daarna SELECT van de nieuwe rij
 repo --> svc : Reservation

@@ -184,6 +184,17 @@ package "repositories" #FFF1D6 {
     interface LocationRepository {
         +getLatestLocationByCarId(carId): Location?
     }
+    interface PhotoRepository {
+        +createPhoto(carId, fileName)
+        +getPhotosByCarId(carId)
+        +getFileName(photoId)
+        +getFileNamesByCarId(carId)
+    }
+    interface RentalTermsRepository {
+        +carExists(carId)
+        +getRentalTermsByCarId(carId)
+        +saveRentalTerms(carId, request)
+    }
     interface ReservationRepository {
         +carExists(carId): Boolean
         +userExists(userId): Boolean

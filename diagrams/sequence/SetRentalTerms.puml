@@ -5,29 +5,41 @@ actor Eigenaar as g
 participant "Android-app" as app
 participant "rentalTermsRoutes" as rt
 participant "RentalTermsService" as svc
+participant "CarRepository" as car
 participant "RentalTermsRepository" as repo
 database "H2-database" as db
 
 g -> app : sla voorwaarden op()
-app -> rt : PUT /cars/{id}/rental-terms {pricePerDay, ...}
-rt -> svc : setRentalTerms(carId, request)
-svc -> svc : request.validate()
+app -> rt : PUT /cars/{id}/rental-terms {pricePerDay, ...}\nAuthorization: Bearer <token>
+note right of rt
+  requireAuthentication { }: zonder geldig token
+  stopt de request hier met 401 (preconditie: #2)
+end note
+rt -> rt : call.authenticatedUserId()
+rt -> svc : setRentalTerms(carId, userId, request)
+svc -> car : getCarById(carId)
+car -> db : SELECT car + subtabellen WHERE id
+db --> car : 0 of 1 rij
+car --> svc : Car?
 
-group flow 3a [ongeldige prijs, locatie of tijdvenster]
-    svc --> rt : throw ValidationException
-    rt --> app : 400 Bad Request (StatusPages)
-    app --> g : toont foutmelding
-end
-
-svc -> repo : carExists(carId)
-repo -> db : SELECT FROM car WHERE id
-db --> repo : 0 of 1 rij
-repo --> svc : Boolean
-
-group flow 4a [auto bestaat niet]
+group flow 3a [auto bestaat niet]
     svc --> rt : throw ResourceNotFoundException
     rt --> app : 404 Not Found (StatusPages)
-    app --> g : toont foutmelding
+    app --> g : foutmelding (einde)
+end
+
+group flow 3b [ingelogde gebruiker is niet de eigenaar]
+    svc --> rt : throw ForbiddenException
+    rt --> app : 403 Forbidden (StatusPages)
+    app --> g : foutmelding (einde)
+end
+
+svc -> svc : request.validate()
+
+group flow 4a [ongeldige prijs, locatie of tijdvenster]
+    svc --> rt : throw ValidationException
+    rt --> app : 400 Bad Request (StatusPages)
+    app --> g : foutmelding (stap 2)
 end
 
 svc -> repo : saveRentalTerms(carId, request)

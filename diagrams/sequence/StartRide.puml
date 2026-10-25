@@ -1,41 +1,57 @@
 @startuml StartRide
+title Sequentiediagram #11: rit starten (POST /reservations/{id}/rides)
 
-actor Client
-participant RideRouting
-participant RideService
-participant ReservationRepository
-participant RideRepository
-participant StatusPages
-database H2
+actor Huurder as g
+participant "Android-app" as app
+participant "rideRoutes" as rt
+participant "RideService" as svc
+participant "ReservationRepository" as resrepo
+participant "RideRepository" as riderepo
+database "H2-database" as db
 
-Client -> RideRouting : POST /reservations/{id}/rides
-RideRouting -> RideService : startRide(reservationId)
+g -> app : rit starten()
+app -> rt : POST /reservations/{id}/rides\nAuthorization: Bearer <token>
+note right of rt
+  requireAuthentication { }: zonder geldig token
+  stopt de request hier met 401 (preconditie: #2)
+end note
+rt -> rt : call.authenticatedUserId()
+rt -> svc : startRide(reservationId, userId)
+svc -> resrepo : getReservationById(reservationId)
+resrepo -> db : SELECT FROM reservation WHERE id
+db --> resrepo : 0 of 1 rij
+resrepo --> svc : Reservation?
 
-RideService -> ReservationRepository : getReservationById(reservationId)
-ReservationRepository -> H2
-ReservationRepository --> RideService : Reservation?
-alt reservering niet gevonden
-    RideService --> StatusPages : ApiException(404)
-    StatusPages --> Client : 404 Not Found
+group flow 2a [reservering bestaat niet]
+    svc --> rt : throw ResourceNotFoundException
+    rt --> app : 404 Not Found (StatusPages)
+    app --> g : foutmelding (einde)
 end
 
-alt status niet CONFIRMED of nu buiten start- en eindtijd
-    RideService --> StatusPages : ApiException(409)
-    StatusPages --> Client : 409 Conflict
+group flow 2b [reservering is van een andere gebruiker]
+    svc --> rt : throw ForbiddenException
+    rt --> app : 403 Forbidden (StatusPages)
+    app --> g : foutmelding (einde)
 end
 
-RideService -> RideRepository : hasRideInProgress(reservationId)
-RideRepository -> H2
-RideRepository --> RideService : Boolean
-alt er loopt al een rit
-    RideService --> StatusPages : ApiException(409)
-    StatusPages --> Client : 409 Conflict
+svc -> svc : status == CONFIRMED en\nstartTime <= nu < endTime?
+svc -> riderepo : hasRideInProgress(reservationId)
+riderepo -> db : SELECT FROM ride WHERE reservation_id\nAND status = IN_PROGRESS
+db --> riderepo : rijen
+riderepo --> svc : Boolean
+
+group flow 3a [niet CONFIRMED, buiten het tijdsblok of er loopt al een rit]
+    svc --> rt : throw ConflictException
+    rt --> app : 409 Conflict (StatusPages)
+    app --> g : foutmelding (einde)
 end
 
-RideService -> RideRepository : startRide(reservationId, now)
-RideRepository -> H2 : INSERT ride (IN_PROGRESS)
-RideRepository --> RideService : Ride
-RideService --> RideRouting : Ride
-RideRouting --> Client : 201 Created
+svc -> riderepo : startRide(reservationId, nu)
+riderepo -> db : INSERT INTO ride (IN_PROGRESS)
+db --> riderepo : id, daarna SELECT van de nieuwe rij
+riderepo --> svc : Ride
+svc --> rt : Ride
+rt --> app : 201 Created + Ride
+app --> g : toont lopende rit
 
 @enduml
