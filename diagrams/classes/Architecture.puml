@@ -35,13 +35,13 @@ package "shared" #E8E0F5 {
         shared.dto
         --
         CarDto, CarChangeDto
+        RentalTermsRequest, RideFinishRequest
     }
     class SharedRequests <<file>> {
         shared.requests
         --
         LoginRequest, RegisterRequest
-        ReservationRequest, RentalTermsRequest
-        RideFinishRequest
+        ReservationRequest
     }
     class SharedResponses <<file>> {
         shared.responses
@@ -283,10 +283,29 @@ UserService --> UserRepository
 AuthService --> UserRepository
 AuthService -> TokenService
 
-CarService ..> SharedModels
-CarRouting ..> SharedRequests
+CarRouting ..> SharedDto
+RentalTermsRouting ..> SharedDto
+RideRouting ..> SharedDto
+ReservationRouting ..> SharedRequests
+UserRouting ..> SharedRequests
 UserRouting ..> SharedResponses
+CarService ..> SharedModels
 CarService ..> SharedDto
+CarImportService ..> SharedModels
+CarImportService ..> SharedDto
+CarCostService ..> SharedModels
+CarCostService ..> SharedDto
+CarCostService ..> SharedResponses
+PhotoService ..> SharedModels
+RentalTermsService ..> SharedModels
+RentalTermsService ..> SharedDto
+LocationService ..> SharedModels
+ReservationService ..> SharedModels
+ReservationService ..> SharedRequests
+RideService ..> SharedModels
+RideService ..> SharedDto
+AuthService ..> SharedRequests
+UserService ..> SharedRequests
 
 VehicleRegistry <|. RdwClient
 CostEstimator <|. GeminiClient

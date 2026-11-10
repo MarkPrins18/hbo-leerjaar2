@@ -32,9 +32,10 @@ Here's a list of features included in this project:
 
 ## Android SDK
 
-Voor `composeApp` en `androidApp` is een Android SDK nodig. Amper downloadt die zelf bij de eerste build
-(command-line tools, build-tools en platform); `ANDROID_HOME` hoeft niet te worden gezet. De eerste build duurt
-daardoor langer en heeft internet nodig. Afspraak in het team: iedereen moet de Android-modules kunnen bouwen.
+Voor `composeApp` en `androidApp` is een Android SDK nodig. Op Windows is geverifieerd dat Amper die zelf downloadt
+bij de eerste build (command-line tools, build-tools en platform), zodat `ANDROID_HOME` niet nodig is. De eerste build
+duurt daardoor langer en heeft internet nodig. Of dit ook op Linux werkt, bevestigt de CI (ubuntu) bij de eerste run.
+Afspraak in het team: iedereen moet de Android-modules kunnen bouwen.
 
 ## Building & Running
 
@@ -43,7 +44,7 @@ To build or run the project, use one of the following tasks:
 | Task             | Description       |
 |------------------|-------------------|
 | `./kotlin test`  | Run the tests     |
-| `./kotlin build` | Build the project (alle modules) |
+| `./kotlin build` | Build the project |
 | `./kotlin run`   | Run the server    |
 
 If the server starts successfully, you'll see the following output:
