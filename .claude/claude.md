@@ -8,6 +8,7 @@ Schoolproject: Kotlin/Ktor Web API voor een autodeelplatform, gebouwd door een t
 - Pragmatisch en simpel. Pas je aan de bestaande stijl en mappenstructuur aan.
 - Weinig commentaar. `//check`, `//remove` en `//rename` zijn notities: laten staan.
 - Na een wijziging: `./kotlin build` (Windows: `.\kotlin.bat build`). Geen Gradle.
+- Gebruik de skills in `.claude/skills/` (start met `using-superpowers`). `/brainstorming` start alleen de gebruiker.
 
 ## Regels
 - Alleen Kotlin stdlib, geen `java.*`. Geen DI-library; dependencies via constructors vanuit `Routing.kt`.
