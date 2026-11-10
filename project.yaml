@@ -1,2 +1,4 @@
 modules:
+  - androidApp
+  - composeApp
   - server
