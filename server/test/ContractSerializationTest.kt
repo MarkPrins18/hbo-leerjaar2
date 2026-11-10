@@ -1,6 +1,6 @@
 import dto.CarChangeDto
+import io.ktor.serialization.kotlinx.json.DefaultJson
 import kotlinx.datetime.LocalTime
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -71,7 +71,7 @@ private val fcevCar = FCEVCar(
     tankCapacityKgH2 = 5.6
 )
 
-private fun encodeCar(car: Car): JsonObject = Json.parseToJsonElement(Json.encodeToString<Car>(car)).jsonObject
+private fun encodeCar(car: Car): JsonObject = DefaultJson.parseToJsonElement(DefaultJson.encodeToString<Car>(car)).jsonObject
 
 private fun JsonObject.string(key: String): String = getValue(key).jsonPrimitive.content
 
@@ -81,22 +81,22 @@ class ContractSerializationTest {
 
     @Test
     fun `ICECar heeft type ICECar in de JSON`() {
-        val json = Json.encodeToString<Car>(iceCar)
+        val json = DefaultJson.encodeToString<Car>(iceCar)
 
-        val obj = Json.parseToJsonElement(json).jsonObject
+        val obj = DefaultJson.parseToJsonElement(json).jsonObject
         assertEquals("ICECar", obj.string("type"))
-        assertEquals(iceCar, Json.decodeFromString<Car>(json))
+        assertEquals(iceCar, DefaultJson.decodeFromString<Car>(json))
     }
 
     @Test
     fun `BEVCar en FCEVCar hebben hun eigen type`() {
-        val bevJson = Json.encodeToString<Car>(bevCar)
-        val fcevJson = Json.encodeToString<Car>(fcevCar)
+        val bevJson = DefaultJson.encodeToString<Car>(bevCar)
+        val fcevJson = DefaultJson.encodeToString<Car>(fcevCar)
 
         assertEquals("BEVCar", encodeCar(bevCar).string("type"))
         assertEquals("FCEVCar", encodeCar(fcevCar).string("type"))
-        assertEquals(bevCar, Json.decodeFromString<Car>(bevJson))
-        assertEquals(fcevCar, Json.decodeFromString<Car>(fcevJson))
+        assertEquals(bevCar, DefaultJson.decodeFromString<Car>(bevJson))
+        assertEquals(fcevCar, DefaultJson.decodeFromString<Car>(fcevJson))
     }
 
     @Test
@@ -110,7 +110,7 @@ class ContractSerializationTest {
             status = ReservationStatus.PENDING
         )
 
-        val obj = Json.parseToJsonElement(Json.encodeToString(reservation)).jsonObject
+        val obj = DefaultJson.parseToJsonElement(DefaultJson.encodeToString(reservation)).jsonObject
 
         assertEquals("2026-01-01T10:00:00Z", obj.string("startTime"))
         assertEquals("PENDING", obj.string("status"))
@@ -130,7 +130,7 @@ class ContractSerializationTest {
             bonusPoints = null
         )
 
-        val obj = Json.parseToJsonElement(Json.encodeToString(ride)).jsonObject
+        val obj = DefaultJson.parseToJsonElement(DefaultJson.encodeToString(ride)).jsonObject
 
         assertEquals("IN_PROGRESS", obj.string("status"))
     }
@@ -145,7 +145,7 @@ class ContractSerializationTest {
             pickupTimeStart = LocalTime(9, 0)
         )
 
-        val obj = Json.parseToJsonElement(Json.encodeToString(terms)).jsonObject
+        val obj = DefaultJson.parseToJsonElement(DefaultJson.encodeToString(terms)).jsonObject
 
         assertEquals("09:00", obj.string("pickupTimeStart"))
     }
@@ -154,7 +154,7 @@ class ContractSerializationTest {
     fun `UserResponse bevat alleen id en email`() {
         val response = User(1, "a@b.nl", "hash").toResponse()
 
-        val obj = Json.parseToJsonElement(Json.encodeToString(response)).jsonObject
+        val obj = DefaultJson.parseToJsonElement(DefaultJson.encodeToString(response)).jsonObject
 
         assertEquals(setOf("id", "email"), obj.keys)
     }
@@ -163,7 +163,7 @@ class ContractSerializationTest {
     fun `CarChangeDto leest enums uit de JSON`() {
         val json = """{"fuelType":"DIESEL","vehicleType":"PASSENGER_CAR"}"""
 
-        val dto = Json.decodeFromString<CarChangeDto>(json)
+        val dto = DefaultJson.decodeFromString<CarChangeDto>(json)
 
         assertEquals(FuelType.DIESEL, dto.fuelType)
         assertEquals(VehicleType.PASSENGER_CAR, dto.vehicleType)
