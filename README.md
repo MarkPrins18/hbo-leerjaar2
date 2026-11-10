@@ -32,10 +32,12 @@ Here's a list of features included in this project:
 
 ## Android SDK
 
-Voor `composeApp` en `androidApp` is een Android SDK nodig. Op Windows is geverifieerd dat Amper die zelf downloadt
-bij de eerste build (command-line tools, build-tools en platform), zodat `ANDROID_HOME` niet nodig is. De eerste build
-duurt daardoor langer en heeft internet nodig. Of dit ook op Linux werkt, bevestigt de CI (ubuntu) bij de eerste run.
-Afspraak in het team: iedereen moet de Android-modules kunnen bouwen.
+Voor `composeApp` en `androidApp` is een Android SDK nodig. Amper downloadt ontbrekende SDK-onderdelen (build-tools,
+platform) zelf bij de eerste build; die build duurt daardoor langer en heeft internet nodig. Op een machine zonder enige
+Android SDK is dit nog niet geverifieerd (getest met een bestaande Android Studio-SDK met geaccepteerde licenties in
+`%LOCALAPPDATA%\Android\Sdk`). Faalt de build daar: installeer de SDK via Android Studio of accepteer de licenties met
+`sdkmanager --licenses`. Of dit op Linux werkt, bevestigt de CI (ubuntu) bij de eerste run.
+Afspraak in het team: iedereen moet de Android-modules kunnen bouwen voordat er gemerged wordt.
 
 ## Building & Running
 

@@ -51,6 +51,16 @@ package "shared" #E8E0F5 {
     }
 }
 
+package "composeApp" #E8E0F5 {
+    class App <<file>> {
+        +App()
+    }
+}
+
+package "androidApp" #E8E0F5 {
+    class MainActivity <<file>>
+}
+
 package "routes" #DCEBFA {
     class CarRouting <<file>> {
         +carRoutes(carService, carImportService, carCostService)
@@ -306,6 +316,8 @@ RideService ..> SharedModels
 RideService ..> SharedDto
 AuthService ..> SharedRequests
 UserService ..> SharedRequests
+
+MainActivity ..> App
 
 VehicleRegistry <|. RdwClient
 CostEstimator <|. GeminiClient

@@ -1,6 +1,6 @@
 @startuml CarDataModel
 
-package models {
+package shared.models {
 
     enum FuelType {
         PETROL
@@ -74,12 +74,6 @@ package models {
         COMPLETED
     }
 
-    class User <<data>> {
-        +id: Int
-        +email: String
-        +passwordHash: String
-    }
-
     class Reservation <<data>> {
         +id: Int
         +carId: Int
@@ -100,16 +94,25 @@ package models {
         +avgDeceleration: Double?
         +bonusPoints: Int?
     }
-
-    Car --> VehicleType
-    ICECar --> FuelType
-
-    Reservation --> ReservationStatus
-    Ride --> RideStatus
-    Car "*" --> "1" User : userId
-    Reservation "*" --> "1" User : userId
-    Reservation "*" --> "1" Car : carId
-    Ride "*" --> "1" Reservation : reservationId
 }
+
+package models {
+
+    class User <<data>> {
+        +id: Int
+        +email: String
+        +passwordHash: String
+    }
+}
+
+Car --> VehicleType
+ICECar --> FuelType
+
+Reservation --> ReservationStatus
+Ride --> RideStatus
+Car "*" --> "1" User : userId
+Reservation "*" --> "1" User : userId
+Reservation "*" --> "1" Car : carId
+Ride "*" --> "1" Reservation : reservationId
 
 @enduml
