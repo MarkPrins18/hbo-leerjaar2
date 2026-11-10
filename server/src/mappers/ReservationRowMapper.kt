@@ -1,6 +1,6 @@
 package mappers
 
-import models.Reservation
+import shared.models.Reservation
 import org.jetbrains.exposed.v1.core.ResultRow
 import tables.ReservationTable
 

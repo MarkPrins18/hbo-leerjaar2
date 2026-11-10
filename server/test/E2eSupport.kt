@@ -14,8 +14,8 @@ import io.ktor.server.testing.testApplication
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.files.SystemTemporaryDirectory
-import requests.LoginRequest
-import responses.LoginResponse
+import shared.requests.LoginRequest
+import shared.responses.LoginResponse
 import kotlin.uuid.Uuid
 
 const val SEED_PASSWORD = "Welkom123!"

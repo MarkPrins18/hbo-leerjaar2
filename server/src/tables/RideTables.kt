@@ -1,6 +1,6 @@
 package tables
 
-import models.RideStatus
+import shared.models.RideStatus
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.datetime.timestamp
 

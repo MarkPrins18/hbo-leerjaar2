@@ -1,0 +1,12 @@
+product:
+  type: kmp/lib
+  platforms: [jvm, android]
+
+dependencies:
+  - $libs.kotlinx.datetime: exported
+
+settings:
+  kotlin:
+    serialization: enabled
+  android:
+    namespace: nl.carsharing.shared

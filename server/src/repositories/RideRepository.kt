@@ -1,6 +1,6 @@
 package repositories
 
-import models.Ride
+import shared.models.Ride
 import kotlin.time.Instant
 
 interface RideRepository {

@@ -1,4 +1,4 @@
-package models
+package shared.models
 
 import kotlinx.serialization.Serializable
 import kotlin.time.Instant

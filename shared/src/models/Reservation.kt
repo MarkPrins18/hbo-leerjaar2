@@ -1,4 +1,4 @@
-package models
+package shared.models
 
 import kotlinx.serialization.Serializable
 import kotlin.time.Instant
@@ -16,5 +16,3 @@ data class Reservation(
 enum class ReservationStatus {
     PENDING, CONFIRMED, CANCELLED, COMPLETED
 }
-
-val ACTIVE_RESERVATION_STATUSES = setOf(ReservationStatus.PENDING, ReservationStatus.CONFIRMED)

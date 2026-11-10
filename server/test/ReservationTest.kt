@@ -9,10 +9,10 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import kotlinx.coroutines.runBlocking
-import models.Reservation
-import models.ReservationStatus
+import shared.models.Reservation
+import shared.models.ReservationStatus
 import repositories.ReservationRepository
-import requests.ReservationRequest
+import shared.requests.ReservationRequest
 import services.ConflictException
 import services.ForbiddenException
 import services.ReservationService

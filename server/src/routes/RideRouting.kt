@@ -6,7 +6,7 @@ import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.*
 import io.ktor.server.util.getOrFail
-import dto.RideFinishRequest
+import shared.dto.RideFinishRequest
 import requireAuthentication
 import services.RideService
 

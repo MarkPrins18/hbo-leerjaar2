@@ -6,7 +6,7 @@ import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.*
 import io.ktor.server.util.getOrFail
-import requests.ReservationRequest
+import shared.requests.ReservationRequest
 import requireAuthentication
 import services.ReservationService
 

@@ -1,4 +1,4 @@
-import dto.RideFinishRequest
+import shared.dto.RideFinishRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.patch
@@ -9,10 +9,10 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import kotlinx.coroutines.runBlocking
-import models.Reservation
-import models.ReservationStatus
-import models.Ride
-import models.RideStatus
+import shared.models.Reservation
+import shared.models.ReservationStatus
+import shared.models.Ride
+import shared.models.RideStatus
 import repositories.ReservationRepository
 import repositories.RideRepository
 import services.ConflictException

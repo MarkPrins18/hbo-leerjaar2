@@ -1,7 +1,7 @@
 package tables
 
-import models.FuelType
-import models.VehicleType
+import shared.models.FuelType
+import shared.models.VehicleType
 import org.jetbrains.exposed.v1.core.Table
 
 val carTables = listOf(CarTable, IceCarTable, BevCarTable, FcevCarTable)

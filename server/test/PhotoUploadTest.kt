@@ -1,5 +1,5 @@
 import config.PhotoStorage
-import dto.CarChangeDto
+import shared.dto.CarChangeDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
@@ -19,10 +19,10 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.files.SystemTemporaryDirectory
-import models.BEVCar
-import models.Car
-import models.Photo
-import models.VehicleType
+import shared.models.BEVCar
+import shared.models.Car
+import shared.models.Photo
+import shared.models.VehicleType
 import repositories.CarRepository
 import repositories.PhotoRepository
 import services.FileTooLargeException

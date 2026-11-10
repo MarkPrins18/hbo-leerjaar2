@@ -1,8 +1,8 @@
-package dto
+package shared.dto
 
 import kotlinx.serialization.Serializable
-import models.FuelType
-import models.VehicleType
+import shared.models.FuelType
+import shared.models.VehicleType
 
 @Serializable
 data class CarDto(
@@ -36,11 +36,4 @@ data class CarChangeDto(
     val automaticTransmission: Boolean? = null,
     val batteryCapacityKWh: Double? = null,
     val tankCapacityKgH2: Double? = null
-)
-
-data class CarFilter(
-    val maxPrice: Double? = null,
-    val maxDistanceKm: Double? = null,
-    val latitude: Double? = null,
-    val longitude: Double? = null,
 )

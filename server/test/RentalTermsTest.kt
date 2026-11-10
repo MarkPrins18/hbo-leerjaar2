@@ -1,5 +1,5 @@
-import dto.CarChangeDto
-import dto.RentalTermsRequest
+import shared.dto.CarChangeDto
+import shared.dto.RentalTermsRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
@@ -12,7 +12,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalTime
-import models.*
+import shared.models.*
 import repositories.CarRepository
 import repositories.RentalTermsRepository
 import services.ForbiddenException

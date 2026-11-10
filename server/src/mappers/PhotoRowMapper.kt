@@ -1,6 +1,6 @@
 package mappers
 
-import models.Photo
+import shared.models.Photo
 import org.jetbrains.exposed.v1.core.ResultRow
 import tables.PhotoTable
 

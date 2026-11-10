@@ -1,4 +1,4 @@
-package responses
+package shared.responses
 
 import kotlinx.serialization.Serializable
 

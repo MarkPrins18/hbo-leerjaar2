@@ -1,7 +1,7 @@
 package repositories
 
-import models.Reservation
-import models.ReservationStatus
+import shared.models.Reservation
+import shared.models.ReservationStatus
 import kotlin.time.Instant
 
 interface ReservationRepository {

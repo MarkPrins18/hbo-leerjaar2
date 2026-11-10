@@ -2,7 +2,8 @@ package services
 
 import repositories.CarRepository
 import dto.*
-import models.*
+import shared.dto.*
+import shared.models.*
 import config.PhotoStorage
 import repositories.LocationRepository
 import repositories.PhotoRepository

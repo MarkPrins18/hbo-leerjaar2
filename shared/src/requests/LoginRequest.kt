@@ -1,4 +1,4 @@
-package requests
+package shared.requests
 
 import kotlinx.serialization.Serializable
 

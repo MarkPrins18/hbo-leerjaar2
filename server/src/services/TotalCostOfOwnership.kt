@@ -1,7 +1,7 @@
 package services
 
-import models.Car
-import responses.TcoResponse
+import shared.models.Car
+import shared.responses.TcoResponse
 import kotlin.math.round
 
 const val DEFAULT_ANNUAL_KM = 15_000.0

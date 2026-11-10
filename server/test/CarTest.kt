@@ -1,7 +1,7 @@
 import clients.CostEstimator
 import config.PhotoStorage
-import dto.CarChangeDto
-import dto.CarDto
+import shared.dto.CarChangeDto
+import shared.dto.CarDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
@@ -19,6 +19,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemTemporaryDirectory
 import models.*
+import shared.models.*
 import models.gemini.CarCostEstimate
 import repositories.*
 import services.CarCostService
@@ -114,7 +115,7 @@ private class UnusedOwnedCarLocationRepository : LocationRepository {
 private class UnusedOwnedCarRentalTermsRepository : RentalTermsRepository {
     override suspend fun carExists(carId: Int): Boolean = TODO()
     override suspend fun getRentalTermsByCarId(carId: Int): RentalTerms? = TODO()
-    override suspend fun saveRentalTerms(carId: Int, request: dto.RentalTermsRequest): RentalTerms = TODO()
+    override suspend fun saveRentalTerms(carId: Int, request: shared.dto.RentalTermsRequest): RentalTerms = TODO()
 }
 
 // ==================== 2. Service: CarService ownership ====================

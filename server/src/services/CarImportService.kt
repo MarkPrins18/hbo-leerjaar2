@@ -1,9 +1,9 @@
 package services
 
 import clients.VehicleRegistry
-import dto.CarDto
+import shared.dto.CarDto
 import mappers.toCar
-import models.Car
+import shared.models.Car
 import repositories.CarRepository
 import repositories.UserRepository
 

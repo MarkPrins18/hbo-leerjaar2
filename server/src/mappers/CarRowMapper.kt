@@ -1,6 +1,6 @@
 package mappers
 
-import models.*
+import shared.models.*
 import org.jetbrains.exposed.v1.core.ResultRow
 import tables.*
 

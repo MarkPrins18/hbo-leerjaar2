@@ -2,10 +2,10 @@ package repositories
 
 import mappers.normalizeLicensePlate
 import mappers.toCar
-import models.BEVCar
-import models.Car
-import models.FCEVCar
-import models.ICECar
+import shared.models.BEVCar
+import shared.models.Car
+import shared.models.FCEVCar
+import shared.models.ICECar
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inSubQuery
 import org.jetbrains.exposed.v1.core.leftJoin
@@ -16,7 +16,7 @@ import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.update
-import dto.CarChangeDto
+import shared.dto.CarChangeDto
 import tables.BevCarTable
 import tables.CarTable
 import tables.FcevCarTable
@@ -153,17 +153,17 @@ class ExposedCarRepository : CarRepository {
             }
 
             is BEVCar -> {
-                if (change.batteryCapacityKWh != null) {
+                change.batteryCapacityKWh?.let { value ->
                     BevCarTable.update({ BevCarTable.carId eq carId }) {
-                        it[batteryCapacityKwh] = change.batteryCapacityKWh.toBigDecimal()
+                        it[batteryCapacityKwh] = value.toBigDecimal()
                     }
                 }
             }
 
             is FCEVCar -> {
-                if (change.tankCapacityKgH2 != null) {
+                change.tankCapacityKgH2?.let { value ->
                     FcevCarTable.update({ FcevCarTable.carId eq carId }) {
-                        it[tankCapacityKgH2] = change.tankCapacityKgH2.toBigDecimal()
+                        it[tankCapacityKgH2] = value.toBigDecimal()
                     }
                 }
             }

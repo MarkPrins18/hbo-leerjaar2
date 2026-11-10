@@ -1,6 +1,6 @@
 package services
 
-import requests.RegisterRequest
+import shared.requests.RegisterRequest
 
 private const val EMAIL_MAX_LENGTH = 255
 private const val PASSWORD_MIN_LENGTH = 8

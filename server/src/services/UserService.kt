@@ -3,7 +3,7 @@ package services
 import models.User
 import org.mindrot.jbcrypt.BCrypt
 import repositories.UserRepository
-import requests.RegisterRequest
+import shared.requests.RegisterRequest
 
 class UserService(private val userRepository: UserRepository) {
 

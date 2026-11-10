@@ -1,6 +1,6 @@
 package repositories
 
-import models.Photo
+import shared.models.Photo
 
 interface PhotoRepository {
     suspend fun createPhoto(carId: Int, fileName: String): Photo

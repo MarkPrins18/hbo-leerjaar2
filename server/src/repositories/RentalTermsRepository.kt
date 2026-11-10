@@ -1,7 +1,7 @@
 package repositories
 
-import dto.RentalTermsRequest
-import models.RentalTerms
+import shared.dto.RentalTermsRequest
+import shared.models.RentalTerms
 
 interface RentalTermsRepository {
     suspend fun carExists(carId: Int): Boolean

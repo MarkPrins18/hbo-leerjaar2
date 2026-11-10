@@ -14,6 +14,7 @@ import io.ktor.http.Parameters
 import io.ktor.server.request.receive
 import io.ktor.server.util.getOrFail
 import dto.*
+import shared.dto.*
 
 fun Route.carRoutes(
     carService: CarService,

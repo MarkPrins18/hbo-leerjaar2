@@ -1,5 +1,5 @@
 import clients.CostEstimator
-import dto.CarChangeDto
+import shared.dto.CarChangeDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
@@ -7,10 +7,10 @@ import io.ktor.client.request.get
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.runBlocking
-import models.*
+import shared.models.*
 import models.gemini.CarCostEstimate
 import repositories.*
-import responses.FuelCostResponse
+import shared.responses.FuelCostResponse
 import services.*
 import kotlin.math.round
 import kotlin.test.Test

@@ -1,7 +1,7 @@
 package services
 
 import models.Location
-import models.RentalTerms
+import shared.models.RentalTerms
 import dto.CarFilter
 
 fun CarFilter.matches(location: Location?, rentalTerms: RentalTerms?): Boolean =

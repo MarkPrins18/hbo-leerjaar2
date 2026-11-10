@@ -1,7 +1,7 @@
 package services
 
-import models.Reservation
-import models.ReservationStatus
+import shared.models.Reservation
+import shared.models.ReservationStatus
 import repositories.CarRepository
 import repositories.LocationRepository
 import repositories.ReservationRepository

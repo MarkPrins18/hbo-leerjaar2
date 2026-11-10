@@ -1,12 +1,10 @@
-package models
+package shared.dto
 
 import kotlinx.datetime.LocalTime
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class RentalTerms(
-    val id: Int,
-    val carId: Int,
+data class RentalTermsRequest(
     val pricePerDay: Double,
     val pickupLocation: String,
     val pickupTimeStart: LocalTime? = null,

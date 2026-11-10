@@ -1,11 +1,12 @@
-import dto.CarChangeDto
+import shared.dto.CarChangeDto
 import io.ktor.serialization.kotlinx.json.DefaultJson
 import kotlinx.datetime.LocalTime
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import models.*
-import responses.toResponse
+import shared.models.*
+import mappers.toResponse
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Instant

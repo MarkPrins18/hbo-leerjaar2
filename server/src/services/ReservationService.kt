@@ -1,10 +1,10 @@
 package services
 
 import models.ACTIVE_RESERVATION_STATUSES
-import models.Reservation
-import models.ReservationStatus
+import shared.models.Reservation
+import shared.models.ReservationStatus
 import repositories.ReservationRepository
-import requests.ReservationRequest
+import shared.requests.ReservationRequest
 import kotlin.time.Clock
 
 class ReservationService(

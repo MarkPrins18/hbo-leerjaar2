@@ -4,10 +4,10 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.*
-import requests.LoginRequest
-import requests.RegisterRequest
-import responses.LoginResponse
-import responses.toResponse
+import shared.requests.LoginRequest
+import shared.requests.RegisterRequest
+import shared.responses.LoginResponse
+import mappers.toResponse
 import services.AuthService
 import services.UserService
 

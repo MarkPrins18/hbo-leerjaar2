@@ -1,7 +1,7 @@
 package repositories
 
-import models.Car
-import dto.CarChangeDto
+import shared.models.Car
+import shared.dto.CarChangeDto
 
 interface CarRepository {
     suspend fun getAllCars(): List<Car>

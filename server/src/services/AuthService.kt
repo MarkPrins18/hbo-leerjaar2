@@ -2,7 +2,7 @@ package services
 
 import org.mindrot.jbcrypt.BCrypt
 import repositories.UserRepository
-import requests.LoginRequest
+import shared.requests.LoginRequest
 
 class AuthService(
     private val userRepository: UserRepository,
