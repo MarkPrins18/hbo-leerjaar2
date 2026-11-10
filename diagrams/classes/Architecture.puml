@@ -24,6 +24,33 @@ skinparam classStereotypeFontColor #5B6573
 skinparam legendBackgroundColor #FFFFFF
 skinparam legendBorderColor #8A94A6
 
+package "shared" #E8E0F5 {
+    class SharedModels <<file>> {
+        shared.models
+        --
+        Car (ICE / BEV / FCEV), Photo
+        RentalTerms, Reservation, Ride
+    }
+    class SharedDto <<file>> {
+        shared.dto
+        --
+        CarDto, CarChangeDto
+    }
+    class SharedRequests <<file>> {
+        shared.requests
+        --
+        LoginRequest, RegisterRequest
+        ReservationRequest, RentalTermsRequest
+        RideFinishRequest
+    }
+    class SharedResponses <<file>> {
+        shared.responses
+        --
+        LoginResponse, UserResponse
+        FuelCostResponse, TcoResponse
+    }
+}
+
 package "routes" #DCEBFA {
     class CarRouting <<file>> {
         +carRoutes(carService, carImportService, carCostService)
@@ -256,6 +283,10 @@ UserService --> UserRepository
 AuthService --> UserRepository
 AuthService -> TokenService
 
+CarService ..> SharedModels
+CarRouting ..> SharedRequests
+UserRouting ..> SharedResponses
+CarService ..> SharedDto
 
 VehicleRegistry <|. RdwClient
 CostEstimator <|. GeminiClient

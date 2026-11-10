@@ -19,6 +19,11 @@ Schoolproject: Kotlin/Ktor Web API voor een autodeelplatform, gebouwd door een t
 - Auth: beveilig routes met `requireAuthentication { }` en haal de gebruiker op met `call.authenticatedUserId()` (beide uit `Authentication.kt`). Neem nooit een user-id uit de request over.
 - Eigendomscontrole hoort in de service: geef `userId` door en gooi `ForbiddenException` als het niet klopt.
 
+## Modules
+- `shared`: alleen `@Serializable` contractklassen (packages `shared.models`, `shared.dto`, `shared.requests`, `shared.responses`), geen logica, geen server-only velden.
+- `server`: alle bestaande regels.
+- `composeApp` / `androidApp`: regels volgen zodra er schermen komen.
+
 ## Database
 - H2-bestand (`MODE=MySQL`) via Exposed. Bij elke start wordt het schema gereset en opnieuw geseed.
 - Nieuwe tabel: toevoegen aan `allTables` in `TableRegistry.kt`, seeddata in `resources/data/seed/` en `seedFilePaths` in `DatabaseSeeder.kt`.

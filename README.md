@@ -21,6 +21,21 @@ Here's a list of features included in this project:
 | [Exposed](https://start.ktor.io/p/org.jetbrains/server-exposed)                       | Adds Exposed database to your application                                          |
 | [Status Pages](https://start.ktor.io/p/io.ktor/server-status-pages)                   | Provides exception handling for routes                                             |
 
+## Modules
+
+| Module       | Type              | Beschrijving                                                        |
+|--------------|-------------------|---------------------------------------------------------------------|
+| `server`     | JVM (Ktor)        | De Web API: routes, services, repositories en database              |
+| `shared`     | KMP-bibliotheek   | `@Serializable` contractklassen (models, dto, requests, responses)  |
+| `composeApp` | KMP-bibliotheek   | Compose Multiplatform-UI (voorlopig alleen Android)                 |
+| `androidApp` | Android-app       | Android-app (`nl.carsharing.app`) die `composeApp` start            |
+
+## Android SDK
+
+Voor `composeApp` en `androidApp` is een Android SDK nodig. Amper downloadt die zelf bij de eerste build
+(command-line tools, build-tools en platform); `ANDROID_HOME` hoeft niet te worden gezet. De eerste build duurt
+daardoor langer en heeft internet nodig. Afspraak in het team: iedereen moet de Android-modules kunnen bouwen.
+
 ## Building & Running
 
 To build or run the project, use one of the following tasks:
@@ -28,7 +43,7 @@ To build or run the project, use one of the following tasks:
 | Task             | Description       |
 |------------------|-------------------|
 | `./kotlin test`  | Run the tests     |
-| `./kotlin build` | Build the project |
+| `./kotlin build` | Build the project (alle modules) |
 | `./kotlin run`   | Run the server    |
 
 If the server starts successfully, you'll see the following output:
@@ -37,3 +52,6 @@ If the server starts successfully, you'll see the following output:
 2024-12-04 14:32:45.584 [main] INFO  Application - Application started in 0.303 seconds.
 2024-12-04 14:32:45.682 [main] INFO  Application - Responding at http://0.0.0.0:8080
 ```
+
+De debug-APK van de Android-app staat na een build in
+`build/tasks/_androidApp_buildAndroidDebug/gradle-project-debug.apk`.
