@@ -6,6 +6,7 @@ participant "Android-app" as app
 participant "reservationRoutes" as rt
 participant "ReservationService" as svc
 participant "CarRepository" as car
+participant "UserRepository" as user
 participant "ReservationRepository" as repo
 database "H2-database" as db
 
@@ -42,10 +43,10 @@ group flow 4b [huurder is de eigenaar van de auto]
     app --> g : eigen auto kan niet (einde)
 end
 
-svc -> repo : userExists(userId)
-repo -> db : SELECT FROM users WHERE id
-db --> repo : 0 of 1 rij
-repo --> svc : Boolean
+svc -> user : userExists(userId)
+user -> db : SELECT FROM users WHERE id
+db --> user : 0 of 1 rij
+user --> svc : Boolean
 
 group flow 4c [huurder bestaat niet]
     svc --> rt : throw ResourceNotFoundException

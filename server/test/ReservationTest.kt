@@ -10,6 +10,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import kotlinx.coroutines.runBlocking
+import models.User
 import repositories.CarRepository
 import shared.dto.CarChangeDto
 import shared.models.BEVCar
@@ -18,6 +19,7 @@ import shared.models.Reservation
 import shared.models.ReservationStatus
 import shared.models.VehicleType
 import repositories.ReservationRepository
+import repositories.UserRepository
 import shared.requests.ReservationRequest
 import services.ConflictException
 import services.ForbiddenException
@@ -77,12 +79,17 @@ private class FakeReservationCarRepository(vararg cars: Car) : CarRepository {
     override suspend fun deleteCar(carId: Int): Boolean = TODO()
 }
 
-private class FakeReservationRepository(
-    private val userIds: Set<Int> = setOf(RENTER_ID, OTHER_USER_ID, OWNER_ID)
-) : ReservationRepository {
-    private val reservations = mutableListOf<Reservation>()
-
+private class FakeReservationUserRepository(private vararg val userIds: Int) : UserRepository {
     override suspend fun userExists(userId: Int): Boolean = userId in userIds
+
+    override suspend fun findByEmail(email: String): User? = TODO()
+    override suspend fun findById(userId: Int): User? = TODO()
+    override suspend fun findAll(): List<User> = TODO()
+    override suspend fun create(email: String, passwordHash: String): User = TODO()
+}
+
+private class FakeReservationRepository : ReservationRepository {
+    private val reservations = mutableListOf<Reservation>()
 
     override suspend fun createReservationIfAvailable(
         carId: Int, userId: Int, startTime: Instant, endTime: Instant, status: ReservationStatus
@@ -118,7 +125,11 @@ private class FakeReservationRepository(
 
 class ReservationServiceTest {
     private val repository = FakeReservationRepository()
-    private val service = ReservationService(repository, FakeReservationCarRepository(testCar()))
+    private val service = ReservationService(
+        repository,
+        FakeReservationCarRepository(testCar()),
+        FakeReservationUserRepository(RENTER_ID, OTHER_USER_ID, OWNER_ID)
+    )
 
     // ---------- createReservation ----------
 
@@ -141,6 +152,12 @@ class ReservationServiceTest {
     @Test
     fun `onbekende auto geeft ResourceNotFoundException`() = runBlocking {
         assertFailsWith<ResourceNotFoundException> { service.createReservation(RENTER_ID, request(carId = 999)) }
+        Unit
+    }
+
+    @Test
+    fun `onbekende gebruiker geeft ResourceNotFoundException`() = runBlocking {
+        assertFailsWith<ResourceNotFoundException> { service.createReservation(999, request()) }
         Unit
     }
 

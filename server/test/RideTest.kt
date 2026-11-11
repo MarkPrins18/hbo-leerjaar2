@@ -55,7 +55,6 @@ private class FakeRideReservationRepository(vararg reservations: Reservation) : 
 
     override suspend fun getReservationById(id: Int): Reservation? = reservations[id]
 
-    override suspend fun userExists(userId: Int): Boolean = TODO()
     override suspend fun createReservationIfAvailable(
         carId: Int, userId: Int, startTime: Instant, endTime: Instant, status: ReservationStatus
     ): Reservation? = TODO()

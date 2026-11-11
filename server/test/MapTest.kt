@@ -105,7 +105,6 @@ private class FakeMapReservationRepository(vararg reservations: Reservation) : R
     override suspend fun getReservationsByCarAndUser(carId: Int, userId: Int): List<Reservation> =
         reservations.filter { it.carId == carId && it.userId == userId }
 
-    override suspend fun userExists(userId: Int): Boolean = TODO()
     override suspend fun createReservationIfAvailable(
         carId: Int, userId: Int, startTime: Instant, endTime: Instant, status: ReservationStatus
     ): Reservation? = TODO()

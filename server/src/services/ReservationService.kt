@@ -3,6 +3,7 @@ package services
 import models.ACTIVE_RESERVATION_STATUSES
 import repositories.CarRepository
 import repositories.ReservationRepository
+import repositories.UserRepository
 import shared.models.Reservation
 import shared.models.ReservationStatus
 import shared.requests.ReservationRequest
@@ -10,7 +11,8 @@ import kotlin.time.Clock
 
 class ReservationService(
     private val reservationRepository: ReservationRepository,
-    private val carRepository: CarRepository
+    private val carRepository: CarRepository,
+    private val userRepository: UserRepository
 ) {
     suspend fun createReservation(userId: Int, request: ReservationRequest): Reservation {
         if (request.startTime <= Clock.System.now()) {
@@ -25,7 +27,7 @@ class ReservationService(
         if (car.userId == userId) {
             throw ForbiddenException("Je kunt je eigen auto niet reserveren")
         }
-        if (!reservationRepository.userExists(userId)) {
+        if (!userRepository.userExists(userId)) {
             throw ResourceNotFoundException("Gebruiker", userId)
         }
         return reservationRepository.createReservationIfAvailable(

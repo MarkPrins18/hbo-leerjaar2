@@ -5,8 +5,6 @@ import shared.models.ReservationStatus
 import kotlin.time.Instant
 
 interface ReservationRepository {
-    suspend fun userExists(userId: Int): Boolean
-
     /** Locks the car, checks for an overlapping active reservation and inserts in one transaction. Returns null on overlap. */
     suspend fun createReservationIfAvailable(
         carId: Int, userId: Int, startTime: Instant, endTime: Instant, status: ReservationStatus

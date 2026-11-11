@@ -232,7 +232,6 @@ package "repositories" #FFF1D6 {
         +getLatestLocationByCarId(carId): Location?
     }
     interface ReservationRepository {
-        +userExists(userId): Boolean
         +createReservationIfAvailable(carId, userId, startTime, endTime, status): Reservation?
         +getReservationById(id): Reservation?
         +getReservationsByCarAndUser(carId, userId): List<Reservation>
@@ -287,6 +286,7 @@ LocationService --> LocationRepository
 LocationService --> ReservationRepository
 ReservationService --> ReservationRepository
 ReservationService --> CarRepository
+ReservationService --> UserRepository
 RideService --> RideRepository
 RideService --> ReservationRepository
 UserService --> UserRepository
