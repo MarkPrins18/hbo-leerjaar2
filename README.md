@@ -49,6 +49,14 @@ To build or run the project, use one of the following tasks:
 | `./kotlin build` | Build the project |
 | `./kotlin run`   | Run the server    |
 
+The server needs the environment variable `JWT_SECRET` (at least 32 characters) and refuses to start without it.
+The tests use their own secret, so `./kotlin test` works without it.
+
+```
+export JWT_SECRET="<random string of at least 32 characters>"   # Windows PowerShell: $env:JWT_SECRET = "..."
+./kotlin run
+```
+
 If the server starts successfully, you'll see the following output:
 
 ```

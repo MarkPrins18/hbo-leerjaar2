@@ -19,10 +19,12 @@ import shared.responses.LoginResponse
 import kotlin.uuid.Uuid
 
 const val SEED_PASSWORD = "Welkom123!"
+const val TEST_JWT_SECRET = "test-secret-only-for-e2e-tests-0123456789"
 
 /**
  * Starts the full app from application.yaml, but with its own database file and photo directory
  * in a temporary directory, so tests never touch the local data in resources/data/database/.
+ * Uses its own JWT secret, so tests do not depend on the JWT_SECRET environment variable.
  * The app resets and seeds that database on start, so every test begins with the seed data.
  * Not in-memory: an in-memory H2 database stays open after its first session closes, which breaks
  * the check constraints of that session's tables (see chk_reservation_status).
@@ -37,7 +39,8 @@ fun e2eTest(block: suspend (HttpClient) -> Unit) {
                 config = ApplicationConfig("application.yaml").mergeWith(
                     MapApplicationConfig(
                         "database.url" to "jdbc:h2:file:$directory/carshare;MODE=MySQL;DATABASE_TO_LOWER=TRUE;TRACE_LEVEL_FILE=0",
-                        "photos.directory" to photoDirectory.toString()
+                        "photos.directory" to photoDirectory.toString(),
+                        "jwt.secret" to TEST_JWT_SECRET
                     )
                 )
             }
