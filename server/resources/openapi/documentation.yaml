@@ -1125,6 +1125,31 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /rides:
+    get:
+      summary: Haal alle ritten van de ingelogde gebruiker op
+      description: Alle ritten op reserveringen van de ingelogde gebruiker, lopend en afgerond, de nieuwste eerst.
+      operationId: getRides
+      tags:
+        - Rides
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Lijst van ritten, gesorteerd op starttijd aflopend (leeg = [])
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Ride"
+        "401":
+          description: Niet ingelogd
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 
   /users:
     get:

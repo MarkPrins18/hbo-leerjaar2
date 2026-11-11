@@ -13,6 +13,9 @@ interface RideRepository {
     suspend fun getRideById(rideId: Int): Ride?
     suspend fun getRideInProgressByUserId(userId: Int): Ride?
 
+    /** All rides on the user's reservations, newest first. */
+    suspend fun getRidesByUserId(userId: Int): List<Ride>
+
     /**
      * Only finishes a ride that is still in progress, sets its reservation to COMPLETED and stores
      * the car's new location from [request], all in one transaction. Returns null if no such ride was updated.

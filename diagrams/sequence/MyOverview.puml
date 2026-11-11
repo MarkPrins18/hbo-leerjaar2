@@ -1,5 +1,5 @@
 @startuml MyOverview
-title Sequentiediagram #13: eigen gegevens ophalen (GET /users/me, /cars/mine, /reservations, /rides/active)
+title Sequentiediagram #13: eigen gegevens ophalen (GET /users/me, /cars/mine, /reservations, /rides, /rides/active)
 
 actor Gebruiker as g
 participant "Android-app" as app
@@ -10,7 +10,7 @@ database "H2-database" as db
 
 g -> app : open mijn overzicht()
 note right of rt
-  Alle vier de routes staan in requireAuthentication { }:
+  Alle vijf de routes staan in requireAuthentication { }:
   zonder geldig token stopt de request met 401 (preconditie: #2).
   De userId komt altijd uit het token via call.authenticatedUserId().
 end note
@@ -49,6 +49,15 @@ svc -> svc : sortedBy { startTime }
 svc --> rt : List<Reservation>
 rt --> app : 200 OK + List<Reservation> (leeg = [])
 
+app -> rt : GET /rides
+rt -> svc : RideService.getRides(userId)
+svc -> repo : RideRepository.getRidesByUserId(userId)
+repo -> db : SELECT ride JOIN reservation\nWHERE user_id ORDER BY start_time DESC
+db --> repo : rijen
+repo --> svc : List<Ride>
+svc --> rt : List<Ride>
+rt --> app : 200 OK + List<Ride>, nieuwste eerst (leeg = [])
+
 app -> rt : GET /rides/active
 rt -> svc : RideService.getActiveRide(userId)
 svc -> repo : RideRepository.getRideInProgressByUserId(userId)
@@ -63,6 +72,7 @@ alt lopende rit
 else flow 4a [geen lopende rit]
     rt --> app : 204 No Content (geen body)
 end
-app --> g : toont profiel, auto's,\nreserveringen en lopende rit
+app --> g : toont profiel, auto's,\nreserveringen, ritten en lopende rit
+
 
 @enduml

@@ -104,6 +104,7 @@ package "routes" #DCEBFA {
         +rideRoutes(rideService)
         --
         <&lock-locked> POST /reservations/{id}/rides
+        <&lock-locked> GET /rides
         <&lock-locked> GET /rides/active
         <&lock-locked> PATCH /rides/{id}/finish
     }
@@ -156,6 +157,7 @@ package "services" #DDF2DD {
     class RideService <<service>> {
         +startRide(reservationId, userId): Ride
         +getActiveRide(userId): Ride?
+        +getRides(userId): List<Ride>
         +finishRide(rideId, userId, request): Ride
     }
     class UserService <<service>> {
@@ -245,6 +247,8 @@ package "repositories" #FFF1D6 {
         +startRideIfNoneInProgress(reservationId, startTime): Ride?
         +getRideById(rideId): Ride?
         +getRideInProgressByUserId(userId): Ride?
+        +getRidesByUserId(userId): List<Ride>
+
         +finishRide(id, endTime, request, bonusPoints): Ride?
     }
     interface UserRepository {

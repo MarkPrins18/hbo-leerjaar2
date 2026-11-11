@@ -53,7 +53,16 @@ class ExposedRideRepository : RideRepository {
             ?.toRide()
     }
 
+    override suspend fun getRidesByUserId(userId: Int): List<Ride> = suspendTransaction {
+        RideTable.innerJoin(ReservationTable, { RideTable.reservationId }, { ReservationTable.id })
+            .selectAll()
+            .where { ReservationTable.userId eq userId }
+            .orderBy(RideTable.startTime to SortOrder.DESC, RideTable.id to SortOrder.DESC)
+            .map { it.toRide() }
+    }
+
     override suspend fun finishRide(
+
         id: Int, endTime: Instant, request: RideFinishRequest, bonusPoints: Int
     ): Ride? = suspendTransaction {
         val updated = RideTable.update({ (RideTable.id eq id) and (RideTable.status eq RideStatus.IN_PROGRESS) }) {

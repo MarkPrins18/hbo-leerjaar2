@@ -82,6 +82,9 @@ private class FakeRideRepository(vararg reservations: Reservation, private val s
     override suspend fun getRideInProgressByUserId(userId: Int): Ride? =
         rides.find { it.status == RideStatus.IN_PROGRESS && reservations[it.reservationId]?.userId == userId }
 
+    override suspend fun getRidesByUserId(userId: Int): List<Ride> =
+        rides.filter { reservations[it.reservationId]?.userId == userId }.sortedByDescending { it.startTime }
+
     fun hasRideInProgress(reservationId: Int): Boolean =
         rides.any { it.reservationId == reservationId && it.status == RideStatus.IN_PROGRESS }
 
@@ -261,6 +264,22 @@ class RideServiceTest {
 
         assertFailsWith<ConflictException> { service.startRide(RESERVATION_ID, RENTER_ID) }
         Unit
+    }
+
+    // ---------- getRides ----------
+
+    @Test
+    fun `huurder krijgt zijn eigen ritten`() = runBlocking {
+        val ride = service.startRide(RESERVATION_ID, RENTER_ID)
+
+        assertEquals(listOf(ride), service.getRides(RENTER_ID))
+    }
+
+    @Test
+    fun `ritten van een ander zijn niet zichtbaar`() = runBlocking {
+        service.startRide(RESERVATION_ID, RENTER_ID)
+
+        assertTrue(service.getRides(OTHER_USER_ID).isEmpty())
     }
 
     // ---------- getActiveRide ----------
@@ -492,4 +511,33 @@ class RideRoutesTest {
     fun `lopende rit opvragen zonder token geeft 401`() = e2eTest { client ->
         assertEquals(HttpStatusCode.Unauthorized, client.get("/rides/active").status)
     }
+
+    // ---------- GET /rides ----------
+
+    @Test
+    fun `ritoverzicht geeft alleen de eigen ritten met de nieuwste eerst`() = e2eTest { client ->
+        val token = client.login(seedRenterId)
+        val started = ExposedRideRepository().startRideIfNoneInProgress(seedReservationId, Clock.System.now())!!
+
+        val response = client.get("/rides") { bearerAuth(token) }
+
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertEquals(listOf(started.id, seedRideId), response.body<List<Ride>>().map { it.id })
+    }
+
+    @Test
+    fun `ritoverzicht zonder ritten geeft een lege lijst`() = e2eTest { client ->
+        val token = client.login(otherUserId)
+
+        val response = client.get("/rides") { bearerAuth(token) }
+
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertEquals(emptyList<Ride>(), response.body<List<Ride>>())
+    }
+
+    @Test
+    fun `ritoverzicht zonder token geeft 401`() = e2eTest { client ->
+        assertEquals(HttpStatusCode.Unauthorized, client.get("/rides").status)
+    }
+
 }
