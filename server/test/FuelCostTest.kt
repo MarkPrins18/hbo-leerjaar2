@@ -90,6 +90,7 @@ private class FakeFuelCostCarRepository(vararg cars: Car) : CarRepository {
     val cars = cars.associateBy { it.id }.toMutableMap()
 
     override suspend fun getCarById(carId: Int): Car? = cars[carId]
+    override suspend fun getCarsByUserId(userId: Int): List<Car> = TODO()
 
     override suspend fun updateCar(carId: Int, change: CarChangeDto): Car? {
         val car = cars[carId] as? BEVCar ?: return null

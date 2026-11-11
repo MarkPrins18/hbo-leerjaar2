@@ -10,6 +10,8 @@ interface CarRepository {
 
     suspend fun getCarById(carId: Int): Car?
 
+    suspend fun getCarsByUserId(userId: Int): List<Car>
+
     /**
      * Saves a new car. The `id` field of [car] is ignored; the repository
      * generates a new id and returns the saved car including that id.

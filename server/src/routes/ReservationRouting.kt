@@ -13,6 +13,10 @@ import services.ReservationService
 fun Route.reservationRoutes(reservationService: ReservationService) {
     requireAuthentication {
         route("/reservations") {
+            get {
+                val userId = call.authenticatedUserId()
+                call.respond(HttpStatusCode.OK, reservationService.getReservationsForUser(userId))
+            }
             post {
                 val userId = call.authenticatedUserId()
                 val request = call.receive<ReservationRequest>()

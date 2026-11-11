@@ -15,4 +15,5 @@ interface ReservationRepository {
     suspend fun getReservationById(id: Int): Reservation?
     suspend fun getReservationsByCarAndUser(carId: Int, userId: Int): List<Reservation>
     suspend fun updateStatus(id: Int, status: ReservationStatus): Reservation?
+    suspend fun getReservationsByUserId(userId: Int): List<Reservation>
 }

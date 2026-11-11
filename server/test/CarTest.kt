@@ -78,6 +78,8 @@ private class FakeOwnedCarRepository(vararg cars: BEVCar) : CarRepository {
 
     override suspend fun getCarById(carId: Int): Car? = cars[carId]
 
+    override suspend fun getCarsByUserId(userId: Int): List<Car> = cars.values.filter { it.userId == userId }
+
     override suspend fun updateCar(carId: Int, change: CarChangeDto): Car? {
         val car = cars[carId] ?: return null
         return car.copy(color = change.color ?: car.color).also { cars[carId] = it }
@@ -175,6 +177,14 @@ class CarOwnershipServiceTest {
     fun `verwijderen van onbekende auto geeft ResourceNotFoundException`() = runBlocking {
         assertFailsWith<ResourceNotFoundException> { service.deleteCar(999, OWNER_ID) }
         Unit
+    }
+
+    // ---------- getCarsByOwner ----------
+
+    @Test
+    fun `eigenaar krijgt alleen zijn eigen auto's`() = runBlocking {
+        assertEquals(listOf(CAR_ID), service.getCarsByOwner(OWNER_ID).map { it.id })
+        assertEquals(emptyList<Car>(), service.getCarsByOwner(OTHER_USER_ID))
     }
 }
 
@@ -299,6 +309,37 @@ class CarRoutesTest {
     @Test
     fun `ongeldig auto-id geeft 400`() = e2eTest { client ->
         assertEquals(HttpStatusCode.BadRequest, client.get("/cars/abc").status)
+    }
+
+    // ---------- GET /cars/mine ----------
+
+    @Test
+    fun `eigen auto's opvragen geeft 200 met alleen de auto's van de ingelogde gebruiker`() = e2eTest { client ->
+        val token = client.login(OWNER_ID)
+
+        val response = client.get("/cars/mine") { bearerAuth(token) }
+
+        // Seed: gebruiker 1 heeft auto 1, 4 en 8; gebruiker 2 heeft auto 2, 5 en 7
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertEquals(listOf(1, 4, 8), response.body<List<Car>>().map { it.id })
+    }
+
+    @Test
+    fun `auto's van een ander zijn niet zichtbaar in de eigen lijst`() = e2eTest { client ->
+        val token = client.login(OTHER_USER_ID)
+
+        val cars = client.get("/cars/mine") { bearerAuth(token) }.body<List<Car>>()
+
+        assertEquals(listOf(2, 5, 7), cars.map { it.id })
+        assertTrue(cars.none { it.userId == OWNER_ID })
+    }
+
+    @Test
+    fun `eigen auto's opvragen zonder token geeft 401 en botst niet met cars id`() = e2eTest { client ->
+        val response = client.get("/cars/mine")
+
+        assertEquals(HttpStatusCode.Unauthorized, response.status)
+        assertEquals(401, response.body<ErrorResponse>().status)
     }
 
     // ---------- GET /cars/license-plate/{licensePlate} ----------

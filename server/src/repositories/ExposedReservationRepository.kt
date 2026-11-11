@@ -59,6 +59,12 @@ class ExposedReservationRepository : ReservationRepository {
             .map { it.toReservation() }
     }
 
+    override suspend fun getReservationsByUserId(userId: Int): List<Reservation> = suspendTransaction {
+        ReservationTable.selectAll()
+            .where { ReservationTable.userId eq userId }
+            .map { it.toReservation() }
+    }
+
     override suspend fun updateStatus(id: Int, status: ReservationStatus): Reservation? = suspendTransaction {
         ReservationTable.update({ ReservationTable.id eq id }) {
             it[ReservationTable.status] = status

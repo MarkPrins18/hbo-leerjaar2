@@ -14,6 +14,10 @@ class ExposedUserRepository : UserRepository {
         UserTable.selectAll().where { UserTable.email eq email }.singleOrNull()?.toUser()
     }
 
+    override suspend fun findById(userId: Int): User? = suspendTransaction {
+        UserTable.selectAll().where { UserTable.id eq userId }.singleOrNull()?.toUser()
+    }
+
     override suspend fun findAll(): List<User> = suspendTransaction {
         UserTable.selectAll().orderBy(UserTable.id).map { it.toUser() }
     }

@@ -69,6 +69,7 @@ private class FakeRentalTermsCarRepository(vararg cars: Car) : CarRepository {
     private val cars = cars.associateBy { it.id }
 
     override suspend fun getCarById(carId: Int): Car? = cars[carId]
+    override suspend fun getCarsByUserId(userId: Int): List<Car> = TODO()
 
     override suspend fun getAllCars(): List<Car> = TODO()
     override suspend fun getCarByLicensePlate(licensePlate: String): Car? = TODO()

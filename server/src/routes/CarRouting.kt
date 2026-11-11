@@ -37,6 +37,11 @@ fun Route.carRoutes(
             call.respond(carService.getCarByLicensePlate(licensePlate))
         }
         requireAuthentication {
+            get("/mine") {
+                val userId = call.authenticatedUserId()
+
+                call.respond(carService.getCarsByOwner(userId))
+            }
             delete("/{id}") {
                 val carId = call.parameters.getOrFail<Int>("id")
                 val userId = call.authenticatedUserId()

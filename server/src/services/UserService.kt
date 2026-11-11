@@ -19,5 +19,8 @@ class UserService(private val userRepository: UserRepository) {
         return userRepository.create(email, passwordHash)
     }
 
+    suspend fun getUser(userId: Int): User =
+        userRepository.findById(userId) ?: throw ResourceNotFoundException("Gebruiker", userId)
+
     suspend fun getAllUsers(): List<User> = userRepository.findAll()
 }

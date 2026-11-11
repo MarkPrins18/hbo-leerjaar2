@@ -2,6 +2,7 @@ import shared.dto.RideFinishRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.get
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -14,7 +15,9 @@ import shared.models.Reservation
 import shared.models.ReservationStatus
 import shared.models.Ride
 import shared.models.RideStatus
+import repositories.ExposedRideRepository
 import repositories.ReservationRepository
+import shared.responses.ErrorResponse
 import repositories.RideRepository
 import repositories.ExposedReservationRepository
 import services.ConflictException
@@ -57,11 +60,16 @@ private class FakeRideReservationRepository(vararg reservations: Reservation) : 
     ): Reservation? = TODO()
     override suspend fun updateStatus(id: Int, status: ReservationStatus): Reservation? = TODO()
     override suspend fun getReservationsByCarAndUser(carId: Int, userId: Int): List<Reservation> = TODO()
+    override suspend fun getReservationsByUserId(userId: Int): List<Reservation> = TODO()
 }
 
 /** [staleReads]: getRideById returns the ride as it was at start, as if another request finishes it in between. */
-private class FakeRideRepository(private val staleReads: Boolean = false) : RideRepository {
+private class FakeRideRepository(vararg reservations: Reservation, private val staleReads: Boolean = false) : RideRepository {
     private val rides = mutableListOf<Ride>()
+    private val reservations = reservations.associateBy { it.id }
+
+    override suspend fun getRideInProgressByUserId(userId: Int): Ride? =
+        rides.find { it.status == RideStatus.IN_PROGRESS && reservations[it.reservationId]?.userId == userId }
 
     fun hasRideInProgress(reservationId: Int): Boolean =
         rides.any { it.reservationId == reservationId && it.status == RideStatus.IN_PROGRESS }
@@ -93,8 +101,9 @@ private class FakeRideRepository(private val staleReads: Boolean = false) : Ride
 // ==================== 2. Service: RideService ====================
 
 class RideServiceTest {
-    private val rideRepository = FakeRideRepository()
-    private val service = RideService(rideRepository, FakeRideReservationRepository(activeReservation()))
+    private val reservation = activeReservation()
+    private val rideRepository = FakeRideRepository(reservation)
+    private val service = RideService(rideRepository, FakeRideReservationRepository(reservation))
 
     // ---------- startRide ----------
 
@@ -154,7 +163,7 @@ class RideServiceTest {
 
     @Test
     fun `rit die tussendoor door een ander verzoek is afgerond geeft ConflictException`() = runBlocking {
-        val staleRepository = FakeRideRepository(staleReads = true)
+        val staleRepository = FakeRideRepository(activeReservation(), staleReads = true)
         val staleService = RideService(staleRepository, FakeRideReservationRepository(activeReservation()))
         val ride = staleService.startRide(RESERVATION_ID, RENTER_ID)
         staleService.finishRide(ride.id, RENTER_ID, calmRide)
@@ -170,6 +179,23 @@ class RideServiceTest {
         service.startRide(RESERVATION_ID, RENTER_ID)
 
         assertFailsWith<ConflictException> { service.startRide(RESERVATION_ID, RENTER_ID) }
+        Unit
+    }
+
+    // ---------- getActiveRide ----------
+
+    @Test
+    fun `huurder krijgt zijn lopende rit`() = runBlocking {
+        val ride = service.startRide(RESERVATION_ID, RENTER_ID)
+
+        assertEquals(ride, service.getActiveRide(RENTER_ID))
+    }
+
+    @Test
+    fun `lopende rit van een ander is niet zichtbaar en geeft ResourceNotFoundException`() = runBlocking {
+        service.startRide(RESERVATION_ID, RENTER_ID)
+
+        assertFailsWith<ResourceNotFoundException> { service.getActiveRide(OTHER_USER_ID) }
         Unit
     }
 
@@ -190,6 +216,15 @@ class RideServiceTest {
             service.finishRide(ride.id, RENTER_ID, calmRide.copy(distanceM = MAX_RIDE_DISTANCE_M + 1))
         }
         assertEquals(RideStatus.IN_PROGRESS, rideRepository.getRideById(ride.id)?.status)
+    }
+
+    @Test
+    fun `afgeronde rit telt niet als lopende rit`() = runBlocking {
+        val ride = service.startRide(RESERVATION_ID, RENTER_ID)
+        service.finishRide(ride.id, RENTER_ID, calmRide)
+
+        assertFailsWith<ResourceNotFoundException> { service.getActiveRide(RENTER_ID) }
+        Unit
     }
 }
 
@@ -276,5 +311,35 @@ class RideRoutesTest {
         assertEquals(HttpStatusCode.Conflict, secondStart.status)
         assertEquals(HttpStatusCode.OK, finished.status)
         assertEquals(HttpStatusCode.Conflict, secondFinish.status)
+    }
+
+    // ---------- GET /rides/active ----------
+
+    @Test
+    fun `lopende rit opvragen geeft 200 met de rit van de huurder`() = e2eTest { client ->
+        val token = client.login(seedRenterId)
+        // A ride can only start during the reservation, so put one in the database directly
+        val started = ExposedRideRepository().startRideIfNoneInProgress(seedReservationId, Clock.System.now())!!
+
+        val response = client.get("/rides/active") { bearerAuth(token) }
+
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertEquals(started.id, response.body<Ride>().id)
+    }
+
+    @Test
+    fun `lopende rit van een ander opvragen geeft 404 als ErrorResponse`() = e2eTest { client ->
+        val token = client.login(otherUserId)
+        ExposedRideRepository().startRideIfNoneInProgress(seedReservationId, Clock.System.now())!!
+
+        val response = client.get("/rides/active") { bearerAuth(token) }
+
+        assertEquals(HttpStatusCode.NotFound, response.status)
+        assertEquals(ErrorResponse(404, "Geen lopende rit gevonden"), response.body<ErrorResponse>())
+    }
+
+    @Test
+    fun `lopende rit opvragen zonder token geeft 401`() = e2eTest { client ->
+        assertEquals(HttpStatusCode.Unauthorized, client.get("/rides/active").status)
     }
 }

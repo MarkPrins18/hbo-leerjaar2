@@ -18,6 +18,10 @@ fun Route.rideRoutes(rideService: RideService) {
             val ride = rideService.startRide(reservationId, userId)
             call.respond(HttpStatusCode.Created, ride)
         }
+        get("/rides/active") {
+            val userId = call.authenticatedUserId()
+            call.respond(HttpStatusCode.OK, rideService.getActiveRide(userId))
+        }
         patch("/rides/{id}/finish") {
             val rideId = call.parameters.getOrFail<Int>("id")
             val userId = call.authenticatedUserId()

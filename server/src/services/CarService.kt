@@ -29,6 +29,8 @@ class CarService(
     suspend fun getCarById(carId: Int): Car =
         carRepository.getCarById(carId) ?: throw carNotFound(carId)
 
+    suspend fun getCarsByOwner(userId: Int): List<Car> = carRepository.getCarsByUserId(userId)
+
     suspend fun getCarByLicensePlate(licensePlate: String): Car =
         carRepository.getCarByLicensePlate(licensePlate)
             ?: throw ResourceNotFoundException("Auto met kenteken $licensePlate niet gevonden")

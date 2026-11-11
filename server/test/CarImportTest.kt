@@ -84,6 +84,7 @@ private class FakeImportCarRepository(vararg cars: Car) : CarRepository {
 
     override suspend fun getAllCars(): List<Car> = TODO()
     override suspend fun getCarById(carId: Int): Car? = TODO()
+    override suspend fun getCarsByUserId(userId: Int): List<Car> = TODO()
     override suspend fun updateCar(carId: Int, change: CarChangeDto): Car? = TODO()
     override suspend fun deleteCar(carId: Int): Boolean = TODO()
 }
@@ -92,6 +93,7 @@ private class FakeImportUserRepository(private vararg val userIds: Int) : UserRe
     override suspend fun userExists(userId: Int): Boolean = userId in userIds
 
     override suspend fun findByEmail(email: String): User? = TODO()
+    override suspend fun findById(userId: Int): User? = TODO()
     override suspend fun findAll(): List<User> = TODO()
     override suspend fun create(email: String, passwordHash: String): User = TODO()
 }

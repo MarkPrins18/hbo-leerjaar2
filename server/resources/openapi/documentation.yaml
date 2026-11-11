@@ -96,6 +96,30 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /cars/mine:
+    get:
+      summary: Haal de auto's van de ingelogde gebruiker op
+      operationId: getMyCars
+      tags:
+        - Cars
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Auto's waarvan de ingelogde gebruiker eigenaar is
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Car"
+        "401":
+          description: Niet ingelogd
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /cars/{id}:
     get:
       summary: Haal een auto op via het id
@@ -747,6 +771,29 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
   /reservations:
+    get:
+      summary: Haal de reserveringen van de ingelogde gebruiker op
+      description: Gesorteerd op starttijd, de vroegste eerst.
+      operationId: getMyReservations
+      tags:
+        - Reservations
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Reserveringen van de ingelogde gebruiker
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Reservation"
+        "401":
+          description: Niet ingelogd
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     post:
       summary: Maak een reservering aan
       description: De reservering komt op naam van de ingelogde gebruiker.
@@ -966,6 +1013,33 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /rides/active:
+    get:
+      summary: Haal de lopende rit van de ingelogde gebruiker op
+      operationId: getActiveRide
+      tags:
+        - Rides
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: De rit met status IN_PROGRESS
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ride"
+        "401":
+          description: Niet ingelogd
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: De ingelogde gebruiker heeft geen lopende rit
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /users:
     get:
@@ -1046,6 +1120,33 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: Onjuist e-mailadres of wachtwoord
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /users/me:
+    get:
+      summary: Haal de ingelogde gebruiker op
+      operationId: getMe
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: De ingelogde gebruiker, zonder wachtwoord
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Niet ingelogd
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Gebruiker bestaat niet meer
           content:
             application/json:
               schema:

@@ -1,6 +1,7 @@
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.get
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -26,6 +27,7 @@ import services.ValidationException
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 import kotlin.time.Instant
 
 // ==================== Test data ====================
@@ -69,6 +71,7 @@ private class FakeReservationCarRepository(vararg cars: Car) : CarRepository {
 
     override suspend fun getAllCars(): List<Car> = TODO()
     override suspend fun getCarByLicensePlate(licensePlate: String): Car? = TODO()
+    override suspend fun getCarsByUserId(userId: Int): List<Car> = TODO()
     override suspend fun createCar(car: Car): Car = TODO()
     override suspend fun updateCar(carId: Int, change: CarChangeDto): Car? = TODO()
     override suspend fun deleteCar(carId: Int): Boolean = TODO()
@@ -104,6 +107,9 @@ private class FakeReservationRepository(
         reservations[index] = reservations[index].copy(status = status)
         return reservations[index]
     }
+
+    override suspend fun getReservationsByUserId(userId: Int): List<Reservation> =
+        reservations.filter { it.userId == userId }
 
     override suspend fun getReservationsByCarAndUser(carId: Int, userId: Int): List<Reservation> = TODO()
 }
@@ -185,6 +191,28 @@ class ReservationServiceTest {
         assertFailsWith<ConflictException> { service.cancelReservation(reservation.id, RENTER_ID) }
         Unit
     }
+
+    // ---------- getReservationsForUser ----------
+
+    @Test
+    fun `gebruiker krijgt alleen zijn eigen reserveringen, gesorteerd op starttijd`() = runBlocking {
+        val later = service.createReservation(RENTER_ID, request())
+        val earlier = service.createReservation(
+            RENTER_ID, request(startTime = Instant.parse("2098-03-01T09:00:00Z"), endTime = Instant.parse("2098-03-01T17:00:00Z"))
+        )
+        service.createReservation(
+            OTHER_USER_ID, request(startTime = Instant.parse("2097-03-01T09:00:00Z"), endTime = Instant.parse("2097-03-01T17:00:00Z"))
+        )
+
+        val reservations = service.getReservationsForUser(RENTER_ID)
+
+        assertEquals(listOf(earlier, later), reservations)
+    }
+
+    @Test
+    fun `gebruiker zonder reserveringen krijgt een lege lijst`() = runBlocking {
+        assertEquals(emptyList<Reservation>(), service.getReservationsForUser(OTHER_USER_ID))
+    }
 }
 
 // ==================== 3. E2E: reservation routes ====================
@@ -247,6 +275,36 @@ class ReservationRoutesTest {
         val thirdUserToken = client.login(thirdUserId)
 
         assertEquals(HttpStatusCode.Conflict, client.reserve(validBody, thirdUserToken).status)
+    }
+
+    // ---------- GET /reservations ----------
+
+    @Test
+    fun `eigen reserveringen opvragen geeft 200 gesorteerd op starttijd`() = e2eTest { client ->
+        val token = client.login(seedRenterId)
+
+        val response = client.get("/reservations") { bearerAuth(token) }
+
+        // Seed: gebruiker 1 heeft reservering 1 (2026-09-20) en 4 (2027-01-15)
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertEquals(listOf(1, seedReservationId), response.body<List<Reservation>>().map { it.id })
+    }
+
+    @Test
+    fun `reserveringen van een ander zijn niet zichtbaar`() = e2eTest { client ->
+        val otherToken = client.login(otherUserId)
+        val otherReservation = client.reserve(validBody, otherToken).body<Reservation>()
+        val token = client.login(seedRenterId)
+
+        val reservations = client.get("/reservations") { bearerAuth(token) }.body<List<Reservation>>()
+
+        assertTrue(reservations.all { it.userId == seedRenterId })
+        assertTrue(reservations.none { it.id == otherReservation.id })
+    }
+
+    @Test
+    fun `reserveringen opvragen zonder token geeft 401`() = e2eTest { client ->
+        assertEquals(HttpStatusCode.Unauthorized, client.get("/reservations").status)
     }
 
     // ---------- PATCH /reservations/{id}/cancel ----------

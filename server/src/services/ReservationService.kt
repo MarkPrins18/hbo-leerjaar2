@@ -33,6 +33,8 @@ class ReservationService(
         ) ?: throw ConflictException("Auto ${request.carId} is in dit tijdsblok al gereserveerd")
     }
 
+    suspend fun getReservationsForUser(userId: Int): List<Reservation> =
+        reservationRepository.getReservationsByUserId(userId).sortedBy { it.startTime }
 
     suspend fun cancelReservation(id: Int, userId: Int): Reservation {
         val reservation = reservationRepository.getReservationById(id)

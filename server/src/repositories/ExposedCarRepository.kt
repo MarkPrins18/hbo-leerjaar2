@@ -52,6 +52,14 @@ class ExposedCarRepository : CarRepository {
         findCarById(carId)
     }
 
+    override suspend fun getCarsByUserId(userId: Int): List<Car> = suspendTransaction {
+        carWithSubtypes
+            .selectAll()
+            .where { CarTable.userId eq userId }
+            .orderBy(CarTable.id)
+            .map { row -> row.toCar() }
+    }
+
     override suspend fun getCarByLicensePlate(licensePlate: String): Car? = suspendTransaction {
         carWithSubtypes
             .selectAll()
