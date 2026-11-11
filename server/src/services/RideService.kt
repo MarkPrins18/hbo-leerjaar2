@@ -42,6 +42,7 @@ class RideService(
         if (request.distanceM > MAX_RIDE_DISTANCE_M) {
             throw ValidationException("Afstand mag niet groter zijn dan ${(MAX_RIDE_DISTANCE_M / 1000).toInt()} km per rit")
         }
+        validateCoordinates(request.latitude, request.longitude)
         val ride = rideRepository.getRideById(rideId)
             ?: throw ResourceNotFoundException("Rit", rideId)
         val reservation = reservationRepository.getReservationById(ride.reservationId)
@@ -55,9 +56,8 @@ class RideService(
             throw rideAlreadyFinished(rideId)
         }
         val bonusPoints = calculateBonusPoints(request.distanceM, request.avgAcceleration, request.avgDeceleration)
-        return rideRepository.finishRide(
-            rideId, Clock.System.now(), request.distanceM, request.avgAcceleration, request.avgDeceleration, bonusPoints
-        ) ?: throw rideAlreadyFinished(rideId)
+        return rideRepository.finishRide(rideId, Clock.System.now(), request, bonusPoints)
+            ?: throw rideAlreadyFinished(rideId)
     }
 
     private fun rideAlreadyFinished(rideId: Int) = ConflictException("Rit $rideId is al afgerond")

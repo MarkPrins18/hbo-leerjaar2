@@ -1,6 +1,7 @@
 package repositories
 
 import shared.models.Ride
+import shared.requests.RideFinishRequest
 import kotlin.time.Instant
 
 interface RideRepository {
@@ -9,6 +10,9 @@ interface RideRepository {
     suspend fun getRideById(rideId: Int): Ride?
     suspend fun getRideInProgressByUserId(userId: Int): Ride?
 
-    /** Only finishes a ride that is still in progress. Returns null if no such ride was updated. */
-    suspend fun finishRide(id: Int, endTime: Instant, distanceM: Double, avgAcceleration: Double, avgDeceleration: Double, bonusPoints: Int): Ride?
+    /**
+     * Only finishes a ride that is still in progress and stores the car's new location from [request],
+     * in one transaction. Returns null if no such ride was updated.
+     */
+    suspend fun finishRide(id: Int, endTime: Instant, request: RideFinishRequest, bonusPoints: Int): Ride?
 }

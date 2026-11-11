@@ -984,6 +984,8 @@ paths:
       description: |
         Slaat de ritgegevens op, zet de status op COMPLETED en kent bonuspunten
         toe voor rustig rijgedrag (zie het veld bonusPoints in het schema Ride).
+        De meegestuurde latitude en longitude worden in dezelfde transactie opgeslagen
+        als nieuwe, huidige locatie van de auto.
         Alleen de huurder van de bijbehorende reservering mag de rit afronden.
       operationId: finishRide
       tags:
@@ -1013,7 +1015,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Ride"
         "400":
-          description: Ongeldig rit-id, ongeldige request body, negatieve waarde of afstand groter dan 6000 km
+          description: Ongeldig rit-id, ongeldige request body, negatieve waarde, afstand groter dan 6000 km of ongeldige latitude/longitude
           content:
             application/json:
               schema:
@@ -1554,6 +1556,8 @@ components:
         - distanceM
         - avgAcceleration
         - avgDeceleration
+        - latitude
+        - longitude
       properties:
         distanceM:
           type: number
@@ -1574,6 +1578,21 @@ components:
           minimum: 0
           description: Gemiddelde deceleratie in m/s²
           example: 2.1
+        latitude:
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+          description: Breedtegraad waar de auto na de rit geparkeerd staat
+          example: 51.5853
+        longitude:
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+          description: Lengtegraad waar de auto na de rit geparkeerd staat
+          example: 4.7946
+
     Ride:
       type: object
       required:

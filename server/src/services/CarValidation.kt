@@ -27,6 +27,8 @@ internal const val MAX_PHOTO_BYTES = 5 * 1024 * 1024
 private const val LOCATION_MAX_LENGTH = 255
 private val PRICE_PER_DAY = 0.01..999999.99
 private val DISTANCE_KM = 0.0..1_000_000.0
+private val LATITUDE = -90.0..90.0
+private val LONGITUDE = -180.0..180.0
 
 /** The RDW only knows Dutch license plates, so check the format before calling it. */
 fun CarDto.validate() {
@@ -110,6 +112,12 @@ fun validateDistanceKm(distanceKm: Double) {
 
 fun validateAnnualKm(annualKm: Double) {
     checkRange("annualKm", annualKm, DISTANCE_KM)
+}
+
+/** NaN and infinity fall outside the range as well. */
+fun validateCoordinates(latitude: Double, longitude: Double) {
+    checkRange("latitude", latitude, LATITUDE)
+    checkRange("longitude", longitude, LONGITUDE)
 }
 
 fun CarFilter.validate() {

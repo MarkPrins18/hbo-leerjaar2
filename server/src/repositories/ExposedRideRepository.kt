@@ -3,11 +3,13 @@ package repositories
 import mappers.toRide
 import shared.models.Ride
 import shared.models.RideStatus
+import shared.requests.RideFinishRequest
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.innerJoin
 import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.update
@@ -48,18 +50,23 @@ class ExposedRideRepository : RideRepository {
     }
 
     override suspend fun finishRide(
-        id: Int, endTime: Instant, distanceM: Double, avgAcceleration: Double, avgDeceleration: Double,
-        bonusPoints: Int
+        id: Int, endTime: Instant, request: RideFinishRequest, bonusPoints: Int
     ): Ride? = suspendTransaction {
         val updated = RideTable.update({ (RideTable.id eq id) and (RideTable.status eq RideStatus.IN_PROGRESS) }) {
             it[RideTable.endTime] = endTime
             it[RideTable.status] = RideStatus.COMPLETED
-            it[RideTable.distanceM] = distanceM
-            it[RideTable.avgAcceleration] = avgAcceleration
-            it[RideTable.avgDeceleration] = avgDeceleration
+            it[RideTable.distanceM] = request.distanceM
+            it[RideTable.avgAcceleration] = request.avgAcceleration
+            it[RideTable.avgDeceleration] = request.avgDeceleration
             it[RideTable.bonusPoints] = bonusPoints
         }
         if (updated == 0) return@suspendTransaction null
-        RideTable.selectAll().where { RideTable.id eq id }.single().toRide()
+        val ride = RideTable.selectAll().where { RideTable.id eq id }.single().toRide()
+
+        val carId = ReservationTable.select(ReservationTable.carId)
+            .where { ReservationTable.id eq ride.reservationId }
+            .single()[ReservationTable.carId]
+        insertParkedLocation(carId, request.latitude, request.longitude, endTime)
+        ride
     }
 }
