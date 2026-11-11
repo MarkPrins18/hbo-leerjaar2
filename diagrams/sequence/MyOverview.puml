@@ -1,0 +1,68 @@
+@startuml MyOverview
+title Sequentiediagram #13: eigen gegevens ophalen (GET /users/me, /cars/mine, /reservations, /rides/active)
+
+actor Gebruiker as g
+participant "Android-app" as app
+participant "Routes" as rt
+participant "Services" as svc
+participant "Repositories" as repo
+database "H2-database" as db
+
+g -> app : open mijn overzicht()
+note right of rt
+  Alle vier de routes staan in requireAuthentication { }:
+  zonder geldig token stopt de request met 401 (preconditie: #2).
+  De userId komt altijd uit het token via call.authenticatedUserId().
+end note
+
+app -> rt : GET /users/me
+rt -> svc : UserService.getUser(userId)
+svc -> repo : UserRepository.findById(userId)
+repo -> db : SELECT FROM users WHERE id
+db --> repo : 0 of 1 rij
+repo --> svc : User?
+
+group flow 1a [gebruiker bestaat niet meer]
+    svc --> rt : throw ResourceNotFoundException
+    rt --> app : 404 Not Found (StatusPages)
+end
+
+svc --> rt : User
+rt --> app : 200 OK + UserResponse
+
+app -> rt : GET /cars/mine
+rt -> svc : CarService.getCarsByOwner(userId)
+svc -> repo : CarRepository.getCarsByUserId(userId)
+repo -> db : SELECT car + subtabellen WHERE user_id
+db --> repo : rijen
+repo --> svc : List<Car>
+svc --> rt : List<Car>
+rt --> app : 200 OK + List<Car> (leeg = [])
+
+app -> rt : GET /reservations
+rt -> svc : ReservationService.getReservationsForUser(userId)
+svc -> repo : ReservationRepository.getReservationsByUserId(userId)
+repo -> db : SELECT FROM reservation WHERE user_id
+db --> repo : rijen
+repo --> svc : List<Reservation>
+svc -> svc : sortedBy { startTime }
+svc --> rt : List<Reservation>
+rt --> app : 200 OK + List<Reservation> (leeg = [])
+
+app -> rt : GET /rides/active
+rt -> svc : RideService.getActiveRide(userId)
+svc -> repo : RideRepository.getRideInProgressByUserId(userId)
+repo -> db : SELECT ride JOIN reservation\nWHERE user_id AND status = IN_PROGRESS
+db --> repo : 0 of 1 rij
+repo --> svc : Ride?
+
+group flow 4a [geen lopende rit]
+    svc --> rt : throw ResourceNotFoundException
+    rt --> app : 404 Not Found (StatusPages)
+end
+
+svc --> rt : Ride
+rt --> app : 200 OK + Ride
+app --> g : toont profiel, auto's,\nreserveringen en lopende rit
+
+@enduml

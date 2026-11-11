@@ -40,7 +40,7 @@ Het is mislukt, ook als het technisch werkt, als:
 - Team van drie. Het werk gebeurt in een aparte branch en komt als één PR binnen.
 - Een Android-build heeft de Android SDK nodig, lokaal en in CI. **Besloten:** iedereen in het team installeert de SDK; er komt geen aparte server-only build. De build-regel in `CLAUDE.md` (`./kotlin build`) blijft gelijk.
 - CI (`.github/workflows/test.yml`) draait nu alleen `./kotlin test` voor de server.
-- Fouten van de server zijn platte tekst (`"<status>: <bericht>"`, zie `StatusPages.kt`). Daar verandert niets aan.
+- Fouten van de server zijn JSON: een `ErrorResponse` (`{"status": <code>, "message": "<bericht>"}`, zie `StatusPages.kt` en `shared.responses`). Daar verandert niets aan.
 
 ## Overwogen aanpakken
 

@@ -5,6 +5,7 @@ actor Huurder as g
 participant "Android-app" as app
 participant "reservationRoutes" as rt
 participant "ReservationService" as svc
+participant "CarRepository" as car
 participant "ReservationRepository" as repo
 database "H2-database" as db
 
@@ -24,33 +25,51 @@ group flow 3a [starttijd in het verleden of eindtijd niet na starttijd]
     app --> g : foutmelding (stap 1)
 end
 
-svc -> repo : carExists(carId)
-repo -> db : SELECT FROM car WHERE id
-db --> repo : 0 of 1 rij
-repo --> svc : Boolean
-svc -> repo : userExists(userId)
-repo -> db : SELECT FROM users WHERE id
-db --> repo : 0 of 1 rij
-repo --> svc : Boolean
+svc -> car : getCarById(carId)
+car -> db : SELECT car + subtabellen WHERE id
+db --> car : 0 of 1 rij
+car --> svc : Car?
 
-group flow 4a [auto of huurder bestaat niet]
+group flow 4a [auto bestaat niet]
     svc --> rt : throw ResourceNotFoundException
     rt --> app : 404 Not Found (StatusPages)
     app --> g : foutmelding (einde)
 end
 
-svc -> repo : hasActiveOverlap(carId, startTime, endTime)
-repo -> db : SELECT FROM reservation (actief + overlap)
-db --> repo : rijen
+group flow 4b [huurder is de eigenaar van de auto]
+    svc --> rt : throw ForbiddenException
+    rt --> app : 403 Forbidden (StatusPages)
+    app --> g : eigen auto kan niet (einde)
+end
+
+svc -> repo : userExists(userId)
+repo -> db : SELECT FROM users WHERE id
+db --> repo : 0 of 1 rij
 repo --> svc : Boolean
 
+group flow 4c [huurder bestaat niet]
+    svc --> rt : throw ResourceNotFoundException
+    rt --> app : 404 Not Found (StatusPages)
+    app --> g : foutmelding (einde)
+end
+
+svc -> repo : createReservationIfAvailable(carId, userId, ..., CONFIRMED)
+note right of repo
+  Eén transactie: de auto-rij wordt vergrendeld,
+  zodat twee gelijktijdige reserveringen elkaar
+  niet missen bij de overlapcontrole.
+end note
+repo -> db : SELECT FROM car WHERE id FOR UPDATE
+repo -> db : SELECT FROM reservation (actief + overlap)
+db --> repo : rijen
+
 group flow 5a [tijdsblok overlapt met actieve reservering]
+    repo --> svc : null
     svc --> rt : throw ConflictException
     rt --> app : 409 Conflict (StatusPages)
     app --> g : ander tijdsblok (stap 1)
 end
 
-svc -> repo : createReservation(carId, userId, ..., CONFIRMED)
 repo -> db : INSERT INTO reservation
 db --> repo : id, daarna SELECT van de nieuwe rij
 repo --> svc : Reservation

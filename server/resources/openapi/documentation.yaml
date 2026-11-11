@@ -827,6 +827,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Je kunt je eigen auto niet reserveren
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Auto of gebruiker niet gevonden
           content:
@@ -984,7 +990,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Ride"
         "400":
-          description: Ongeldig rit-id, ongeldige request body of negatieve waarde
+          description: Ongeldig rit-id, ongeldige request body, negatieve waarde of afstand groter dan 6000 km
           content:
             application/json:
               schema:
@@ -1191,11 +1197,8 @@ components:
         - model
         - productionYear
         - color
-        - seats
         - vehicleType
         - readyToDriveWeightKg
-        - consumptionCombined
-        - co2EmissionCombined
       properties:
         id:
           type: integer
@@ -1216,6 +1219,7 @@ components:
           type: string
         seats:
           type: integer
+          nullable: true
         doors:
           type: integer
           nullable: true
@@ -1229,9 +1233,11 @@ components:
         consumptionCombined:
           type: number
           format: double
+          nullable: true
         co2EmissionCombined:
           type: number
           format: double
+          nullable: true
         roadTaxPerQuarter:
           type: number
           format: double
@@ -1460,6 +1466,7 @@ components:
           type: number
           format: double
           minimum: 0
+          maximum: 6000000
           description: Gereden afstand in meter
           example: 12500.0
         avgAcceleration:

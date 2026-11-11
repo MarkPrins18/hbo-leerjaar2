@@ -35,18 +35,30 @@ group flow 2b [reservering is van een andere gebruiker]
 end
 
 svc -> svc : status == CONFIRMED en\nstartTime <= nu < endTime?
-svc -> riderepo : hasRideInProgress(reservationId)
-riderepo -> db : SELECT FROM ride WHERE reservation_id\nAND status = IN_PROGRESS
-db --> riderepo : rijen
-riderepo --> svc : Boolean
 
-group flow 3a [niet CONFIRMED, buiten het tijdsblok of er loopt al een rit]
+group flow 3a [niet CONFIRMED of buiten het tijdsblok]
     svc --> rt : throw ConflictException
     rt --> app : 409 Conflict (StatusPages)
     app --> g : foutmelding (einde)
 end
 
-svc -> riderepo : startRide(reservationId, nu)
+svc -> riderepo : startRideIfNoneInProgress(reservationId, nu)
+note right of riderepo
+  Eén transactie: de reservering wordt
+  vergrendeld, zodat er nooit twee ritten
+  tegelijk starten.
+end note
+riderepo -> db : SELECT FROM reservation WHERE id FOR UPDATE
+riderepo -> db : SELECT FROM ride WHERE reservation_id\nAND status = IN_PROGRESS
+db --> riderepo : rijen
+
+group flow 3b [er loopt al een rit]
+    riderepo --> svc : null
+    svc --> rt : throw ConflictException
+    rt --> app : 409 Conflict (StatusPages)
+    app --> g : foutmelding (einde)
+end
+
 riderepo -> db : INSERT INTO ride (IN_PROGRESS)
 db --> riderepo : id, daarna SELECT van de nieuwe rij
 riderepo --> svc : Ride

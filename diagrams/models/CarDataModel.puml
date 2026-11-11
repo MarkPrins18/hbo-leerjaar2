@@ -22,12 +22,13 @@ package shared.models {
         +productionYear: Int
         +trim: String?
         +color: String
-        +seats: Int
+        +seats: Int?
         +doors: Int?
         +vehicleType: VehicleType
         +readyToDriveWeightKg: Int
-        +consumptionCombined: Double
-        +co2EmissionCombined: Double
+        +consumptionCombined: Double?
+        +co2EmissionCombined: Double?
+        +roadTaxPerQuarter: Double?
     }
 
     class ICECar <<data>> {
@@ -56,7 +57,15 @@ package shared.models {
         +returnTimeEnd: LocalTime?
     }
 
+    class Photo <<data>> {
+        +id: Int
+        +carId: Int
+        +url: String
+        +uploadedAt: Instant
+    }
+
     Car "1" <-- "0..1" RentalTerms
+    Car "1" <-- "*" Photo
 
     Car <|-- ICECar
     Car <|-- BEVCar
@@ -103,6 +112,17 @@ package models {
         +email: String
         +passwordHash: String
     }
+
+    class Location <<data>> {
+        +id: Int
+        +carId: Int
+        +userId: Int?
+        +rideId: Int?
+        +latitude: Double
+        +longitude: Double
+        +speed: Double?
+        +timestamp: Instant
+    }
 }
 
 Car --> VehicleType
@@ -114,5 +134,8 @@ Car "*" --> "1" User : userId
 Reservation "*" --> "1" User : userId
 Reservation "*" --> "1" Car : carId
 Ride "*" --> "1" Reservation : reservationId
+Location "*" --> "1" Car : carId
+Location "*" --> "0..1" User : userId
+Location "*" --> "0..1" Ride : rideId
 
 @enduml

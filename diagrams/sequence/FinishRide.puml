@@ -1,5 +1,5 @@
 @startuml FinishRide
-title Sequentiediagram #11: rit afronden (PATCH /rides/{id}/finish)
+title Sequentiediagram #12: rit afronden (PATCH /rides/{id}/finish)
 
 actor Huurder as g
 participant "Android-app" as app
@@ -17,9 +17,9 @@ note right of rt
 end note
 rt -> rt : call.authenticatedUserId()
 rt -> svc : finishRide(rideId, userId, request)
-svc -> svc : distanceM, avgAcceleration en\navgDeceleration niet negatief?
+svc -> svc : distanceM, avgAcceleration en\navgDeceleration niet negatief,\ndistanceM <= 6000 km?
 
-group flow 7a [negatieve waarde]
+group flow 7a [negatieve waarde of afstand boven 6000 km]
     svc --> rt : throw ValidationException
     rt --> app : 400 Bad Request (StatusPages)
     app --> g : foutmelding (stap 6)
@@ -55,8 +55,18 @@ end
 
 svc -> svc : calculateBonusPoints(distanceM,\navgAcceleration, avgDeceleration)
 svc -> riderepo : finishRide(rideId, nu, distanceM, ..., bonusPoints)
-riderepo -> db : UPDATE ride (COMPLETED)
-db --> riderepo : daarna SELECT van de rij
+riderepo -> db : UPDATE ride (COMPLETED)\nWHERE id AND status = IN_PROGRESS
+db --> riderepo : aantal bijgewerkte rijen
+
+group flow 9a [rit is intussen al afgerond (0 rijen bijgewerkt)]
+    riderepo --> svc : null
+    svc --> rt : throw ConflictException
+    rt --> app : 409 Conflict (StatusPages)
+    app --> g : foutmelding (einde)
+end
+
+riderepo -> db : SELECT van de rij
+db --> riderepo : 1 rij
 riderepo --> svc : Ride
 svc --> rt : Ride
 rt --> app : 200 OK + Ride
