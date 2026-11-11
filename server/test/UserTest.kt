@@ -123,7 +123,7 @@ class UserRoutesTest {
         val token = client.login(OTHER_USER_ID)
         val now = Clock.System.now()
         val reservation = ExposedReservationRepository().createReservationIfAvailable(
-            1, OTHER_USER_ID, now - 1.hours, now + 1.hours, ReservationStatus.CONFIRMED
+            1, OTHER_USER_ID, now - 1.hours, now + 1.hours, ReservationStatus.CONFIRMED, 89.0
         )!!
         val ride = client.post("/reservations/${reservation.id}/rides") { bearerAuth(token) }.body<Ride>()
 

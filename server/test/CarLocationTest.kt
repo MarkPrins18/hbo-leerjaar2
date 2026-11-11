@@ -87,12 +87,13 @@ private class FakeLocationRepository : LocationRepository {
 
 private class UnusedLocationReservationRepository : ReservationRepository {
     override suspend fun createReservationIfAvailable(
-        carId: Int, userId: Int, startTime: Instant, endTime: Instant, status: ReservationStatus
+        carId: Int, userId: Int, startTime: Instant, endTime: Instant, status: ReservationStatus, totalPrice: Double
     ): Reservation? = TODO()
     override suspend fun getReservationById(id: Int): Reservation? = TODO()
     override suspend fun getReservationsByCarAndUser(carId: Int, userId: Int): List<Reservation> = TODO()
     override suspend fun updateStatus(id: Int, status: ReservationStatus): Reservation? = TODO()
     override suspend fun getReservationsByUserId(userId: Int): List<Reservation> = TODO()
+    override suspend fun getReservedCarIds(startTime: Instant, endTime: Instant): Set<Int> = TODO()
 }
 
 // ==================== 1. Validation: LocationRequest ====================

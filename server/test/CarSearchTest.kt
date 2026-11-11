@@ -111,6 +111,8 @@ private class FakeSearchLocationRepository(vararg locations: Location) : Locatio
     private val locations = locations.associateBy { it.carId }
 
     override suspend fun getLatestLocationByCarId(carId: Int): Location? = locations[carId]
+
+    override suspend fun addLocation(carId: Int, latitude: Double, longitude: Double, timestamp: Instant): Location = TODO()
 }
 
 /** Counts the bulk calls, so a test can check that the rental terms are not fetched per car. */
