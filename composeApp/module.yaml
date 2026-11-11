@@ -3,8 +3,15 @@ product:
   platforms: [android]
 
 dependencies:
+  - ../shared
   - $compose.foundation: exported
   - $compose.material3: exported
+  - $libs.ktor.client.core
+  - $libs.ktor.client.content.negotiation
+  - $libs.ktor.serialization.kotlinx.json
+
+dependencies@android:
+  - $libs.ktor.client.okhttp
 
 settings:
   compose: enabled

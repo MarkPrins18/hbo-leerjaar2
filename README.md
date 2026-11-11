@@ -66,3 +66,14 @@ If the server starts successfully, you'll see the following output:
 
 De debug-APK van de Android-app staat na een build in
 `build/tasks/_androidApp_buildAndroidDebug/gradle-project-debug.apk`.
+
+## App en lokale server
+
+De server luistert lokaal op `http://0.0.0.0:8080`. In de Android-emulator is de eigen machine bereikbaar via
+`10.0.2.2`, dus de app praat standaard met `http://10.0.2.2:8080` (`DEFAULT_BASE_URL` in
+`composeApp/src/api/ApiClient.kt`). Start eerst de server met `./kotlin run` en daarna de app in de emulator.
+
+- Onversleuteld HTTP is alleen toegestaan voor `10.0.2.2` en `localhost`
+  (`androidApp/res/xml/network_security_config.xml`).
+- Op een echt toestel werkt `10.0.2.2` niet: geef dan het IP-adres van je pc in het lokale netwerk mee aan
+  `createApiClient(baseUrl = ...)` en voeg dat adres toe aan de network-security-config.
