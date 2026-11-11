@@ -74,6 +74,12 @@ riderepo -> db : SELECT van de rij
 db --> riderepo : 1 rij
 riderepo -> db : SELECT car_id FROM reservation WHERE id
 db --> riderepo : car_id
+riderepo -> db : UPDATE reservation SET status = COMPLETED\nWHERE id = ride.reservationId
+note right of db
+  Op een COMPLETED reservering start geen
+  nieuwe rit meer (409) en annuleren geeft 409.
+end note
+
 riderepo -> db : INSERT INTO location\n(car_id, latitude, longitude, speed = 0, nu)
 note right of db
   De nieuwste rij geldt als huidige locatie
@@ -83,6 +89,6 @@ riderepo --> svc : Ride
 
 svc --> rt : Ride
 rt --> app : 200 OK + Ride
-app --> g : toont bonuspunten
+app --> g : toont bonuspunten, reservering is afgerond
 
 @enduml

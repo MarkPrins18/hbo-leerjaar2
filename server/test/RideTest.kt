@@ -165,6 +165,20 @@ class RideServiceTest {
         Unit
     }
 
+    @Test
+    fun `rit starten op een niet-bevestigde reservering geeft ConflictException`() = runBlocking {
+        val inactive = listOf(ReservationStatus.COMPLETED, ReservationStatus.CANCELLED, ReservationStatus.PENDING)
+            .map { activeReservation().copy(status = it) }
+
+        for (reservation in inactive) {
+            val inactiveRepository = FakeRideRepository(reservation)
+            val inactiveService = RideService(inactiveRepository, FakeRideReservationRepository(reservation))
+
+            assertFailsWith<ConflictException> { inactiveService.startRide(RESERVATION_ID, RENTER_ID) }
+            assertEquals(false, inactiveRepository.hasRideInProgress(RESERVATION_ID))
+        }
+    }
+
     // ---------- finishRide ----------
 
     @Test
@@ -425,7 +439,31 @@ class RideRoutesTest {
         assertEquals(HttpStatusCode.BadRequest, response.status)
     }
 
+    @Test
+    fun `na het afronden is de reservering COMPLETED en kan er geen nieuwe rit starten of annuleren`() = e2eTest { client ->
+        val token = client.login(otherUserId)
+        val reservation = activeSeedReservation(1, otherUserId)
+        val rideId = client.startRide(reservation.id, token).body<Ride>().id
+        client.finishRide(rideId, token)
+
+        val secondRide = client.startRide(reservation.id, token)
+        val cancel = client.patch("/reservations/${reservation.id}/cancel") { bearerAuth(token) }
+
+        assertEquals(ReservationStatus.COMPLETED, ExposedReservationRepository().getReservationById(reservation.id)?.status)
+        assertEquals(HttpStatusCode.Conflict, secondRide.status)
+        assertEquals(HttpStatusCode.Conflict, cancel.status)
+    }
+
+    @Test
+    fun `repository start geen rit op een afgeronde reservering`() = e2eTest { _ ->
+        // Seed: reservering 1 is COMPLETED; the lock check also guards against a finish in between
+        val ride = ExposedRideRepository().startRideIfNoneInProgress(1, Clock.System.now())
+
+        assertNull(ride)
+    }
+
     // ---------- GET /rides/active ----------
+
 
     @Test
     fun `lopende rit opvragen geeft 200 met de rit van de huurder`() = e2eTest { client ->

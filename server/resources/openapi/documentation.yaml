@@ -1042,7 +1042,8 @@ paths:
         Slaat de ritgegevens op, zet de status op COMPLETED en kent bonuspunten
         toe voor rustig rijgedrag (zie het veld bonusPoints in het schema Ride).
         De meegestuurde latitude en longitude worden in dezelfde transactie opgeslagen
-        als nieuwe, huidige locatie van de auto.
+        als nieuwe, huidige locatie van de auto, en de bijbehorende reservering krijgt
+        de status COMPLETED. Daarna kan op die reservering geen nieuwe rit meer starten.
         Alleen de huurder van de bijbehorende reservering mag de rit afronden.
       operationId: finishRide
       tags:
@@ -1530,11 +1531,13 @@ components:
         status:
           type: string
           enum: [PENDING, CONFIRMED, CANCELLED, COMPLETED]
+          description: COMPLETED zodra een rit op de reservering is afgerond
         totalPrice:
           type: number
           format: double
           description: Prijs per dag maal het aantal begonnen dagen (minimaal 1)
           example: 178.0
+
     CarChangeRequest:
       type: object
       properties:

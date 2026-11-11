@@ -2,7 +2,9 @@ package repositories
 
 import mappers.toRide
 import shared.models.Ride
+import shared.models.ReservationStatus
 import shared.models.RideStatus
+
 import shared.requests.RideFinishRequest
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
@@ -20,7 +22,9 @@ import kotlin.time.Instant
 class ExposedRideRepository : RideRepository {
 
     override suspend fun startRideIfNoneInProgress(reservationId: Int, startTime: Instant): Ride? = suspendTransaction {
-        ReservationTable.selectAll().where { ReservationTable.id eq reservationId }.forUpdate().toList()
+        val reservation = ReservationTable.selectAll().where { ReservationTable.id eq reservationId }.forUpdate().singleOrNull()
+        // Checked again under the lock: a finish in between may have completed the reservation
+        if (reservation?.get(ReservationTable.status) != ReservationStatus.CONFIRMED) return@suspendTransaction null
 
         val hasRideInProgress = !RideTable.selectAll().where {
             (RideTable.reservationId eq reservationId) and (RideTable.status eq RideStatus.IN_PROGRESS)
@@ -66,6 +70,9 @@ class ExposedRideRepository : RideRepository {
         val carId = ReservationTable.select(ReservationTable.carId)
             .where { ReservationTable.id eq ride.reservationId }
             .single()[ReservationTable.carId]
+        ReservationTable.update({ ReservationTable.id eq ride.reservationId }) {
+            it[ReservationTable.status] = ReservationStatus.COMPLETED
+        }
         insertParkedLocation(carId, request.latitude, request.longitude, endTime)
         ride
     }
