@@ -1,4 +1,6 @@
 openapi: 3.0.3
+servers:
+  - url: /
 info:
   title: Car Sharing API
   version: "1.0.0"
@@ -8,6 +10,7 @@ paths:
     get:
       summary: Haal alle auto's op
       operationId: getAllCars
+      security: []
       tags:
         - Cars
       description: |
@@ -44,6 +47,7 @@ paths:
     get:
       summary: Haal een auto op via het kenteken
       operationId: getCarByLicensePlate
+      security: []
       tags:
         - Cars
       parameters:
@@ -138,6 +142,7 @@ paths:
     get:
       summary: Haal een auto op via het id
       operationId: getCarById
+      security: []
       tags:
         - Cars
       parameters:
@@ -590,6 +595,7 @@ paths:
     get:
       summary: Haal de foto's van een auto op
       operationId: getCarPhotos
+      security: []
       tags:
         - Photos
       parameters:
@@ -620,6 +626,7 @@ paths:
     get:
       summary: Haal een foto op
       operationId: getPhoto
+      security: []
       tags:
         - Photos
       parameters:
@@ -757,6 +764,7 @@ paths:
     get:
       summary: Haal de verhuurvoorwaarden van een auto op
       operationId: getRentalTerms
+      security: []
       tags:
         - RentalTerms
       parameters:
@@ -1155,6 +1163,7 @@ paths:
     get:
       summary: Haal alle gebruikers op (tijdelijk, voor testen)
       operationId: getAllUsers
+      security: []
       tags:
         - Users
       responses:
@@ -1173,6 +1182,7 @@ paths:
         Het wachtwoord moet minimaal 8 tekens lang zijn en een hoofdletter,
         een kleine letter, een cijfer en een speciaal teken bevatten.
       operationId: register
+      security: []
       tags:
         - Users
       requestBody:
@@ -1207,6 +1217,7 @@ paths:
         Geeft een JWT-token terug. Gebruik deze token via de knop "Authorize"
         om beveiligde endpoints aan te roepen.
       operationId: login
+      security: []
       tags:
         - Users
       requestBody:
@@ -1245,7 +1256,6 @@ paths:
       responses:
         "200":
           description: De ingelogde gebruiker met zijn saldo bonuspunten, zonder wachtwoord
-
           content:
             application/json:
               schema:
@@ -1761,7 +1771,6 @@ components:
           type: string
           format: date-time
     LoginRequest:
-
       type: object
       required:
         - email
