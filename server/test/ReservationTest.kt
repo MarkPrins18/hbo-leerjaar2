@@ -9,8 +9,13 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import kotlinx.coroutines.runBlocking
+import repositories.CarRepository
+import shared.dto.CarChangeDto
+import shared.models.BEVCar
+import shared.models.Car
 import shared.models.Reservation
 import shared.models.ReservationStatus
+import shared.models.VehicleType
 import repositories.ReservationRepository
 import shared.requests.ReservationRequest
 import services.ConflictException
@@ -27,6 +32,7 @@ import kotlin.time.Instant
 
 private const val RENTER_ID = 1
 private const val OTHER_USER_ID = 2
+private const val OWNER_ID = 3
 private const val CAR_ID = 10
 
 private val start = Instant.parse("2099-03-01T09:00:00Z")
@@ -35,28 +41,60 @@ private val end = Instant.parse("2099-03-01T17:00:00Z")
 private fun request(carId: Int = CAR_ID, startTime: Instant = start, endTime: Instant = end) =
     ReservationRequest(carId, startTime, endTime)
 
+private fun testCar(): Car = BEVCar(
+    id = CAR_ID,
+    userId = OWNER_ID,
+    licensePlate = "AB-123-C",
+    brand = "Tesla",
+    model = "Model 3",
+    productionYear = 2022,
+    trim = null,
+    color = "Wit",
+    seats = 5,
+    doors = 4,
+    vehicleType = VehicleType.PASSENGER_CAR,
+    readyToDriveWeightKg = 1800,
+    consumptionCombined = 15.0,
+    co2EmissionCombined = 0.0,
+    roadTaxPerQuarter = null,
+    batteryCapacityKWh = 60.0
+)
+
 // ==================== Fakes ====================
 
+private class FakeReservationCarRepository(vararg cars: Car) : CarRepository {
+    private val cars = cars.associateBy { it.id }
+
+    override suspend fun getCarById(carId: Int): Car? = cars[carId]
+
+    override suspend fun getAllCars(): List<Car> = TODO()
+    override suspend fun getCarByLicensePlate(licensePlate: String): Car? = TODO()
+    override suspend fun createCar(car: Car): Car = TODO()
+    override suspend fun updateCar(carId: Int, change: CarChangeDto): Car? = TODO()
+    override suspend fun deleteCar(carId: Int): Boolean = TODO()
+}
+
 private class FakeReservationRepository(
-    private val carIds: Set<Int> = setOf(CAR_ID),
-    private val userIds: Set<Int> = setOf(RENTER_ID, OTHER_USER_ID)
+    private val userIds: Set<Int> = setOf(RENTER_ID, OTHER_USER_ID, OWNER_ID)
 ) : ReservationRepository {
     private val reservations = mutableListOf<Reservation>()
 
-    override suspend fun carExists(carId: Int): Boolean = carId in carIds
     override suspend fun userExists(userId: Int): Boolean = userId in userIds
 
-    override suspend fun hasActiveOverlap(carId: Int, startTime: Instant, endTime: Instant): Boolean =
-        reservations.any {
+    override suspend fun createReservationIfAvailable(
+        carId: Int, userId: Int, startTime: Instant, endTime: Instant, status: ReservationStatus
+    ): Reservation? {
+        val hasOverlap = reservations.any {
             it.carId == carId &&
                 it.status in listOf(ReservationStatus.PENDING, ReservationStatus.CONFIRMED) &&
                 it.startTime < endTime && it.endTime > startTime
         }
+        if (hasOverlap) return null
+        return Reservation(reservations.size + 1, carId, userId, startTime, endTime, status)
+            .also { reservations += it }
+    }
 
-    override suspend fun createReservation(
-        carId: Int, userId: Int, startTime: Instant, endTime: Instant, status: ReservationStatus
-    ): Reservation = Reservation(reservations.size + 1, carId, userId, startTime, endTime, status)
-        .also { reservations += it }
+    fun count(): Int = reservations.size
 
     override suspend fun getReservationById(id: Int): Reservation? = reservations.find { it.id == id }
 
@@ -74,7 +112,7 @@ private class FakeReservationRepository(
 
 class ReservationServiceTest {
     private val repository = FakeReservationRepository()
-    private val service = ReservationService(repository)
+    private val service = ReservationService(repository, FakeReservationCarRepository(testCar()))
 
     // ---------- createReservation ----------
 
@@ -105,7 +143,13 @@ class ReservationServiceTest {
         service.createReservation(RENTER_ID, request())
 
         assertFailsWith<ConflictException> { service.createReservation(OTHER_USER_ID, request()) }
-        Unit
+        assertEquals(1, repository.count())
+    }
+
+    @Test
+    fun `eigen auto reserveren geeft ForbiddenException`() = runBlocking {
+        assertFailsWith<ForbiddenException> { service.createReservation(OWNER_ID, request()) }
+        assertEquals(0, repository.count())
     }
 
     // ---------- cancelReservation ----------
@@ -150,6 +194,8 @@ class ReservationRoutesTest {
     private val seedReservationId = 4
     private val seedRenterId = 1
     private val otherUserId = 2
+    private val thirdUserId = 3
+    private val seedOwnerOfCar1 = 1
 
     private suspend fun HttpClient.reserve(body: String, token: String? = null): HttpResponse =
         post("/reservations") {
@@ -186,6 +232,21 @@ class ReservationRoutesTest {
         val body = """{ "carId": 1, "userId": 3, "startTime": "2099-03-01T09:00:00Z", "endTime": "2099-03-01T17:00:00Z" }"""
 
         assertEquals(HttpStatusCode.BadRequest, client.reserve(body, token).status)
+    }
+
+    @Test
+    fun `eigen auto reserveren geeft 403`() = e2eTest { client ->
+        val token = client.login(seedOwnerOfCar1)
+
+        assertEquals(HttpStatusCode.Forbidden, client.reserve(validBody, token).status)
+    }
+
+    @Test
+    fun `overlappende reservering geeft 409`() = e2eTest { client ->
+        client.reserve(validBody, client.login(otherUserId))
+        val thirdUserToken = client.login(thirdUserId)
+
+        assertEquals(HttpStatusCode.Conflict, client.reserve(validBody, thirdUserToken).status)
     }
 
     // ---------- PATCH /reservations/{id}/cancel ----------

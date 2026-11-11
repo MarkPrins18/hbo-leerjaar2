@@ -20,28 +20,23 @@ import kotlin.time.Instant
 
 class ExposedReservationRepository : ReservationRepository {
 
-    override suspend fun carExists(carId: Int): Boolean = suspendTransaction {
-        !CarTable.selectAll().where { CarTable.id eq carId }.empty()
-    }
-
     override suspend fun userExists(userId: Int): Boolean = suspendTransaction {
         !UserTable.selectAll().where { UserTable.id eq userId }.empty()
     }
 
+    override suspend fun createReservationIfAvailable(
+        carId: Int, userId: Int, startTime: Instant, endTime: Instant, status: ReservationStatus
+    ): Reservation? = suspendTransaction {
+        CarTable.selectAll().where { CarTable.id eq carId }.forUpdate().toList()
 
-    override suspend fun hasActiveOverlap(carId: Int, startTime: Instant, endTime: Instant): Boolean = suspendTransaction {
-        !ReservationTable.selectAll().where {
+        val hasOverlap = !ReservationTable.selectAll().where {
             (ReservationTable.carId eq carId) and
                     (ReservationTable.status inList ACTIVE_RESERVATION_STATUSES) and
                     (ReservationTable.startTime less endTime) and
                     (ReservationTable.endTime greater startTime)
         }.empty()
-    }
+        if (hasOverlap) return@suspendTransaction null
 
-
-    override suspend fun createReservation(
-        carId: Int, userId: Int, startTime: Instant, endTime: Instant, status: ReservationStatus
-    ): Reservation = suspendTransaction {
         val inserted = ReservationTable.insert {
             it[ReservationTable.carId] = carId
             it[ReservationTable.userId] = userId

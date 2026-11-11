@@ -1,5 +1,6 @@
 import shared.dto.RideFinishRequest
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
@@ -15,10 +16,13 @@ import shared.models.Ride
 import shared.models.RideStatus
 import repositories.ReservationRepository
 import repositories.RideRepository
+import repositories.ExposedReservationRepository
 import services.ConflictException
 import services.ForbiddenException
+import services.MAX_RIDE_DISTANCE_M
 import services.ResourceNotFoundException
 import services.RideService
+import services.ValidationException
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -47,32 +51,36 @@ private class FakeRideReservationRepository(vararg reservations: Reservation) : 
 
     override suspend fun getReservationById(id: Int): Reservation? = reservations[id]
 
-    override suspend fun carExists(carId: Int): Boolean = TODO()
     override suspend fun userExists(userId: Int): Boolean = TODO()
-    override suspend fun hasActiveOverlap(carId: Int, startTime: Instant, endTime: Instant): Boolean = TODO()
-    override suspend fun createReservation(
+    override suspend fun createReservationIfAvailable(
         carId: Int, userId: Int, startTime: Instant, endTime: Instant, status: ReservationStatus
-    ): Reservation = TODO()
+    ): Reservation? = TODO()
     override suspend fun updateStatus(id: Int, status: ReservationStatus): Reservation? = TODO()
     override suspend fun getReservationsByCarAndUser(carId: Int, userId: Int): List<Reservation> = TODO()
 }
 
-private class FakeRideRepository : RideRepository {
+/** [staleReads]: getRideById returns the ride as it was at start, as if another request finishes it in between. */
+private class FakeRideRepository(private val staleReads: Boolean = false) : RideRepository {
     private val rides = mutableListOf<Ride>()
 
-    override suspend fun hasRideInProgress(reservationId: Int): Boolean =
+    fun hasRideInProgress(reservationId: Int): Boolean =
         rides.any { it.reservationId == reservationId && it.status == RideStatus.IN_PROGRESS }
 
-    override suspend fun startRide(reservationId: Int, startTime: Instant): Ride =
-        Ride(rides.size + 1, reservationId, startTime, null, RideStatus.IN_PROGRESS, null, null, null, null)
+    override suspend fun startRideIfNoneInProgress(reservationId: Int, startTime: Instant): Ride? {
+        if (hasRideInProgress(reservationId)) return null
+        return Ride(rides.size + 1, reservationId, startTime, null, RideStatus.IN_PROGRESS, null, null, null, null)
             .also { rides += it }
+    }
 
-    override suspend fun getRideById(rideId: Int): Ride? = rides.find { it.id == rideId }
+    override suspend fun getRideById(rideId: Int): Ride? {
+        val ride = rides.find { it.id == rideId } ?: return null
+        return if (staleReads) ride.copy(status = RideStatus.IN_PROGRESS) else ride
+    }
 
     override suspend fun finishRide(
         id: Int, endTime: Instant, distanceM: Double, avgAcceleration: Double, avgDeceleration: Double, bonusPoints: Int
     ): Ride? {
-        val index = rides.indexOfFirst { it.id == id }
+        val index = rides.indexOfFirst { it.id == id && it.status == RideStatus.IN_PROGRESS }
         if (index == -1) return null
         rides[index] = rides[index].copy(
             endTime = endTime, status = RideStatus.COMPLETED, distanceM = distanceM,
@@ -143,6 +151,46 @@ class RideServiceTest {
         assertFailsWith<ConflictException> { service.finishRide(ride.id, RENTER_ID, calmRide) }
         Unit
     }
+
+    @Test
+    fun `rit die tussendoor door een ander verzoek is afgerond geeft ConflictException`() = runBlocking {
+        val staleRepository = FakeRideRepository(staleReads = true)
+        val staleService = RideService(staleRepository, FakeRideReservationRepository(activeReservation()))
+        val ride = staleService.startRide(RESERVATION_ID, RENTER_ID)
+        staleService.finishRide(ride.id, RENTER_ID, calmRide)
+
+        assertFailsWith<ConflictException> {
+            staleService.finishRide(ride.id, RENTER_ID, calmRide.copy(distanceM = 99_000.0))
+        }
+        assertEquals(12, staleRepository.getRideById(ride.id)?.bonusPoints)
+    }
+
+    @Test
+    fun `tweede rit starten terwijl er al een loopt geeft ConflictException`() = runBlocking {
+        service.startRide(RESERVATION_ID, RENTER_ID)
+
+        assertFailsWith<ConflictException> { service.startRide(RESERVATION_ID, RENTER_ID) }
+        Unit
+    }
+
+    @Test
+    fun `afstand van precies 1000 km is toegestaan`() = runBlocking {
+        val ride = service.startRide(RESERVATION_ID, RENTER_ID)
+
+        val finished = service.finishRide(ride.id, RENTER_ID, calmRide.copy(distanceM = MAX_RIDE_DISTANCE_M))
+
+        assertEquals(RideStatus.COMPLETED, finished.status)
+    }
+
+    @Test
+    fun `afstand boven 1000 km geeft ValidationException`() = runBlocking {
+        val ride = service.startRide(RESERVATION_ID, RENTER_ID)
+
+        assertFailsWith<ValidationException> {
+            service.finishRide(ride.id, RENTER_ID, calmRide.copy(distanceM = MAX_RIDE_DISTANCE_M + 1))
+        }
+        assertEquals(RideStatus.IN_PROGRESS, rideRepository.getRideById(ride.id)?.status)
+    }
 }
 
 // ==================== 3. E2E: ride routes ====================
@@ -205,5 +253,28 @@ class RideRoutesTest {
         val token = client.login(seedRenterId)
 
         assertEquals(HttpStatusCode.Conflict, client.finishRide(seedRideId, token).status)
+    }
+
+    // ---------- start en finish op een reservering die nu actief is ----------
+
+    @Test
+    fun `tweede rit starten of tweede keer afronden geeft 409`() = e2eTest { client ->
+        // The API only accepts reservations in the future, so the active one is inserted directly.
+        val token = client.login(otherUserId)
+        val now = Clock.System.now()
+        val reservation = ExposedReservationRepository().createReservationIfAvailable(
+            1, otherUserId, now - 1.hours, now + 1.hours, ReservationStatus.CONFIRMED
+        )!!
+
+        val started = client.startRide(reservation.id, token)
+        val secondStart = client.startRide(reservation.id, token)
+        val rideId = started.body<Ride>().id
+        val finished = client.finishRide(rideId, token)
+        val secondFinish = client.finishRide(rideId, token)
+
+        assertEquals(HttpStatusCode.Created, started.status)
+        assertEquals(HttpStatusCode.Conflict, secondStart.status)
+        assertEquals(HttpStatusCode.OK, finished.status)
+        assertEquals(HttpStatusCode.Conflict, secondFinish.status)
     }
 }

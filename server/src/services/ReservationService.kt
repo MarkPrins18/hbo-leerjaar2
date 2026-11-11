@@ -1,14 +1,16 @@
 package services
 
 import models.ACTIVE_RESERVATION_STATUSES
+import repositories.CarRepository
+import repositories.ReservationRepository
 import shared.models.Reservation
 import shared.models.ReservationStatus
-import repositories.ReservationRepository
 import shared.requests.ReservationRequest
 import kotlin.time.Clock
 
 class ReservationService(
-    private val reservationRepository: ReservationRepository
+    private val reservationRepository: ReservationRepository,
+    private val carRepository: CarRepository
 ) {
     suspend fun createReservation(userId: Int, request: ReservationRequest): Reservation {
         if (request.startTime <= Clock.System.now()) {
@@ -17,18 +19,18 @@ class ReservationService(
         if (request.endTime <= request.startTime) {
             throw ValidationException("Eindtijd moet na de starttijd liggen")
         }
-        if (!reservationRepository.carExists(request.carId)) {
-            throw ResourceNotFoundException("Auto", request.carId)
+        val car = carRepository.getCarById(request.carId)
+            ?: throw carNotFound(request.carId)
+
+        if (car.userId == userId) {
+            throw ForbiddenException("Je kunt je eigen auto niet reserveren")
         }
         if (!reservationRepository.userExists(userId)) {
             throw ResourceNotFoundException("Gebruiker", userId)
         }
-        if (reservationRepository.hasActiveOverlap(request.carId, request.startTime, request.endTime)) {
-            throw ConflictException("Auto ${request.carId} is in dit tijdsblok al gereserveerd")
-        }
-        return reservationRepository.createReservation(
+        return reservationRepository.createReservationIfAvailable(
             request.carId, userId, request.startTime, request.endTime, ReservationStatus.CONFIRMED
-        )
+        ) ?: throw ConflictException("Auto ${request.carId} is in dit tijdsblok al gereserveerd")
     }
 
 

@@ -9,18 +9,20 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.update
+import tables.ReservationTable
 import tables.RideTable
 import kotlin.time.Instant
 
 class ExposedRideRepository : RideRepository {
 
-    override suspend fun hasRideInProgress(reservationId: Int): Boolean = suspendTransaction {
-        !RideTable.selectAll().where {
+    override suspend fun startRideIfNoneInProgress(reservationId: Int, startTime: Instant): Ride? = suspendTransaction {
+        ReservationTable.selectAll().where { ReservationTable.id eq reservationId }.forUpdate().toList()
+
+        val hasRideInProgress = !RideTable.selectAll().where {
             (RideTable.reservationId eq reservationId) and (RideTable.status eq RideStatus.IN_PROGRESS)
         }.empty()
-    }
+        if (hasRideInProgress) return@suspendTransaction null
 
-    override suspend fun startRide(reservationId: Int, startTime: Instant): Ride = suspendTransaction {
         val inserted = RideTable.insert {
             it[RideTable.reservationId] = reservationId
             it[RideTable.startTime] = startTime
@@ -38,7 +40,7 @@ class ExposedRideRepository : RideRepository {
         id: Int, endTime: Instant, distanceM: Double, avgAcceleration: Double, avgDeceleration: Double,
         bonusPoints: Int
     ): Ride? = suspendTransaction {
-        RideTable.update({ RideTable.id eq id }) {
+        val updated = RideTable.update({ (RideTable.id eq id) and (RideTable.status eq RideStatus.IN_PROGRESS) }) {
             it[RideTable.endTime] = endTime
             it[RideTable.status] = RideStatus.COMPLETED
             it[RideTable.distanceM] = distanceM
@@ -46,6 +48,7 @@ class ExposedRideRepository : RideRepository {
             it[RideTable.avgDeceleration] = avgDeceleration
             it[RideTable.bonusPoints] = bonusPoints
         }
-        RideTable.selectAll().where { RideTable.id eq id }.singleOrNull()?.toRide()
+        if (updated == 0) return@suspendTransaction null
+        RideTable.selectAll().where { RideTable.id eq id }.single().toRide()
     }
 }
