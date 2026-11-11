@@ -56,13 +56,13 @@ repo -> db : SELECT ride JOIN reservation\nWHERE user_id AND status = IN_PROGRES
 db --> repo : 0 of 1 rij
 repo --> svc : Ride?
 
-group flow 4a [geen lopende rit]
-    svc --> rt : throw ResourceNotFoundException
-    rt --> app : 404 Not Found (StatusPages)
-end
+svc --> rt : Ride?
 
-svc --> rt : Ride
-rt --> app : 200 OK + Ride
+alt lopende rit
+    rt --> app : 200 OK + Ride
+else flow 4a [geen lopende rit]
+    rt --> app : 204 No Content (geen body)
+end
 app --> g : toont profiel, auto's,\nreserveringen en lopende rit
 
 @enduml

@@ -155,7 +155,7 @@ package "services" #DDF2DD {
     }
     class RideService <<service>> {
         +startRide(reservationId, userId): Ride
-        +getActiveRide(userId): Ride
+        +getActiveRide(userId): Ride?
         +finishRide(rideId, userId, request): Ride
     }
     class UserService <<service>> {
