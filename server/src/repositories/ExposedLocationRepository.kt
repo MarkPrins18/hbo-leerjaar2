@@ -20,6 +20,11 @@ class ExposedLocationRepository : LocationRepository {
             .singleOrNull()
             ?.toLocation()
     }
+
+    override suspend fun addLocation(carId: Int, latitude: Double, longitude: Double, timestamp: Instant): Location =
+        suspendTransaction {
+            insertParkedLocation(carId, latitude, longitude, timestamp)
+        }
 }
 
 /**

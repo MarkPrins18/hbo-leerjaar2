@@ -97,6 +97,8 @@ private class FakeMapLocationRepository(vararg locations: Location) : LocationRe
     private val locations = locations.associateBy { it.carId }
 
     override suspend fun getLatestLocationByCarId(carId: Int): Location? = locations[carId]
+
+    override suspend fun addLocation(carId: Int, latitude: Double, longitude: Double, timestamp: Instant): Location = TODO()
 }
 
 private class FakeMapReservationRepository(vararg reservations: Reservation) : ReservationRepository {

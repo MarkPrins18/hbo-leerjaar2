@@ -37,14 +37,14 @@ package "shared" #E8E0F5 {
         CarDto, CarChangeDto
         RentalTermsRequest, RideFinishRequest
         LoginRequest, RegisterRequest
-        ReservationRequest
+        ReservationRequest, LocationRequest
     }
     class SharedResponses <<file>> {
         shared.responses
         --
         LoginResponse, UserResponse
         FuelCostResponse, TcoResponse
-        CarMapResponse, ErrorResponse
+        CarMapResponse, ErrorResponse, LocationResponse
     }
 }
 
@@ -91,6 +91,7 @@ package "routes" #DCEBFA {
         +mapRoutes(locationService)
         --
         <&lock-locked> GET /cars/{carId}/maps
+        <&lock-locked> PUT /cars/{id}/location
     }
     class ReservationRouting <<file>> {
         +reservationRoutes(reservationService)
@@ -145,6 +146,7 @@ package "services" #DDF2DD {
     }
     class LocationService <<service>> {
         +getMapsUrl(carId, userId): String
+        +setLocation(carId, userId, request): LocationResponse
     }
     class ReservationService <<service>> {
         +createReservation(userId, request): Reservation
@@ -229,6 +231,7 @@ package "repositories" #FFF1D6 {
     }
     interface LocationRepository {
         +getLatestLocationByCarId(carId): Location?
+        +addLocation(carId, latitude, longitude, timestamp): Location
     }
     interface ReservationRepository {
         +createReservationIfAvailable(carId, userId, startTime, endTime, status, totalPrice): Reservation?
@@ -313,6 +316,10 @@ PhotoService ..> SharedModels
 RentalTermsService ..> SharedModels
 RentalTermsService ..> SharedRequests
 LocationService ..> SharedModels
+LocationService ..> SharedRequests
+LocationService ..> SharedResponses
+MapRouting ..> SharedRequests
+
 ReservationService ..> SharedModels
 ReservationService ..> SharedRequests
 RideService ..> SharedModels

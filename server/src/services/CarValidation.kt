@@ -120,6 +120,10 @@ fun validateCoordinates(latitude: Double, longitude: Double) {
     checkRange("longitude", longitude, LONGITUDE)
 }
 
+fun LocationRequest.validate() {
+    validateCoordinates(latitude, longitude)
+}
+
 fun CarFilter.validate() {
     maxPrice?.let { checkNotNegative("maxPrice", it) }
     maxDistanceKm?.let { checkNotNegative("maxDistanceKm", it) }

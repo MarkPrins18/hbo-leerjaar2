@@ -1,10 +1,13 @@
 package services
 
+import mappers.toResponse
 import shared.models.Reservation
 import shared.models.ReservationStatus
 import repositories.CarRepository
 import repositories.LocationRepository
 import repositories.ReservationRepository
+import shared.requests.LocationRequest
+import shared.responses.LocationResponse
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -23,6 +26,15 @@ class LocationService(
             ?: throw ResourceNotFoundException("Geen locatie bekend voor deze auto")
 
         return "https://www.google.com/maps/dir/?api=1&destination=${location.latitude},${location.longitude}"
+    }
+
+    suspend fun setLocation(carId: Int, userId: Int, request: LocationRequest): LocationResponse {
+        carRepository.getOwnedCar(carId, userId)
+
+        request.validate()
+
+        return locationRepository.addLocation(carId, request.latitude, request.longitude, Clock.System.now())
+            .toResponse()
     }
 
     private suspend fun hasActiveReservation(carId: Int, userId: Int): Boolean {
