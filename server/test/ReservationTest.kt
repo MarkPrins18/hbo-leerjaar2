@@ -235,9 +235,9 @@ class ReservationServiceTest {
 // ==================== 3. E2E: reservation routes ====================
 
 class ReservationRoutesTest {
-    // Seed: reservering 4 is van gebruiker 1, start op 2027-01-15 en is CONFIRMED.
+    // Seed: reservering 4 is van gebruiker 3, start op 2027-01-15 en is CONFIRMED.
     private val seedReservationId = 4
-    private val seedRenterId = 1
+    private val seedRenterId = 3
     private val otherUserId = 2
     private val thirdUserId = 3
     private val seedOwnerOfCar1 = 1
@@ -302,7 +302,7 @@ class ReservationRoutesTest {
 
         val response = client.get("/reservations") { bearerAuth(token) }
 
-        // Seed: gebruiker 1 heeft reservering 1 (2026-09-20) en 4 (2027-01-15)
+        // Seed: gebruiker 3 heeft reservering 1 (2026-09-20) en 4 (2027-01-15)
         assertEquals(HttpStatusCode.OK, response.status)
         assertEquals(listOf(1, seedReservationId), response.body<List<Reservation>>().map { it.id })
     }
