@@ -138,6 +138,14 @@ class ContractSerializationTest {
     }
 
     @Test
+    fun `RideStatus is zelfstandig serialiseerbaar als naam`() {
+        val json = DefaultJson.encodeToString(RideStatus.COMPLETED)
+
+        assertEquals("\"COMPLETED\"", json)
+        assertEquals(RideStatus.COMPLETED, DefaultJson.decodeFromString<RideStatus>(json))
+    }
+
+    @Test
     fun `RentalTerms zet LocalTime als uur en minuten`() {
         val terms = RentalTerms(
             id = 1,

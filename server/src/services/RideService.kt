@@ -32,9 +32,8 @@ class RideService(
             ?: throw ConflictException("Er loopt al een rit voor reservering $reservationId")
     }
 
-    suspend fun getActiveRide(userId: Int): Ride =
+    suspend fun getActiveRide(userId: Int): Ride? =
         rideRepository.getRideInProgressByUserId(userId)
-            ?: throw ResourceNotFoundException("Geen lopende rit gevonden")
 
     suspend fun finishRide(rideId: Int, userId: Int, request: RideFinishRequest): Ride {
         if (request.distanceM < 0 || request.avgAcceleration < 0 || request.avgDeceleration < 0) {

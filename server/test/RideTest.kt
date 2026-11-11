@@ -7,6 +7,7 @@ import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
@@ -17,7 +18,6 @@ import shared.models.Ride
 import shared.models.RideStatus
 import repositories.ExposedRideRepository
 import repositories.ReservationRepository
-import shared.responses.ErrorResponse
 import repositories.RideRepository
 import repositories.ExposedReservationRepository
 import services.ConflictException
@@ -29,6 +29,7 @@ import services.ValidationException
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNull
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Instant
@@ -192,11 +193,10 @@ class RideServiceTest {
     }
 
     @Test
-    fun `lopende rit van een ander is niet zichtbaar en geeft ResourceNotFoundException`() = runBlocking {
+    fun `lopende rit van een ander is niet zichtbaar en geeft null`() = runBlocking {
         service.startRide(RESERVATION_ID, RENTER_ID)
 
-        assertFailsWith<ResourceNotFoundException> { service.getActiveRide(OTHER_USER_ID) }
-        Unit
+        assertNull(service.getActiveRide(OTHER_USER_ID))
     }
 
     @Test
@@ -223,8 +223,7 @@ class RideServiceTest {
         val ride = service.startRide(RESERVATION_ID, RENTER_ID)
         service.finishRide(ride.id, RENTER_ID, calmRide)
 
-        assertFailsWith<ResourceNotFoundException> { service.getActiveRide(RENTER_ID) }
-        Unit
+        assertNull(service.getActiveRide(RENTER_ID))
     }
 }
 
@@ -328,14 +327,14 @@ class RideRoutesTest {
     }
 
     @Test
-    fun `lopende rit van een ander opvragen geeft 404 als ErrorResponse`() = e2eTest { client ->
+    fun `lopende rit van een ander opvragen geeft 204 zonder body`() = e2eTest { client ->
         val token = client.login(otherUserId)
         ExposedRideRepository().startRideIfNoneInProgress(seedReservationId, Clock.System.now())!!
 
         val response = client.get("/rides/active") { bearerAuth(token) }
 
-        assertEquals(HttpStatusCode.NotFound, response.status)
-        assertEquals(ErrorResponse(404, "Geen lopende rit gevonden"), response.body<ErrorResponse>())
+        assertEquals(HttpStatusCode.NoContent, response.status)
+        assertEquals("", response.bodyAsText())
     }
 
     @Test

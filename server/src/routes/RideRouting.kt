@@ -20,7 +20,12 @@ fun Route.rideRoutes(rideService: RideService) {
         }
         get("/rides/active") {
             val userId = call.authenticatedUserId()
-            call.respond(HttpStatusCode.OK, rideService.getActiveRide(userId))
+            val ride = rideService.getActiveRide(userId)
+            if (ride == null) {
+                call.respond(HttpStatusCode.NoContent)
+            } else {
+                call.respond(HttpStatusCode.OK, ride)
+            }
         }
         patch("/rides/{id}/finish") {
             val rideId = call.parameters.getOrFail<Int>("id")

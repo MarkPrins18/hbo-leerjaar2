@@ -1028,14 +1028,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Ride"
+        "204":
+          description: De ingelogde gebruiker heeft geen lopende rit (geen body)
         "401":
           description: Niet ingelogd
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "404":
-          description: De ingelogde gebruiker heeft geen lopende rit
           content:
             application/json:
               schema:
