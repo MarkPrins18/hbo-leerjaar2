@@ -2,6 +2,7 @@ package services
 
 import models.ACTIVE_RESERVATION_STATUSES
 import repositories.CarRepository
+import repositories.RentalTermsRepository
 import repositories.ReservationRepository
 import repositories.UserRepository
 import shared.models.Reservation
@@ -12,7 +13,8 @@ import kotlin.time.Clock
 class ReservationService(
     private val reservationRepository: ReservationRepository,
     private val carRepository: CarRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val rentalTermsRepository: RentalTermsRepository
 ) {
     suspend fun createReservation(userId: Int, request: ReservationRequest): Reservation {
         if (request.startTime <= Clock.System.now()) {
@@ -30,8 +32,12 @@ class ReservationService(
         if (!userRepository.userExists(userId)) {
             throw ResourceNotFoundException("Gebruiker", userId)
         }
+        val rentalTerms = rentalTermsRepository.getRentalTermsByCarId(request.carId)
+            ?: throw UnprocessableException("Auto ${request.carId} heeft nog geen huurvoorwaarden")
+        val totalPrice = calculateTotalPrice(rentalTerms.pricePerDay, request.startTime, request.endTime)
+
         return reservationRepository.createReservationIfAvailable(
-            request.carId, userId, request.startTime, request.endTime, ReservationStatus.CONFIRMED
+            request.carId, userId, request.startTime, request.endTime, ReservationStatus.CONFIRMED, totalPrice
         ) ?: throw ConflictException("Auto ${request.carId} is in dit tijdsblok al gereserveerd")
     }
 

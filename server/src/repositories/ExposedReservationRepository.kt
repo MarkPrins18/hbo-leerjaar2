@@ -20,7 +20,7 @@ import kotlin.time.Instant
 class ExposedReservationRepository : ReservationRepository {
 
     override suspend fun createReservationIfAvailable(
-        carId: Int, userId: Int, startTime: Instant, endTime: Instant, status: ReservationStatus
+        carId: Int, userId: Int, startTime: Instant, endTime: Instant, status: ReservationStatus, totalPrice: Double
     ): Reservation? = suspendTransaction {
         CarTable.selectAll().where { CarTable.id eq carId }.forUpdate().toList()
 
@@ -38,6 +38,7 @@ class ExposedReservationRepository : ReservationRepository {
             it[ReservationTable.startTime] = startTime
             it[ReservationTable.endTime] = endTime
             it[ReservationTable.status] = status
+            it[ReservationTable.totalPrice] = totalPrice.toBigDecimal()
         }
         val id = inserted[ReservationTable.id]
         ReservationTable.selectAll().where { ReservationTable.id eq id }.single().toReservation()

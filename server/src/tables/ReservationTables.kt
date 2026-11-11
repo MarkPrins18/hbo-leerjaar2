@@ -15,6 +15,7 @@ object ReservationTable : Table("reservation") {
     val startTime = timestamp("start_time")
     val endTime = timestamp("end_time")
     val status = enumerationByName("status", 20, ReservationStatus::class)
+    val totalPrice = decimal("total_price", 10, 2)
 
     override val primaryKey = PrimaryKey(id)
 

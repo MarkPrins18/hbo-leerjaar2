@@ -172,7 +172,7 @@ package "services" #DDF2DD {
         CarLookup (getOwnedCar, callExternal)
         CarFilter / CarFilterMatching / Distance
         FuelCost / TotalCostOfOwnership
-        BonusPoints
+        BonusPoints / ReservationPrice
     }
 }
 
@@ -228,7 +228,7 @@ package "repositories" #FFF1D6 {
         +getLatestLocationByCarId(carId): Location?
     }
     interface ReservationRepository {
-        +createReservationIfAvailable(carId, userId, startTime, endTime, status): Reservation?
+        +createReservationIfAvailable(carId, userId, startTime, endTime, status, totalPrice): Reservation?
         +getReservationById(id): Reservation?
         +getReservationsByCarAndUser(carId, userId): List<Reservation>
         +getReservationsByUserId(userId): List<Reservation>
@@ -283,6 +283,7 @@ LocationService --> ReservationRepository
 ReservationService --> ReservationRepository
 ReservationService --> CarRepository
 ReservationService --> UserRepository
+ReservationService --> RentalTermsRepository
 RideService --> RideRepository
 RideService --> ReservationRepository
 UserService --> UserRepository

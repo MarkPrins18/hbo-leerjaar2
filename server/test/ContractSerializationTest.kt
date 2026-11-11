@@ -109,13 +109,32 @@ class ContractSerializationTest {
             userId = 2,
             startTime = Instant.parse("2026-01-01T10:00:00Z"),
             endTime = Instant.parse("2026-01-02T10:00:00Z"),
-            status = ReservationStatus.PENDING
+            status = ReservationStatus.PENDING,
+            totalPrice = 125.5
         )
 
         val obj = DefaultJson.parseToJsonElement(DefaultJson.encodeToString(reservation)).jsonObject
 
         assertEquals("2026-01-01T10:00:00Z", obj.string("startTime"))
         assertEquals("PENDING", obj.string("status"))
+    }
+
+    @Test
+    fun `Reservation zet totalPrice als getal`() {
+        val reservation = Reservation(
+            id = 1,
+            carId = 1,
+            userId = 2,
+            startTime = Instant.parse("2026-01-01T10:00:00Z"),
+            endTime = Instant.parse("2026-01-02T10:00:00Z"),
+            status = ReservationStatus.CONFIRMED,
+            totalPrice = 125.5
+        )
+
+        val json = DefaultJson.encodeToString(reservation)
+
+        assertEquals("125.5", DefaultJson.parseToJsonElement(json).jsonObject.string("totalPrice"))
+        assertEquals(reservation, DefaultJson.decodeFromString<Reservation>(json))
     }
 
     @Test

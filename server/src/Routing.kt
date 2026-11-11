@@ -39,7 +39,7 @@ fun Application.configureRouting() {
     val photoService = PhotoService(photoRepository, carRepository, photoStorage)
     val rentalTermsService = RentalTermsService(rentalTermsRepository, carRepository)
     val reservationRepository = ExposedReservationRepository()
-    val reservationService = ReservationService(reservationRepository, carRepository, userRepository)
+    val reservationService = ReservationService(reservationRepository, carRepository, userRepository, rentalTermsRepository)
     val rideRepository = ExposedRideRepository()
     val rideService = RideService(rideRepository, reservationRepository)
     val locationService = LocationService(carRepository, locationRepository, reservationRepository)

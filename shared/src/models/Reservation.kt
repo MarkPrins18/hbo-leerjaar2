@@ -10,7 +10,8 @@ data class Reservation(
     val userId: Int,
     val startTime: Instant,
     val endTime: Instant,
-    val status: ReservationStatus
+    val status: ReservationStatus,
+    val totalPrice: Double
 )
 @Serializable
 enum class ReservationStatus {

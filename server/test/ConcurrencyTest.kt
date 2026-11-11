@@ -60,7 +60,7 @@ private suspend fun <T> inParallel(times: Int, block: suspend (Int) -> T): List<
 private suspend fun insertActiveReservation(): Reservation {
     val now = Clock.System.now()
     return ExposedReservationRepository().createReservationIfAvailable(
-        CAR_ID, RENTER_ID, now - 1.hours, now + 1.hours, ReservationStatus.CONFIRMED
+        CAR_ID, RENTER_ID, now - 1.hours, now + 1.hours, ReservationStatus.CONFIRMED, 50.0
     )!!
 }
 
@@ -118,7 +118,7 @@ class ConcurrencyTest {
         val repository = ExposedReservationRepository()
 
         val created = inParallel(PARALLEL_REQUESTS) { index ->
-            repository.createReservationIfAvailable(CAR_ID, users[index], start, end, ReservationStatus.CONFIRMED)
+            repository.createReservationIfAvailable(CAR_ID, users[index], start, end, ReservationStatus.CONFIRMED, 50.0)
         }
         val stored = users.flatMap { repository.getReservationsByCarAndUser(CAR_ID, it) }
 

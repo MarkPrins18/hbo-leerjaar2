@@ -796,7 +796,10 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
     post:
       summary: Maak een reservering aan
-      description: De reservering komt op naam van de ingelogde gebruiker.
+      description: |
+        De reservering komt op naam van de ingelogde gebruiker.
+        De totaalprijs is de prijs per dag uit de huurvoorwaarden maal het aantal
+        begonnen dagen (elke begonnen 24 uur telt als een dag, minimaal 1).
       operationId: createReservation
       tags:
         - Reservations
@@ -841,6 +844,12 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         "409":
           description: Auto is in dit tijdsblok al gereserveerd
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Auto heeft nog geen huurvoorwaarden
           content:
             application/json:
               schema:
@@ -1370,6 +1379,7 @@ components:
         - startTime
         - endTime
         - status
+        - totalPrice
       properties:
         id:
           type: integer
@@ -1386,6 +1396,11 @@ components:
         status:
           type: string
           enum: [PENDING, CONFIRMED, CANCELLED, COMPLETED]
+        totalPrice:
+          type: number
+          format: double
+          description: Prijs per dag maal het aantal begonnen dagen (minimaal 1)
+          example: 178.0
     CarChangeRequest:
       type: object
       properties:

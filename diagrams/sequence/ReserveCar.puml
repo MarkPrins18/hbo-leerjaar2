@@ -7,6 +7,7 @@ participant "reservationRoutes" as rt
 participant "ReservationService" as svc
 participant "CarRepository" as car
 participant "UserRepository" as user
+participant "RentalTermsRepository" as terms
 participant "ReservationRepository" as repo
 database "H2-database" as db
 
@@ -54,7 +55,25 @@ group flow 4c [huurder bestaat niet]
     app --> g : foutmelding (einde)
 end
 
-svc -> repo : createReservationIfAvailable(carId, userId, ..., CONFIRMED)
+svc -> terms : getRentalTermsByCarId(carId)
+terms -> db : SELECT FROM rental_terms WHERE car_id
+db --> terms : 0 of 1 rij
+terms --> svc : RentalTerms?
+
+group flow 4d [auto heeft nog geen huurvoorwaarden]
+    svc --> rt : throw UnprocessableException
+    rt --> app : 422 Unprocessable Entity (StatusPages)
+    app --> g : auto is nog niet te huur (einde)
+end
+
+svc -> svc : calculateTotalPrice(pricePerDay, startTime, endTime)
+note right of svc
+  pricePerDay × begonnen dagen:
+  ceil(duur / 24 uur), minimaal 1,
+  afgerond op centen
+end note
+
+svc -> repo : createReservationIfAvailable(carId, userId, ..., CONFIRMED, totalPrice)
 note right of repo
   Eén transactie: de auto-rij wordt vergrendeld,
   zodat twee gelijktijdige reserveringen elkaar
@@ -75,7 +94,7 @@ repo -> db : INSERT INTO reservation
 db --> repo : id, daarna SELECT van de nieuwe rij
 repo --> svc : Reservation
 svc --> rt : Reservation
-rt --> app : 201 Created + Reservation
-app --> g : toont bevestiging
+rt --> app : 201 Created + Reservation (met totalPrice)
+app --> g : toont bevestiging en prijs
 
 @enduml

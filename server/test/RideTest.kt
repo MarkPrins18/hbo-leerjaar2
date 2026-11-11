@@ -45,7 +45,7 @@ private val calmRide = RideFinishRequest(distanceM = 12_500.0, avgAcceleration =
 /** A confirmed reservation that is active right now, so a ride can start. */
 private fun activeReservation(): Reservation {
     val now = Clock.System.now()
-    return Reservation(RESERVATION_ID, 10, RENTER_ID, now - 1.hours, now + 1.hours, ReservationStatus.CONFIRMED)
+    return Reservation(RESERVATION_ID, 10, RENTER_ID, now - 1.hours, now + 1.hours, ReservationStatus.CONFIRMED, 50.0)
 }
 
 // ==================== Fakes ====================
@@ -56,7 +56,7 @@ private class FakeRideReservationRepository(vararg reservations: Reservation) : 
     override suspend fun getReservationById(id: Int): Reservation? = reservations[id]
 
     override suspend fun createReservationIfAvailable(
-        carId: Int, userId: Int, startTime: Instant, endTime: Instant, status: ReservationStatus
+        carId: Int, userId: Int, startTime: Instant, endTime: Instant, status: ReservationStatus, totalPrice: Double
     ): Reservation? = TODO()
     override suspend fun updateStatus(id: Int, status: ReservationStatus): Reservation? = TODO()
     override suspend fun getReservationsByCarAndUser(carId: Int, userId: Int): List<Reservation> = TODO()
@@ -296,7 +296,7 @@ class RideRoutesTest {
         val token = client.login(otherUserId)
         val now = Clock.System.now()
         val reservation = ExposedReservationRepository().createReservationIfAvailable(
-            1, otherUserId, now - 1.hours, now + 1.hours, ReservationStatus.CONFIRMED
+            1, otherUserId, now - 1.hours, now + 1.hours, ReservationStatus.CONFIRMED, 89.0
         )!!
 
         val started = client.startRide(reservation.id, token)

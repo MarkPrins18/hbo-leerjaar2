@@ -90,6 +90,7 @@ package shared.models {
         +startTime: Instant
         +endTime: Instant
         +status: ReservationStatus
+        +totalPrice: Double
     }
 
     class Ride <<data>> {

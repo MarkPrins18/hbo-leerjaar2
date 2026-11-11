@@ -12,6 +12,9 @@ import io.ktor.http.contentType
 import kotlinx.coroutines.runBlocking
 import models.User
 import repositories.CarRepository
+import repositories.RentalTermsRepository
+import shared.models.RentalTerms
+import shared.requests.RentalTermsRequest
 import shared.requests.CarChangeDto
 import shared.models.BEVCar
 import shared.models.Car
@@ -25,11 +28,15 @@ import services.ConflictException
 import services.ForbiddenException
 import services.ReservationService
 import services.ResourceNotFoundException
+import services.UnprocessableException
 import services.ValidationException
+import services.calculateTotalPrice
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
 // ==================== Test data ====================
@@ -38,6 +45,8 @@ private const val RENTER_ID = 1
 private const val OTHER_USER_ID = 2
 private const val OWNER_ID = 3
 private const val CAR_ID = 10
+private const val CAR_WITHOUT_TERMS_ID = 11
+private const val PRICE_PER_DAY = 89.0
 
 private val start = Instant.parse("2099-03-01T09:00:00Z")
 private val end = Instant.parse("2099-03-01T17:00:00Z")
@@ -45,8 +54,8 @@ private val end = Instant.parse("2099-03-01T17:00:00Z")
 private fun request(carId: Int = CAR_ID, startTime: Instant = start, endTime: Instant = end) =
     ReservationRequest(carId, startTime, endTime)
 
-private fun testCar(): Car = BEVCar(
-    id = CAR_ID,
+private fun testCar(id: Int = CAR_ID): Car = BEVCar(
+    id = id,
     userId = OWNER_ID,
     licensePlate = "AB-123-C",
     brand = "Tesla",
@@ -88,11 +97,20 @@ private class FakeReservationUserRepository(private vararg val userIds: Int) : U
     override suspend fun create(email: String, passwordHash: String): User = TODO()
 }
 
+private class FakeReservationRentalTermsRepository(vararg rentalTerms: RentalTerms) : RentalTermsRepository {
+    private val rentalTerms = rentalTerms.associateBy { it.carId }
+
+    override suspend fun getRentalTermsByCarId(carId: Int): RentalTerms? = rentalTerms[carId]
+
+    override suspend fun carExists(carId: Int): Boolean = TODO()
+    override suspend fun saveRentalTerms(carId: Int, request: RentalTermsRequest): RentalTerms = TODO()
+}
+
 private class FakeReservationRepository : ReservationRepository {
     private val reservations = mutableListOf<Reservation>()
 
     override suspend fun createReservationIfAvailable(
-        carId: Int, userId: Int, startTime: Instant, endTime: Instant, status: ReservationStatus
+        carId: Int, userId: Int, startTime: Instant, endTime: Instant, status: ReservationStatus, totalPrice: Double
     ): Reservation? {
         val hasOverlap = reservations.any {
             it.carId == carId &&
@@ -100,7 +118,7 @@ private class FakeReservationRepository : ReservationRepository {
                 it.startTime < endTime && it.endTime > startTime
         }
         if (hasOverlap) return null
-        return Reservation(reservations.size + 1, carId, userId, startTime, endTime, status)
+        return Reservation(reservations.size + 1, carId, userId, startTime, endTime, status, totalPrice)
             .also { reservations += it }
     }
 
@@ -121,14 +139,41 @@ private class FakeReservationRepository : ReservationRepository {
     override suspend fun getReservationsByCarAndUser(carId: Int, userId: Int): List<Reservation> = TODO()
 }
 
+// ==================== 1. Calculation: calculateTotalPrice ====================
+
+class TotalPriceTest {
+    @Test
+    fun `precies 24 uur is een dag`() {
+        assertEquals(89.0, calculateTotalPrice(PRICE_PER_DAY, start, start + 24.hours))
+    }
+
+    @Test
+    fun `24 uur en 1 minuut zijn twee begonnen dagen`() {
+        assertEquals(178.0, calculateTotalPrice(PRICE_PER_DAY, start, start + 24.hours + 1.minutes))
+    }
+
+    @Test
+    fun `1 uur kost een hele dag`() {
+        assertEquals(89.0, calculateTotalPrice(PRICE_PER_DAY, start, start + 1.hours))
+    }
+
+    @Test
+    fun `prijs wordt afgerond op centen`() {
+        assertEquals(99.99, calculateTotalPrice(33.33, start, start + 72.hours))
+    }
+}
+
 // ==================== 2. Service: ReservationService ====================
 
 class ReservationServiceTest {
     private val repository = FakeReservationRepository()
     private val service = ReservationService(
         repository,
-        FakeReservationCarRepository(testCar()),
-        FakeReservationUserRepository(RENTER_ID, OTHER_USER_ID, OWNER_ID)
+        FakeReservationCarRepository(testCar(), testCar(CAR_WITHOUT_TERMS_ID)),
+        FakeReservationUserRepository(RENTER_ID, OTHER_USER_ID, OWNER_ID),
+        FakeReservationRentalTermsRepository(
+            RentalTerms(id = 1, carId = CAR_ID, pricePerDay = PRICE_PER_DAY, pickupLocation = "Breda")
+        )
     )
 
     // ---------- createReservation ----------
@@ -139,6 +184,19 @@ class ReservationServiceTest {
 
         assertEquals(RENTER_ID, reservation.userId)
         assertEquals(ReservationStatus.CONFIRMED, reservation.status)
+    }
+
+    @Test
+    fun `reservering krijgt de prijs per begonnen dag`() = runBlocking {
+        val reservation = service.createReservation(RENTER_ID, request(endTime = start + 25.hours))
+
+        assertEquals(178.0, reservation.totalPrice)
+    }
+
+    @Test
+    fun `auto zonder huurvoorwaarden geeft UnprocessableException en reserveert niets`() = runBlocking {
+        assertFailsWith<UnprocessableException> { service.createReservation(RENTER_ID, request(carId = CAR_WITHOUT_TERMS_ID)) }
+        assertEquals(0, repository.count())
     }
 
     @Test
@@ -241,6 +299,9 @@ class ReservationRoutesTest {
     private val otherUserId = 2
     private val thirdUserId = 3
     private val seedOwnerOfCar1 = 1
+    // Seed: auto 8 is van gebruiker 1 en heeft geen huurvoorwaarden; auto 1 kost 89.00 per dag
+    private val carWithoutTermsId = 8
+    private val seedPricePerDayCar1 = 89.0
 
     private suspend fun HttpClient.reserve(body: String, token: String? = null): HttpResponse =
         post("/reservations") {
@@ -264,6 +325,24 @@ class ReservationRoutesTest {
 
         assertEquals(HttpStatusCode.Created, response.status)
         assertEquals(otherUserId, response.body<Reservation>().userId)
+    }
+
+    @Test
+    fun `reservering van 8 uur kost een dag huur`() = e2eTest { client ->
+        val token = client.login(otherUserId)
+
+        val response = client.reserve(validBody, token)
+
+        assertEquals(HttpStatusCode.Created, response.status)
+        assertEquals(seedPricePerDayCar1, response.body<Reservation>().totalPrice)
+    }
+
+    @Test
+    fun `auto zonder huurvoorwaarden reserveren geeft 422`() = e2eTest { client ->
+        val token = client.login(otherUserId)
+        val body = """{ "carId": $carWithoutTermsId, "startTime": "2099-03-01T09:00:00Z", "endTime": "2099-03-01T17:00:00Z" }"""
+
+        assertEquals(HttpStatusCode.UnprocessableEntity, client.reserve(body, token).status)
     }
 
     @Test

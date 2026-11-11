@@ -10,5 +10,6 @@ fun ResultRow.toReservation(): Reservation = Reservation(
     userId = this[ReservationTable.userId],
     startTime = this[ReservationTable.startTime],
     endTime = this[ReservationTable.endTime],
-    status = this[ReservationTable.status]
+    status = this[ReservationTable.status],
+    totalPrice = this[ReservationTable.totalPrice].toDouble()
 )

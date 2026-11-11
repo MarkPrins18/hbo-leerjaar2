@@ -7,7 +7,7 @@ import kotlin.time.Instant
 interface ReservationRepository {
     /** Locks the car, checks for an overlapping active reservation and inserts in one transaction. Returns null on overlap. */
     suspend fun createReservationIfAvailable(
-        carId: Int, userId: Int, startTime: Instant, endTime: Instant, status: ReservationStatus
+        carId: Int, userId: Int, startTime: Instant, endTime: Instant, status: ReservationStatus, totalPrice: Double
     ): Reservation?
 
     suspend fun getReservationById(id: Int): Reservation?

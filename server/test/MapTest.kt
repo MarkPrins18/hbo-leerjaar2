@@ -68,7 +68,7 @@ private fun reservation(
     endTime: Instant,
     status: ReservationStatus = ReservationStatus.CONFIRMED,
     carId: Int = CAR_ID
-): Reservation = Reservation(1, carId, RENTER_ID, startTime, endTime, status)
+): Reservation = Reservation(1, carId, RENTER_ID, startTime, endTime, status, 50.0)
 
 private fun activeReservation(
     status: ReservationStatus = ReservationStatus.CONFIRMED,
@@ -106,7 +106,7 @@ private class FakeMapReservationRepository(vararg reservations: Reservation) : R
         reservations.filter { it.carId == carId && it.userId == userId }
 
     override suspend fun createReservationIfAvailable(
-        carId: Int, userId: Int, startTime: Instant, endTime: Instant, status: ReservationStatus
+        carId: Int, userId: Int, startTime: Instant, endTime: Instant, status: ReservationStatus, totalPrice: Double
     ): Reservation? = TODO()
     override suspend fun getReservationById(id: Int): Reservation? = TODO()
     override suspend fun updateStatus(id: Int, status: ReservationStatus): Reservation? = TODO()
