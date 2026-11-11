@@ -7,6 +7,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import models.*
 import shared.models.*
 import mappers.toResponse
+import shared.responses.CarMapResponse
 import shared.responses.ErrorResponse
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -135,6 +136,27 @@ class ContractSerializationTest {
 
         assertEquals("125.5", DefaultJson.parseToJsonElement(json).jsonObject.string("totalPrice"))
         assertEquals(reservation, DefaultJson.decodeFromString<Reservation>(json))
+    }
+
+    @Test
+    fun `CarMapResponse bevat de auto met type, positie en prijs`() {
+        val response = CarMapResponse(bevCar, 51.5853, 4.7946, 89.0)
+
+        val json = DefaultJson.encodeToString(response)
+
+        val obj = DefaultJson.parseToJsonElement(json).jsonObject
+        assertEquals(setOf("car", "latitude", "longitude", "pricePerDay"), obj.keys)
+        assertEquals("BEVCar", obj.getValue("car").jsonObject.string("type"))
+        assertEquals(response, DefaultJson.decodeFromString<CarMapResponse>(json))
+    }
+
+    @Test
+    fun `CarMapResponse zonder positie en prijs heeft null-waarden`() {
+        val response = CarMapResponse(iceCar, null, null, null)
+
+        val json = DefaultJson.encodeToString(response)
+
+        assertEquals(response, DefaultJson.decodeFromString<CarMapResponse>(json))
     }
 
     @Test

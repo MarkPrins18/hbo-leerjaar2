@@ -87,6 +87,7 @@ private class FakeRentalTermsRepository : RentalTermsRepository {
 
     override suspend fun carExists(carId: Int): Boolean = TODO()
     override suspend fun getRentalTermsByCarId(carId: Int): RentalTerms? = TODO()
+    override suspend fun getAllRentalTerms(): List<RentalTerms> = TODO()
 }
 
 private class FakeStoredRentalTermsRepository(
@@ -99,6 +100,7 @@ private class FakeStoredRentalTermsRepository(
     override suspend fun getRentalTermsByCarId(carId: Int): RentalTerms? = rentalTerms[carId]
 
     override suspend fun saveRentalTerms(carId: Int, request: RentalTermsRequest): RentalTerms = TODO()
+    override suspend fun getAllRentalTerms(): List<RentalTerms> = TODO()
 }
 
 // ==================== 2. Service: RentalTermsService ====================

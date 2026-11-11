@@ -129,6 +129,7 @@ private class UnusedOwnedCarReservationRepository : ReservationRepository {
 private class UnusedOwnedCarRentalTermsRepository : RentalTermsRepository {
     override suspend fun carExists(carId: Int): Boolean = TODO()
     override suspend fun getRentalTermsByCarId(carId: Int): RentalTerms? = TODO()
+    override suspend fun getAllRentalTerms(): List<RentalTerms> = TODO()
     override suspend fun saveRentalTerms(carId: Int, request: shared.requests.RentalTermsRequest): RentalTerms = TODO()
 }
 

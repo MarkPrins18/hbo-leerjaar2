@@ -1,5 +1,5 @@
 @startuml SearchCars
-title Sequentiediagram #8: auto's zoeken en filteren (GET /cars)
+title Sequentiediagram #8: auto's zoeken en filteren (GET /cars en GET /cars/map)
 
 actor Huurder as g
 participant "Android-app" as app
@@ -12,9 +12,14 @@ participant "ReservationRepository" as res
 database "H2-database" as db
 
 g -> app : zoek auto's()
-app -> rt : GET /cars?maxPrice&maxDistanceKm&latitude&longitude&startTime&endTime
+app -> rt : GET /cars of /cars/map\n?maxPrice&maxDistanceKm&latitude&longitude&startTime&endTime
+note right of rt
+  /cars/map staat in requireAuthentication { }:
+  zonder geldig token 401. De vaste route /map
+  gaat in Ktor voor /cars/{id}, net als /mine.
+end note
 rt -> rt : toCarFilter()
-rt -> svc : getCars(filter)
+rt -> svc : getCars(filter) of getCarMap(filter)
 svc -> svc : filter.validate()
 
 group flow 3a [ongeldige filterwaarde, of startTime/endTime niet samen of eind niet na begin]
@@ -36,17 +41,24 @@ opt startTime en endTime opgegeven
     svc -> svc : auto's met een overlappende reservering weglaten
 end
 
+svc -> terms : getAllRentalTerms()
+terms -> db : SELECT rental_terms
+db --> terms : rijen
+terms --> svc : List<RentalTerms>
+
 loop voor elke auto
     svc -> loc : getLatestLocationByCarId(car.id)
     loc -> db : SELECT location (nieuwste)
     db --> loc : 0 of 1 rij
     loc --> svc : Location?
-    svc -> terms : getRentalTermsByCarId(car.id)
-    terms -> db : SELECT rental_terms
-    db --> terms : 0 of 1 rij
-    terms --> svc : RentalTerms?
     svc -> svc : filter.matches(location, rentalTerms)
 end
+note right of svc
+  getCars slaat locaties en huurvoorwaarden over
+  als er geen prijs- of afstandsfilter is.
+  getCarMap maakt per auto een CarMapResponse
+  (car, latitude, longitude, pricePerDay).
+end note
 
 group flow 4a [geen auto voldoet aan de filters]
     svc --> rt : lege List<Car>
@@ -54,8 +66,8 @@ group flow 4a [geen auto voldoet aan de filters]
     app --> g : geen auto's (stap 2)
 end
 
-svc --> rt : gefilterde List<Car>
-rt --> app : 200 OK + List<Car>
+svc --> rt : gefilterde List<Car> of List<CarMapResponse>
+rt --> app : 200 OK + List<Car> of List<CarMapResponse>
 app --> g : lijst of kaart
 
 @enduml

@@ -24,6 +24,9 @@ import shared.models.ReservationStatus
 import shared.models.VehicleType
 import shared.requests.CarChangeDto
 import shared.requests.RentalTermsRequest
+import shared.responses.CarMapResponse
+import shared.responses.ErrorResponse
+import io.ktor.client.request.bearerAuth
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -35,9 +38,22 @@ import kotlin.uuid.Uuid
 private const val OWNER_ID = 1
 private const val FREE_CAR_ID = 10
 private const val RESERVED_CAR_ID = 11
+private const val BARE_CAR_ID = 12 // no location and no rental terms
+private const val PRICE_PER_DAY = 45.0
+private const val LATITUDE = 51.5853
+private const val LONGITUDE = 4.7946
 
 private val periodStart = Instant.parse("2099-03-01T09:00:00Z")
 private val periodEnd = Instant.parse("2099-03-01T17:00:00Z")
+
+private fun testLocation(carId: Int) = Location(
+    id = 1,
+    carId = carId,
+    latitude = LATITUDE,
+    longitude = LONGITUDE,
+    speed = null,
+    timestamp = Instant.parse("2099-02-28T12:00:00Z")
+)
 
 private fun testCar(id: Int): Car = BEVCar(
     id = id,
@@ -91,11 +107,22 @@ private class FakeSearchReservationRepository(private val reservedCarIds: Set<In
     override suspend fun getReservationsByUserId(userId: Int): List<Reservation> = TODO()
 }
 
-private class UnusedSearchLocationRepository : LocationRepository {
-    override suspend fun getLatestLocationByCarId(carId: Int): Location? = TODO()
+private class FakeSearchLocationRepository(vararg locations: Location) : LocationRepository {
+    private val locations = locations.associateBy { it.carId }
+
+    override suspend fun getLatestLocationByCarId(carId: Int): Location? = locations[carId]
 }
 
-private class UnusedSearchRentalTermsRepository : RentalTermsRepository {
+/** Counts the bulk calls, so a test can check that the rental terms are not fetched per car. */
+private class FakeSearchRentalTermsRepository(vararg rentalTerms: RentalTerms) : RentalTermsRepository {
+    private val rentalTerms = rentalTerms.toList()
+    var bulkCalls = 0
+
+    override suspend fun getAllRentalTerms(): List<RentalTerms> {
+        bulkCalls++
+        return rentalTerms
+    }
+
     override suspend fun carExists(carId: Int): Boolean = TODO()
     override suspend fun getRentalTermsByCarId(carId: Int): RentalTerms? = TODO()
     override suspend fun saveRentalTerms(carId: Int, request: RentalTermsRequest): RentalTerms = TODO()
@@ -142,15 +169,58 @@ class CarAvailabilityFilterValidationTest {
 
 class CarSearchServiceTest {
     private val reservationRepository = FakeSearchReservationRepository(setOf(RESERVED_CAR_ID))
+    private val rentalTermsRepository = FakeSearchRentalTermsRepository(
+        RentalTerms(id = 1, carId = FREE_CAR_ID, pricePerDay = PRICE_PER_DAY, pickupLocation = "Breda")
+    )
 
     private val service = CarService(
-        FakeSearchCarRepository(testCar(FREE_CAR_ID), testCar(RESERVED_CAR_ID)),
-        UnusedSearchLocationRepository(),
+        FakeSearchCarRepository(testCar(FREE_CAR_ID), testCar(RESERVED_CAR_ID), testCar(BARE_CAR_ID)),
+        FakeSearchLocationRepository(testLocation(FREE_CAR_ID)),
         UnusedSearchPhotoRepository(),
         PhotoStorage(Path(SystemTemporaryDirectory, "car-search-test-${Uuid.random()}")),
-        UnusedSearchRentalTermsRepository(),
+        rentalTermsRepository,
         reservationRepository
     )
+
+    // ---------- getCarMap ----------
+
+    @Test
+    fun `kaart geeft per auto de laatste positie en de prijs per dag`() = runBlocking {
+        val markers = service.getCarMap(CarFilter())
+
+        val marker = markers.single { it.car.id == FREE_CAR_ID }
+        assertEquals(LATITUDE, marker.latitude)
+        assertEquals(LONGITUDE, marker.longitude)
+        assertEquals(PRICE_PER_DAY, marker.pricePerDay)
+        assertEquals(1, rentalTermsRepository.bulkCalls)
+    }
+
+    @Test
+    fun `auto zonder locatie en huurvoorwaarden staat op de kaart zonder positie en prijs`() = runBlocking {
+        val marker = service.getCarMap(CarFilter()).single { it.car.id == BARE_CAR_ID }
+
+        assertEquals(CarMapResponse(testCar(BARE_CAR_ID), null, null, null), marker)
+    }
+
+    @Test
+    fun `kaart laat gereserveerde auto weg bij een tijdvak`() = runBlocking {
+        val markers = service.getCarMap(CarFilter(startTime = periodStart, endTime = periodEnd))
+
+        assertEquals(listOf(FREE_CAR_ID, BARE_CAR_ID), markers.map { it.car.id })
+    }
+
+    @Test
+    fun `kaart past de prijsfilter toe`() = runBlocking {
+        val markers = service.getCarMap(CarFilter(maxPrice = PRICE_PER_DAY))
+
+        assertEquals(listOf(FREE_CAR_ID), markers.map { it.car.id })
+    }
+
+    @Test
+    fun `kaart met ongeldig tijdvak geeft ValidationException`() = runBlocking {
+        assertFailsWith<ValidationException> { service.getCarMap(CarFilter(startTime = periodEnd, endTime = periodStart)) }
+        Unit
+    }
 
     // ---------- getCars ----------
 
@@ -158,7 +228,7 @@ class CarSearchServiceTest {
     fun `gereserveerde auto valt weg bij een tijdvak`() = runBlocking {
         val cars = service.getCars(CarFilter(startTime = periodStart, endTime = periodEnd))
 
-        assertEquals(listOf(FREE_CAR_ID), cars.map { it.id })
+        assertEquals(listOf(FREE_CAR_ID, BARE_CAR_ID), cars.map { it.id })
         assertEquals(periodStart to periodEnd, reservationRepository.requestedPeriod)
     }
 
@@ -166,7 +236,7 @@ class CarSearchServiceTest {
     fun `zonder tijdvak komen alle auto's terug zonder reserveringen op te vragen`() = runBlocking {
         val cars = service.getCars(CarFilter())
 
-        assertEquals(listOf(FREE_CAR_ID, RESERVED_CAR_ID), cars.map { it.id })
+        assertEquals(listOf(FREE_CAR_ID, RESERVED_CAR_ID, BARE_CAR_ID), cars.map { it.id })
         assertEquals(null, reservationRepository.requestedPeriod)
     }
 
@@ -229,6 +299,52 @@ class CarSearchRoutesTest {
     @Test
     fun `tijdstip dat geen ISO-8601 is geeft 400`() = e2eTest { client ->
         val response = client.get("/cars?startTime=morgen&endTime=2027-01-15T00:00:00Z")
+
+        assertEquals(HttpStatusCode.BadRequest, response.status)
+    }
+
+    // ---------- GET /cars/map ----------
+
+    @Test
+    fun `kaart geeft alle auto's met laatste positie en prijs`() = e2eTest { client ->
+        val token = client.login(2)
+
+        val response = client.get("/cars/map") { bearerAuth(token) }
+
+        // Seed: laatste locatie van auto 1 is 51.643610, 4.860440; auto 1 kost 89.00, auto 8 heeft geen huurvoorwaarden
+        assertEquals(HttpStatusCode.OK, response.status)
+        val markers = response.body<List<CarMapResponse>>()
+        assertEquals((1..seedCarCount).toList(), markers.map { it.car.id }.sorted())
+        val car1 = markers.single { it.car.id == 1 }
+        assertEquals(51.643610, car1.latitude)
+        assertEquals(4.860440, car1.longitude)
+        assertEquals(89.0, car1.pricePerDay)
+        assertEquals(null, markers.single { it.car.id == 8 }.pricePerDay)
+    }
+
+    @Test
+    fun `kaart met tijdvak laat de gereserveerde auto weg`() = e2eTest { client ->
+        val token = client.login(2)
+
+        val response = client.get("/cars/map?$reservedDay") { bearerAuth(token) }
+
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertEquals((1..seedCarCount).filter { it != reservedSeedCarId }, response.body<List<CarMapResponse>>().map { it.car.id }.sorted())
+    }
+
+    @Test
+    fun `kaart zonder token geeft 401 en botst niet met cars id`() = e2eTest { client ->
+        val response = client.get("/cars/map")
+
+        assertEquals(HttpStatusCode.Unauthorized, response.status)
+        assertEquals(401, response.body<ErrorResponse>().status)
+    }
+
+    @Test
+    fun `kaart met eind voor begin geeft 400`() = e2eTest { client ->
+        val token = client.login(2)
+
+        val response = client.get("/cars/map?startTime=2027-01-16T00:00:00Z&endTime=2027-01-15T00:00:00Z") { bearerAuth(token) }
 
         assertEquals(HttpStatusCode.BadRequest, response.status)
     }

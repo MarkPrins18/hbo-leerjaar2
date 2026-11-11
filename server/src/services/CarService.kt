@@ -8,6 +8,7 @@ import repositories.LocationRepository
 import repositories.PhotoRepository
 import repositories.RentalTermsRepository
 import repositories.ReservationRepository
+import shared.responses.CarMapResponse
 
 class CarService(
     private val carRepository: CarRepository,
@@ -54,12 +55,30 @@ class CarService(
         val cars = getAvailableCars(filter)
         if (filter.maxDistanceKm == null && filter.maxPrice == null) return cars
 
+        val rentalTermsByCarId = getRentalTermsByCarId()
         return cars.filter { car ->
             val location = locationRepository.getLatestLocationByCarId(car.id)
-            val rentalTerms = rentalTermsRepository.getRentalTermsByCarId(car.id)
-            filter.matches(location, rentalTerms)
+            filter.matches(location, rentalTermsByCarId[car.id])
         }
     }
+
+    /** One query for all rental terms; the latest location is still fetched per car. */
+    suspend fun getCarMap(filter: CarFilter): List<CarMapResponse> {
+        filter.validate()
+
+        val cars = getAvailableCars(filter)
+        val rentalTermsByCarId = getRentalTermsByCarId()
+        return cars.mapNotNull { car ->
+            val location = locationRepository.getLatestLocationByCarId(car.id)
+            val rentalTerms = rentalTermsByCarId[car.id]
+            if (!filter.matches(location, rentalTerms)) return@mapNotNull null
+
+            CarMapResponse(car, location?.latitude, location?.longitude, rentalTerms?.pricePerDay)
+        }
+    }
+
+    private suspend fun getRentalTermsByCarId(): Map<Int, RentalTerms> =
+        rentalTermsRepository.getAllRentalTerms().associateBy { it.carId }
 
     private suspend fun getAvailableCars(filter: CarFilter): List<Car> {
         val cars = carRepository.getAllCars()

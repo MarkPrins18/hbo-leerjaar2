@@ -22,6 +22,10 @@ class ExposedRentalTermsRepository : RentalTermsRepository {
         RentalTermsTable.selectAll().where { RentalTermsTable.carId eq carId }.singleOrNull()?.toRentalTerms()
     }
 
+    override suspend fun getAllRentalTerms(): List<RentalTerms> = suspendTransaction {
+        RentalTermsTable.selectAll().map { it.toRentalTerms() }
+    }
+
     override suspend fun saveRentalTerms(carId: Int, request: RentalTermsRequest): RentalTerms = suspendTransaction {
         val exists = !RentalTermsTable.selectAll().where { RentalTermsTable.carId eq carId }.empty()
         if (exists) {

@@ -92,6 +92,48 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /cars/map:
+    get:
+      summary: Haal de auto's op voor de kaart
+      description: |
+        Geeft per auto de laatste bekende positie en de prijs per dag terug.
+        Ondersteunt dezelfde filters als `GET /cars`. Een auto zonder locatie of
+        huurvoorwaarden komt mee met `null` als positie of prijs, tenzij een
+        afstands- of prijsfilter hem uitsluit.
+      operationId: getCarMap
+      tags:
+        - Cars
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/MaxPrice"
+        - $ref: "#/components/parameters/MaxDistanceKm"
+        - $ref: "#/components/parameters/Latitude"
+        - $ref: "#/components/parameters/Longitude"
+        - $ref: "#/components/parameters/AvailableFrom"
+        - $ref: "#/components/parameters/AvailableUntil"
+      responses:
+        "200":
+          description: Auto's met positie en prijs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CarMapResponse"
+        "400":
+          description: Ongeldige filterwaarde, zie GET /cars
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Niet ingelogd
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /cars/{id}:
     get:
       summary: Haal een auto op via het id
@@ -1756,6 +1798,34 @@ components:
           type: string
           example: "20:00"
           nullable: true
+    CarMapResponse:
+      type: object
+      required:
+        - car
+        - latitude
+        - longitude
+        - pricePerDay
+      properties:
+        car:
+          $ref: "#/components/schemas/Car"
+        latitude:
+          type: number
+          format: double
+          nullable: true
+          description: Laatste bekende breedtegraad, null als er geen locatie is
+          example: 51.64361
+        longitude:
+          type: number
+          format: double
+          nullable: true
+          description: Laatste bekende lengtegraad, null als er geen locatie is
+          example: 4.86044
+        pricePerDay:
+          type: number
+          format: double
+          nullable: true
+          description: Prijs per dag uit de huurvoorwaarden, null als die er niet zijn
+          example: 89.0
     RentalTerms:
       type: object
       required:

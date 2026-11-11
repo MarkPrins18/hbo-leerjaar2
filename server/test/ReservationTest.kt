@@ -104,6 +104,7 @@ private class FakeReservationRentalTermsRepository(vararg rentalTerms: RentalTer
 
     override suspend fun carExists(carId: Int): Boolean = TODO()
     override suspend fun saveRentalTerms(carId: Int, request: RentalTermsRequest): RentalTerms = TODO()
+    override suspend fun getAllRentalTerms(): List<RentalTerms> = TODO()
 }
 
 private class FakeReservationRepository : ReservationRepository {

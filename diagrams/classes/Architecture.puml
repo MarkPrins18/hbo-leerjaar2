@@ -44,7 +44,7 @@ package "shared" #E8E0F5 {
         --
         LoginResponse, UserResponse
         FuelCostResponse, TcoResponse
-        ErrorResponse
+        CarMapResponse, ErrorResponse
     }
 }
 
@@ -66,6 +66,7 @@ package "routes" #DCEBFA {
         GET /cars/{id}
         GET /cars/license-plate/{licensePlate}
         <&lock-locked> GET /cars/mine
+        <&lock-locked> GET /cars/map
         <&lock-locked> POST /cars/import
         <&lock-locked> PATCH /cars/{id}
         <&lock-locked> DELETE /cars/{id}
@@ -123,6 +124,7 @@ package "services" #DDF2DD {
     }
     class CarService <<service>> {
         +getCars(filter): List<Car>
+        +getCarMap(filter): List<CarMapResponse>
         +getCarById(carId): Car
         +getCarsByOwner(userId): List<Car>
         +getCarByLicensePlate(licensePlate): Car
@@ -222,6 +224,7 @@ package "repositories" #FFF1D6 {
     interface RentalTermsRepository {
         +carExists(carId): Boolean
         +getRentalTermsByCarId(carId): RentalTerms?
+        +getAllRentalTerms(): List<RentalTerms>
         +saveRentalTerms(carId, request): RentalTerms
     }
     interface LocationRepository {
@@ -305,6 +308,7 @@ CarImportService ..> SharedRequests
 CarCostService ..> SharedModels
 CarCostService ..> SharedRequests
 CarCostService ..> SharedResponses
+CarService ..> SharedResponses
 PhotoService ..> SharedModels
 RentalTermsService ..> SharedModels
 RentalTermsService ..> SharedRequests
