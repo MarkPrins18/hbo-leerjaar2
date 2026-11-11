@@ -10,6 +10,8 @@ import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.innerJoin
+import org.jetbrains.exposed.v1.core.sum
+
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
@@ -59,6 +61,14 @@ class ExposedRideRepository : RideRepository {
             .where { ReservationTable.userId eq userId }
             .orderBy(RideTable.startTime to SortOrder.DESC, RideTable.id to SortOrder.DESC)
             .map { it.toRide() }
+    }
+
+    override suspend fun getTotalBonusPointsByUserId(userId: Int): Int = suspendTransaction {
+        val total = RideTable.bonusPoints.sum()
+        RideTable.innerJoin(ReservationTable, { RideTable.reservationId }, { ReservationTable.id })
+            .select(total)
+            .where { (ReservationTable.userId eq userId) and (RideTable.status eq RideStatus.COMPLETED) }
+            .single()[total] ?: 0
     }
 
     override suspend fun finishRide(

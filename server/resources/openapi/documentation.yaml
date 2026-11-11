@@ -1244,7 +1244,8 @@ paths:
         - bearerAuth: []
       responses:
         "200":
-          description: De ingelogde gebruiker, zonder wachtwoord
+          description: De ingelogde gebruiker met zijn saldo bonuspunten, zonder wachtwoord
+
           content:
             application/json:
               schema:
@@ -1899,6 +1900,7 @@ components:
       required:
         - id
         - email
+        - bonusPoints
       properties:
         id:
           type: integer
@@ -1906,6 +1908,11 @@ components:
         email:
           type: string
           format: email
+        bonusPoints:
+          type: integer
+          format: int32
+          description: Saldo bonuspunten, de som van bonusPoints van alle afgeronde ritten. 0 zonder ritten.
+          example: 48
     RentalTermsRequest:
       type: object
       required:

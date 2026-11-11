@@ -17,13 +17,14 @@ fun Route.userRoutes(userService: UserService, authService: AuthService) {
     route("/users") {
         // TODO: temporary endpoint for testing, remove before release
         get {
-            val users = userService.getAllUsers().map { it.toResponse() }
+            val users = userService.getAllUsers().map { it.toResponse(userService.getBonusPoints(it.id)) }
             call.respond(HttpStatusCode.OK, users)
         }
         post("/register") {
             val request = call.receive<RegisterRequest>()
             val user = userService.register(request)
-            call.respond(HttpStatusCode.Created, user.toResponse())
+            // A new account has no rides yet
+            call.respond(HttpStatusCode.Created, user.toResponse(bonusPoints = 0))
         }
         post("/login") {
             val request = call.receive<LoginRequest>()
@@ -33,7 +34,8 @@ fun Route.userRoutes(userService: UserService, authService: AuthService) {
         requireAuthentication {
             get("/me") {
                 val userId = call.authenticatedUserId()
-                call.respond(HttpStatusCode.OK, userService.getUser(userId).toResponse())
+                val user = userService.getUser(userId)
+                call.respond(HttpStatusCode.OK, user.toResponse(userService.getBonusPoints(user.id)))
             }
         }
     }

@@ -202,12 +202,13 @@ class ContractSerializationTest {
     }
 
     @Test
-    fun `UserResponse bevat alleen id en email`() {
-        val response = User(1, "a@b.nl", "hash").toResponse()
+    fun `UserResponse bevat alleen id, email en bonusPoints`() {
+        val response = User(1, "a@b.nl", "hash").toResponse(bonusPoints = 48)
 
         val obj = DefaultJson.parseToJsonElement(DefaultJson.encodeToString(response)).jsonObject
 
-        assertEquals(setOf("id", "email"), obj.keys)
+        assertEquals(setOf("id", "email", "bonusPoints"), obj.keys)
+
     }
 
     @Test

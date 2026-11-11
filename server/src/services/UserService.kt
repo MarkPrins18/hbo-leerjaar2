@@ -2,10 +2,14 @@ package services
 
 import models.User
 import org.mindrot.jbcrypt.BCrypt
+import repositories.RideRepository
 import repositories.UserRepository
 import shared.requests.RegisterRequest
 
-class UserService(private val userRepository: UserRepository) {
+class UserService(
+    private val userRepository: UserRepository,
+    private val rideRepository: RideRepository
+) {
 
     suspend fun register(request: RegisterRequest): User {
         request.validate()
@@ -23,4 +27,6 @@ class UserService(private val userRepository: UserRepository) {
         userRepository.findById(userId) ?: throw ResourceNotFoundException("Gebruiker", userId)
 
     suspend fun getAllUsers(): List<User> = userRepository.findAll()
+
+    suspend fun getBonusPoints(userId: Int): Int = rideRepository.getTotalBonusPointsByUserId(userId)
 }

@@ -12,6 +12,7 @@ import io.ktor.http.contentType
 import kotlinx.coroutines.runBlocking
 import models.User
 import org.mindrot.jbcrypt.BCrypt
+import repositories.RideRepository
 import repositories.UserRepository
 import services.AuthService
 import services.ConflictException
@@ -21,7 +22,9 @@ import services.UserService
 import services.ValidationException
 import services.validate
 import shared.requests.LoginRequest
+import shared.models.Ride
 import shared.requests.RegisterRequest
+import shared.requests.RideFinishRequest
 import shared.responses.ErrorResponse
 import shared.responses.LoginResponse
 import shared.responses.UserResponse
@@ -30,6 +33,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
+import kotlin.time.Instant
 
 // ==================== Test data ====================
 
@@ -71,6 +75,15 @@ private class FakeAuthUserRepository(vararg users: User) : UserRepository {
     override suspend fun findById(userId: Int): User? = TODO()
     override suspend fun findAll(): List<User> = TODO()
     override suspend fun userExists(userId: Int): Boolean = TODO()
+}
+
+private class UnusedAuthRideRepository : RideRepository {
+    override suspend fun startRideIfNoneInProgress(reservationId: Int, startTime: Instant): Ride? = TODO()
+    override suspend fun getRideById(rideId: Int): Ride? = TODO()
+    override suspend fun getRideInProgressByUserId(userId: Int): Ride? = TODO()
+    override suspend fun getRidesByUserId(userId: Int): List<Ride> = TODO()
+    override suspend fun getTotalBonusPointsByUserId(userId: Int): Int = TODO()
+    override suspend fun finishRide(id: Int, endTime: Instant, request: RideFinishRequest, bonusPoints: Int): Ride? = TODO()
 }
 
 // ==================== 1. Validation: RegisterRequest ====================
@@ -182,7 +195,7 @@ class UserValidationTest {
 
 class UserRegistrationServiceTest {
     private val repository = FakeAuthUserRepository(existingUser())
-    private val service = UserService(repository)
+    private val service = UserService(repository, UnusedAuthRideRepository())
 
     // ---------- register ----------
 
@@ -317,6 +330,8 @@ class AuthRoutesTest {
         assertEquals(HttpStatusCode.OK, login.status)
         assertEquals(HttpStatusCode.OK, me.status)
         assertEquals(registered, me.body<UserResponse>())
+        assertEquals(0, registered.bonusPoints)
+
     }
 
     @Test

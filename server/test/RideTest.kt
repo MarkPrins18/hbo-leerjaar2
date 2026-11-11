@@ -85,7 +85,10 @@ private class FakeRideRepository(vararg reservations: Reservation, private val s
     override suspend fun getRidesByUserId(userId: Int): List<Ride> =
         rides.filter { reservations[it.reservationId]?.userId == userId }.sortedByDescending { it.startTime }
 
+    override suspend fun getTotalBonusPointsByUserId(userId: Int): Int = TODO()
+
     fun hasRideInProgress(reservationId: Int): Boolean =
+
         rides.any { it.reservationId == reservationId && it.status == RideStatus.IN_PROGRESS }
 
     override suspend fun startRideIfNoneInProgress(reservationId: Int, startTime: Instant): Ride? {
@@ -474,8 +477,10 @@ class RideRoutesTest {
     }
 
     @Test
-    fun `repository start geen rit op een afgeronde reservering`() = e2eTest { _ ->
-        // Seed: reservering 1 is COMPLETED; the lock check also guards against a finish in between
+    fun `repository start geen rit op een afgeronde reservering`() = e2eTest { client ->
+        // Seed: reservering 1 is COMPLETED; the lock check also guards against a finish in between.
+        // The app (and so the database) only starts on the first request.
+        client.login(seedRenterId)
         val ride = ExposedRideRepository().startRideIfNoneInProgress(1, Clock.System.now())
 
         assertNull(ride)

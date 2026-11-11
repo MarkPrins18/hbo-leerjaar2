@@ -16,6 +16,9 @@ interface RideRepository {
     /** All rides on the user's reservations, newest first. */
     suspend fun getRidesByUserId(userId: Int): List<Ride>
 
+    /** Sum of the bonus points of the user's completed rides; 0 without rides. */
+    suspend fun getTotalBonusPointsByUserId(userId: Int): Int
+
     /**
      * Only finishes a ride that is still in progress, sets its reservation to COMPLETED and stores
      * the car's new location from [request], all in one transaction. Returns null if no such ride was updated.

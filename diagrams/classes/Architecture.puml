@@ -164,6 +164,7 @@ package "services" #DDF2DD {
         +register(request): User
         +getUser(userId): User
         +getAllUsers(): List<User>
+        +getBonusPoints(userId): Int
     }
     together {
         class AuthService <<service>> {
@@ -248,6 +249,7 @@ package "repositories" #FFF1D6 {
         +getRideById(rideId): Ride?
         +getRideInProgressByUserId(userId): Ride?
         +getRidesByUserId(userId): List<Ride>
+        +getTotalBonusPointsByUserId(userId): Int
 
         +finishRide(id, endTime, request, bonusPoints): Ride?
     }
@@ -299,6 +301,8 @@ ReservationService --> RentalTermsRepository
 RideService --> RideRepository
 RideService --> ReservationRepository
 UserService --> UserRepository
+UserService --> RideRepository
+
 AuthService --> UserRepository
 AuthService -> TokenService
 

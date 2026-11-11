@@ -28,7 +28,14 @@ group flow 1a [gebruiker bestaat niet meer]
 end
 
 svc --> rt : User
-rt --> app : 200 OK + UserResponse
+rt -> svc : UserService.getBonusPoints(userId)
+svc -> repo : RideRepository.getTotalBonusPointsByUserId(userId)
+repo -> db : SELECT SUM(bonus_points) FROM ride JOIN reservation\nWHERE user_id AND status = COMPLETED
+db --> repo : som of NULL
+repo --> svc : Int (NULL = 0)
+svc --> rt : saldo
+rt -> rt : user.toResponse(bonusPoints)
+rt --> app : 200 OK + UserResponse {id, email, bonusPoints}
 
 app -> rt : GET /cars/mine
 rt -> svc : CarService.getCarsByOwner(userId)
@@ -72,7 +79,8 @@ alt lopende rit
 else flow 4a [geen lopende rit]
     rt --> app : 204 No Content (geen body)
 end
-app --> g : toont profiel, auto's,\nreserveringen, ritten en lopende rit
+app --> g : toont profiel met saldo, auto's,\nreserveringen, ritten en lopende rit
+
 
 
 @enduml
