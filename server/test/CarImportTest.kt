@@ -1,6 +1,6 @@
 import clients.VehicleRegistry
-import shared.dto.CarChangeDto
-import shared.dto.CarDto
+import shared.requests.CarChangeDto
+import shared.requests.CarDto
 import kotlinx.coroutines.runBlocking
 import mappers.normalizeLicensePlate
 import shared.models.BEVCar

@@ -1,4 +1,4 @@
-package shared.dto
+package shared.requests
 
 import kotlinx.serialization.Serializable
 

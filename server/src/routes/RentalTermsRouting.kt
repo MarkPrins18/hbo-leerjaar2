@@ -7,7 +7,7 @@ import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.*
 import io.ktor.server.util.getOrFail
-import shared.dto.RentalTermsRequest
+import shared.requests.RentalTermsRequest
 import services.RentalTermsService
 
 fun Route.rentalTermsRoutes(rentalTermsService: RentalTermsService) {

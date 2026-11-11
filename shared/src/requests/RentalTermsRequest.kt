@@ -1,4 +1,4 @@
-package shared.dto
+package shared.requests
 
 import kotlinx.datetime.LocalTime
 import kotlinx.serialization.Serializable

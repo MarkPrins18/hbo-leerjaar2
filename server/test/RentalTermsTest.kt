@@ -1,5 +1,5 @@
-import shared.dto.CarChangeDto
-import shared.dto.RentalTermsRequest
+import shared.requests.CarChangeDto
+import shared.requests.RentalTermsRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth

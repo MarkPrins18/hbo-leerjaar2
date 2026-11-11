@@ -1,4 +1,4 @@
-import shared.dto.CarChangeDto
+import shared.requests.CarChangeDto
 import io.ktor.client.HttpClient
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get

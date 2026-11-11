@@ -1,6 +1,6 @@
 package services
 
-import shared.dto.RentalTermsRequest
+import shared.requests.RentalTermsRequest
 import shared.models.RentalTerms
 import repositories.CarRepository
 import repositories.RentalTermsRepository

@@ -1,6 +1,6 @@
 package repositories
 
-import shared.dto.RentalTermsRequest
+import shared.requests.RentalTermsRequest
 import shared.models.RentalTerms
 
 interface RentalTermsRepository {

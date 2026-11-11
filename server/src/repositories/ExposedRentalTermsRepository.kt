@@ -1,6 +1,6 @@
 package repositories
 
-import shared.dto.RentalTermsRequest
+import shared.requests.RentalTermsRequest
 import mappers.toRentalTerms
 import shared.models.RentalTerms
 import org.jetbrains.exposed.v1.core.eq

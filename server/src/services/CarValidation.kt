@@ -5,8 +5,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 import mappers.normalizeLicensePlate
 import shared.models.*
-import dto.*
-import shared.dto.*
+import shared.requests.*
 import models.gemini.CarCostEstimate
 import kotlin.time.Clock
 

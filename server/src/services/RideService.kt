@@ -5,7 +5,7 @@ import shared.models.Ride
 import shared.models.RideStatus
 import repositories.ReservationRepository
 import repositories.RideRepository
-import shared.dto.RideFinishRequest
+import shared.requests.RideFinishRequest
 import kotlin.time.Clock
 
 internal const val MAX_RIDE_DISTANCE_M = 6_000_000.0

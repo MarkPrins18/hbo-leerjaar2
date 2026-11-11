@@ -31,15 +31,11 @@ package "shared" #E8E0F5 {
         Car (ICE / BEV / FCEV), Photo
         RentalTerms, Reservation, Ride
     }
-    class SharedDto <<file>> {
-        shared.dto
-        --
-        CarDto, CarChangeDto
-        RentalTermsRequest, RideFinishRequest
-    }
     class SharedRequests <<file>> {
         shared.requests
         --
+        CarDto, CarChangeDto
+        RentalTermsRequest, RideFinishRequest
         LoginRequest, RegisterRequest
         ReservationRequest
     }
@@ -174,7 +170,7 @@ package "services" #DDF2DD {
     class Helpers <<file>> {
         CarValidation / UserValidation
         CarLookup (getOwnedCar, callExternal)
-        CarFilterMatching / Distance
+        CarFilter / CarFilterMatching / Distance
         FuelCost / TotalCostOfOwnership
         BonusPoints
     }
@@ -293,27 +289,27 @@ UserService --> UserRepository
 AuthService --> UserRepository
 AuthService -> TokenService
 
-CarRouting ..> SharedDto
-RentalTermsRouting ..> SharedDto
-RideRouting ..> SharedDto
+CarRouting ..> SharedRequests
+RentalTermsRouting ..> SharedRequests
+RideRouting ..> SharedRequests
 ReservationRouting ..> SharedRequests
 UserRouting ..> SharedRequests
 UserRouting ..> SharedResponses
 CarService ..> SharedModels
-CarService ..> SharedDto
+CarService ..> SharedRequests
 CarImportService ..> SharedModels
-CarImportService ..> SharedDto
+CarImportService ..> SharedRequests
 CarCostService ..> SharedModels
-CarCostService ..> SharedDto
+CarCostService ..> SharedRequests
 CarCostService ..> SharedResponses
 PhotoService ..> SharedModels
 RentalTermsService ..> SharedModels
-RentalTermsService ..> SharedDto
+RentalTermsService ..> SharedRequests
 LocationService ..> SharedModels
 ReservationService ..> SharedModels
 ReservationService ..> SharedRequests
 RideService ..> SharedModels
-RideService ..> SharedDto
+RideService ..> SharedRequests
 AuthService ..> SharedRequests
 UserService ..> SharedRequests
 

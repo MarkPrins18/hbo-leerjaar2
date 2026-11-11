@@ -13,8 +13,8 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.Parameters
 import io.ktor.server.request.receive
 import io.ktor.server.util.getOrFail
-import dto.*
-import shared.dto.*
+import services.CarFilter
+import shared.requests.*
 
 fun Route.carRoutes(
     carService: CarService,

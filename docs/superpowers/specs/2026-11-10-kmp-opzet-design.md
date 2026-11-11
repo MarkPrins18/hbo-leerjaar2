@@ -92,11 +92,13 @@ Alleen klassen die over de lijn gaan (request-body of response). Inhoud blijft i
 | `models` (`RentalTerms.kt`) | `shared.models` | `RentalTerms` |
 | `models` (`Reservation.kt`) | `shared.models` | `Reservation`, `ReservationStatus` |
 | `models` (`Ride.kt`) | `shared.models` | `Ride`, `RideStatus` |
-| `dto` | `shared.dto` | `CarDto`, `CarChangeDto`, `RentalTermsRequest`, `RideFinishRequest` |
+| `dto` | `shared.requests` | `CarDto`, `CarChangeDto`, `RentalTermsRequest`, `RideFinishRequest` |
 | `requests` | `shared.requests` | `LoginRequest`, `RegisterRequest`, `ReservationRequest` |
 | `responses` | `shared.responses` | `FuelCostResponse`, `LoginResponse`, `TcoResponse`, `UserResponse` |
 
 *Mijn keuze:* de bestaande indeling `dto` / `requests` blijft, alleen met het `shared.`-voorvoegsel. Ze samenvoegen is een opruimactie die niets met deze opzet te maken heeft.
+
+*Later bijgewerkt:* bij die opruimactie zijn alle request-bodies uit `shared.dto` naar `shared.requests` verhuisd; `shared.dto` bestaat niet meer.
 
 ### Wat op de server blijft
 
@@ -106,7 +108,7 @@ Alleen klassen die over de lijn gaan (request-body of response). Inhoud blijft i
 | `fun User.toResponse()` (nu in `UserResponse.kt`) | Verwijst naar `User`. Blijft in de server, bijv. in `mappers/`. |
 | `ACTIVE_RESERVATION_STATUSES` (nu in `Reservation.kt`) | Bedrijfsregel voor queries, geen contract. Blijft in de server naast de code die hem gebruikt. *Mijn keuze.* |
 | `models.Location` | Niet `@Serializable`, wordt niet verstuurd. |
-| `dto.CarFilter` | Niet `@Serializable`; de route bouwt hem uit queryparameters. *Mijn keuze:* blijft voorlopig op de server. |
+| `services.CarFilter` (was `dto.CarFilter`) | Niet `@Serializable`; de route bouwt hem uit queryparameters. *Mijn keuze:* blijft voorlopig op de server. |
 | `models.rdw.*`, `models.gemini.*` | Externe API's van de server. |
 | Tabellen, mappers, repositories, services, validatie | Serverlogica. |
 

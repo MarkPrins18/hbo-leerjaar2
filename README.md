@@ -26,7 +26,7 @@ Here's a list of features included in this project:
 | Module       | Type              | Beschrijving                                                        |
 |--------------|-------------------|---------------------------------------------------------------------|
 | `server`     | JVM (Ktor)        | De Web API: routes, services, repositories en database              |
-| `shared`     | KMP-bibliotheek   | `@Serializable` contractklassen (models, dto, requests, responses)  |
+| `shared`     | KMP-bibliotheek   | `@Serializable` contractklassen (models, requests, responses)      |
 | `composeApp` | KMP-bibliotheek   | Compose Multiplatform-UI (voorlopig alleen Android)                 |
 | `androidApp` | Android-app       | Android-app (`nl.carsharing.app`) die `composeApp` start            |
 

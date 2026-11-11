@@ -1,7 +1,7 @@
 package services
 
 import clients.CostEstimator
-import shared.dto.CarChangeDto
+import shared.requests.CarChangeDto
 import shared.models.Car
 import repositories.CarRepository
 import shared.responses.FuelCostResponse

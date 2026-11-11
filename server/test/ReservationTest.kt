@@ -12,7 +12,7 @@ import io.ktor.http.contentType
 import kotlinx.coroutines.runBlocking
 import models.User
 import repositories.CarRepository
-import shared.dto.CarChangeDto
+import shared.requests.CarChangeDto
 import shared.models.BEVCar
 import shared.models.Car
 import shared.models.Reservation

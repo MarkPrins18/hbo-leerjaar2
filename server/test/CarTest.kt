@@ -1,7 +1,7 @@
 import clients.CostEstimator
 import config.PhotoStorage
-import shared.dto.CarChangeDto
-import shared.dto.CarDto
+import shared.requests.CarChangeDto
+import shared.requests.CarDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
@@ -117,7 +117,7 @@ private class UnusedOwnedCarLocationRepository : LocationRepository {
 private class UnusedOwnedCarRentalTermsRepository : RentalTermsRepository {
     override suspend fun carExists(carId: Int): Boolean = TODO()
     override suspend fun getRentalTermsByCarId(carId: Int): RentalTerms? = TODO()
-    override suspend fun saveRentalTerms(carId: Int, request: shared.dto.RentalTermsRequest): RentalTerms = TODO()
+    override suspend fun saveRentalTerms(carId: Int, request: shared.requests.RentalTermsRequest): RentalTerms = TODO()
 }
 
 // ==================== 2. Service: CarService ownership ====================

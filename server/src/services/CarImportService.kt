@@ -1,7 +1,7 @@
 package services
 
 import clients.VehicleRegistry
-import shared.dto.CarDto
+import shared.requests.CarDto
 import mappers.toCar
 import shared.models.Car
 import repositories.CarRepository

@@ -1,4 +1,4 @@
-package dto
+package services
 
 data class CarFilter(
     val maxPrice: Double? = null,

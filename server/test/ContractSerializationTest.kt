@@ -1,4 +1,4 @@
-import shared.dto.CarChangeDto
+import shared.requests.CarChangeDto
 import io.ktor.serialization.kotlinx.json.DefaultJson
 import kotlinx.datetime.LocalTime
 import kotlinx.serialization.json.JsonObject
