@@ -7,6 +7,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import models.*
 import shared.models.*
 import mappers.toResponse
+import shared.responses.ErrorResponse
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Instant
@@ -158,6 +159,18 @@ class ContractSerializationTest {
         val obj = DefaultJson.parseToJsonElement(DefaultJson.encodeToString(response)).jsonObject
 
         assertEquals(setOf("id", "email"), obj.keys)
+    }
+
+    @Test
+    fun `ErrorResponse bevat status en message`() {
+        val error = ErrorResponse(404, "Auto 1 niet gevonden")
+
+        val json = DefaultJson.encodeToString(error)
+
+        val obj = DefaultJson.parseToJsonElement(json).jsonObject
+        assertEquals(setOf("status", "message"), obj.keys)
+        assertEquals("404", obj.string("status"))
+        assertEquals(error, DefaultJson.decodeFromString<ErrorResponse>(json))
     }
 
     @Test

@@ -11,7 +11,6 @@ import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
-import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
@@ -20,6 +19,7 @@ import kotlinx.io.files.Path
 import kotlinx.io.files.SystemTemporaryDirectory
 import models.*
 import shared.models.*
+import shared.responses.ErrorResponse
 import models.gemini.CarCostEstimate
 import repositories.*
 import services.CarCostService
@@ -550,7 +550,7 @@ class CarRoutesTest {
     }
 
     @Test
-    fun `ongeldige JSON geeft 400 met een Nederlandse melding`() = e2eTest { client ->
+    fun `ongeldige JSON geeft 400 als ErrorResponse met een Nederlandse melding`() = e2eTest { client ->
         val token = client.login(OWNER_ID)
 
         val response = client.post("/cars/import") {
@@ -560,7 +560,10 @@ class CarRoutesTest {
         }
 
         assertEquals(HttpStatusCode.BadRequest, response.status)
-        assertTrue(response.bodyAsText().startsWith("400: Ongeldige body"))
+        assertTrue(response.contentType()!!.match(ContentType.Application.Json))
+        val error = response.body<ErrorResponse>()
+        assertEquals(400, error.status)
+        assertTrue(error.message.startsWith("Ongeldige body"))
     }
 
     @Test

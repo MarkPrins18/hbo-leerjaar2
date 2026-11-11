@@ -11,6 +11,7 @@ import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
 import org.jetbrains.exposed.v1.exceptions.ExposedSQLException
 import services.ApiException
+import shared.responses.ErrorResponse
 
 fun Application.configureStatusPages() {
     install(StatusPages) {
@@ -67,5 +68,5 @@ fun Application.configureStatusPages() {
 }
 
 private suspend fun ApplicationCall.respondError(status: HttpStatusCode, message: String?) {
-    respondText(text = "${status.value}: ${message ?: status.description}", status = status)
+    respond(status, ErrorResponse(status.value, message ?: status.description))
 }

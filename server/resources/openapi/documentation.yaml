@@ -64,6 +64,10 @@ paths:
                   $ref: "#/components/schemas/Car"
         "400":
           description: Ongeldige filterwaarde (geen getal of buiten bereik), of maxDistanceKm, latitude en longitude niet alle drie opgegeven
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /cars/license-plate/{licensePlate}:
     get:
       summary: Haal een auto op via het kenteken
@@ -87,6 +91,10 @@ paths:
                 $ref: "#/components/schemas/Car"
         "404":
           description: Auto niet gevonden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /cars/{id}:
     get:
@@ -112,8 +120,16 @@ paths:
                 $ref: "#/components/schemas/Car"
         "400":
           description: Ongeldig auto-id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Auto niet gevonden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     patch:
       summary: Werk een auto bij via het id
       operationId: updateCar
@@ -145,14 +161,34 @@ paths:
                 $ref: "#/components/schemas/Car"
         "400":
           description: Ongeldige waarde of veld hoort niet bij het type auto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: Niet ingelogd
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "403":
           description: Ingelogde gebruiker is niet de eigenaar van de auto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Auto niet gevonden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "409":
           description: Kenteken bestaat al
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     delete:
       summary: Verwijder een auto via het id
       operationId: deleteCar
@@ -174,10 +210,22 @@ paths:
           description: Auto succesvol verwijderd
         "401":
           description: Niet ingelogd
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "403":
           description: Ingelogde gebruiker is niet de eigenaar van de auto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Auto niet gevonden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /cars/{id}/cost-data:
     post:
       summary: "Testroute: vul ontbrekende MRB en verbruik aan via Gemini"
@@ -209,12 +257,28 @@ paths:
                 $ref: "#/components/schemas/Car"
         "401":
           description: Niet ingelogd
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "403":
           description: Ingelogde gebruiker is niet de eigenaar van de auto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Auto niet gevonden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "502":
           description: De Gemini API is niet bereikbaar of gaf een ongeldig antwoord
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /cars/{id}/fuel-cost:
     get:
       summary: Bereken de geschatte verbruikskosten voor een afstand
@@ -253,16 +317,40 @@ paths:
                 $ref: "#/components/schemas/FuelCost"
         "400":
           description: distanceKm ontbreekt, is geen getal of is negatief
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: Niet ingelogd
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "403":
           description: De ingelogde gebruiker is geen eigenaar van deze auto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Auto niet gevonden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "422":
           description: Het verbruik van de auto is onbekend, ook na aanvullen via Gemini
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "502":
           description: De Gemini API is niet bereikbaar of gaf een ongeldig antwoord
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /cars/{id}/tco:
     get:
       summary: Bereken de Total Cost of Ownership per jaar en per maand
@@ -302,16 +390,40 @@ paths:
                 $ref: "#/components/schemas/Tco"
         "400":
           description: annualKm is geen getal, is negatief of is te groot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: Niet ingelogd
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "403":
           description: De ingelogde gebruiker is geen eigenaar van deze auto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Auto niet gevonden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "422":
           description: Het verbruik of de wegenbelasting van de auto is onbekend, ook na aanvullen via Gemini
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "502":
           description: De Gemini API is niet bereikbaar of gaf een ongeldig antwoord
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /cars/import:
     post:
       summary: Importeer een auto via het kenteken
@@ -336,14 +448,34 @@ paths:
                 $ref: "#/components/schemas/Car"
         "400":
           description: Ongeldige waarde in de request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: Niet ingelogd
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "409":
           description: Kenteken bestaat al
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "422":
           description: Kenteken onbekend bij de RDW, of RDW-gegevens niet te verwerken
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "502":
           description: De RDW API is niet bereikbaar of gaf een ongeldig antwoord
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /cars/{id}/photos:
     post:
       summary: Upload een foto van een auto
@@ -383,16 +515,40 @@ paths:
                 $ref: "#/components/schemas/Photo"
         "400":
           description: Geen foto meegestuurd of het bestand is leeg
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: Niet ingelogd
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "403":
           description: De ingelogde gebruiker is geen eigenaar van deze auto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Auto niet gevonden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "413":
           description: Foto is groter dan 5 MB
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "415":
           description: Foto is geen JPEG
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     get:
       summary: Haal de foto's van een auto op
       operationId: getCarPhotos
@@ -418,6 +574,10 @@ paths:
                   $ref: "#/components/schemas/Photo"
         "404":
           description: Auto niet gevonden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /photos/{id}:
     get:
       summary: Haal een foto op
@@ -443,6 +603,10 @@ paths:
                 format: binary
         "404":
           description: Foto niet gevonden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /cars/{carId}/maps:
     get:
       summary: Open de locatie van een auto in Google Maps
@@ -472,12 +636,28 @@ paths:
               example: https://www.google.com/maps/dir/?api=1&destination=51.6436,4.86044
         "400":
           description: Ongeldig auto-id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: Niet ingelogd
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "403":
           description: De ingelogde gebruiker is geen eigenaar en heeft geen actieve reservering voor deze auto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Auto niet gevonden of geen locatie bekend voor deze auto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /cars/{id}/rental-terms:
     get:
       summary: Haal de verhuurvoorwaarden van een auto op
@@ -502,8 +682,16 @@ paths:
                 $ref: "#/components/schemas/RentalTerms"
         "400":
           description: Ongeldig auto-id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Auto niet gevonden of geen verhuurvoorwaarden bekend
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     put:
       summary: Stel de verhuurvoorwaarden van een auto in
       description: Alleen de ingelogde eigenaar van de auto mag dit. Maakt de verhuurvoorwaarden aan, of overschrijft ze als ze al bestaan.
@@ -536,12 +724,28 @@ paths:
                 $ref: "#/components/schemas/RentalTerms"
         "400":
           description: Ongeldige waarde, bijvoorbeeld een prijs van 0 of lager
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: Niet ingelogd
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "403":
           description: Ingelogde gebruiker is niet de eigenaar van de auto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Auto niet gevonden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /reservations:
     post:
       summary: Maak een reservering aan
@@ -566,12 +770,28 @@ paths:
                 $ref: "#/components/schemas/Reservation"
         "400":
           description: Ongeldige request, starttijd ligt in het verleden of eindtijd ligt niet na de starttijd
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: Niet ingelogd
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Auto of gebruiker niet gevonden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "409":
           description: Auto is in dit tijdsblok al gereserveerd
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /reservations/{id}/cancel:
     patch:
       summary: Annuleer een reservering via het id
@@ -599,14 +819,34 @@ paths:
                 $ref: "#/components/schemas/Reservation"
         "400":
           description: Ongeldig reservering-id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: Niet ingelogd
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "403":
           description: De reservering is van een andere gebruiker
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Reservering niet gevonden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "409":
           description: Reservering is al geannuleerd of de starttijd is al verstreken
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /reservations/{id}/rides:
     post:
       summary: Start een rit voor een reservering
@@ -634,14 +874,34 @@ paths:
                 $ref: "#/components/schemas/Ride"
         "400":
           description: Ongeldig reservering-id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: Niet ingelogd
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "403":
           description: De reservering is van een andere gebruiker
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Reservering niet gevonden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "409":
           description: Reservering is niet bevestigd, is nu niet actief, of er loopt al een rit
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /rides/{id}/finish:
     patch:
       summary: Rond een rit af met de gegevens van het telematica-kastje
@@ -678,14 +938,34 @@ paths:
                 $ref: "#/components/schemas/Ride"
         "400":
           description: Ongeldig rit-id, ongeldige request body of negatieve waarde
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: Niet ingelogd
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "403":
           description: De rit hoort bij een reservering van een andere gebruiker
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Rit niet gevonden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "409":
           description: Rit is al afgerond
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /users:
     get:
@@ -726,8 +1006,16 @@ paths:
                 $ref: "#/components/schemas/User"
         "400":
           description: Ongeldig e-mailadres of te zwak wachtwoord, de foutmelding noemt het veld
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "409":
           description: Er bestaat al een account met dit e-mailadres
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /users/login:
     post:
       summary: Log in met e-mail en wachtwoord
@@ -752,8 +1040,16 @@ paths:
                 $ref: "#/components/schemas/LoginResponse"
         "400":
           description: Ongeldige request body
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: Onjuist e-mailadres of wachtwoord
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
 components:
   securitySchemes:
@@ -762,6 +1058,20 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
+    ErrorResponse:
+      type: object
+      description: Foutresponse van de API, met de HTTP-statuscode en een Nederlandse melding
+      required:
+        - status
+        - message
+      properties:
+        status:
+          type: integer
+          format: int32
+          example: 404
+        message:
+          type: string
+          example: Auto 1 niet gevonden
     Car:
       oneOf:
         - $ref: "#/components/schemas/ICECar"
