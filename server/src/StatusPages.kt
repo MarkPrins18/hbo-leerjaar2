@@ -64,6 +64,14 @@ fun Application.configureStatusPages() {
             call.application.log.error("Unhandled exception", cause)
             call.respondError(HttpStatusCode.InternalServerError, "Er ging iets mis op de server")
         }
+        // Routing answers an unknown route or wrong method without a body. Only fires when no
+        // exception handler above has responded, so a ResourceNotFoundException keeps its message.
+        status(HttpStatusCode.NotFound) { call, status ->
+            call.respondError(status, "Deze route bestaat niet")
+        }
+        status(HttpStatusCode.MethodNotAllowed) { call, status ->
+            call.respondError(status, "Deze methode is niet toegestaan op deze route")
+        }
     }
 }
 

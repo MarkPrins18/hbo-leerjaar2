@@ -1163,7 +1163,10 @@ components:
   schemas:
     ErrorResponse:
       type: object
-      description: Foutresponse van de API, met de HTTP-statuscode en een Nederlandse melding
+      description: |
+        Foutresponse van de API, met de HTTP-statuscode en een Nederlandse melding.
+        Elke fout heeft deze body, ook een onbekende route (404) en een niet-toegestane
+        methode op een bestaande route (405).
       required:
         - status
         - message
