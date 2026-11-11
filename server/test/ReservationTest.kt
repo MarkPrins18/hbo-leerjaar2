@@ -137,6 +137,7 @@ private class FakeReservationRepository : ReservationRepository {
         reservations.filter { it.userId == userId }
 
     override suspend fun getReservationsByCarAndUser(carId: Int, userId: Int): List<Reservation> = TODO()
+    override suspend fun getReservedCarIds(startTime: Instant, endTime: Instant): Set<Int> = TODO()
 }
 
 // ==================== 1. Calculation: calculateTotalPrice ====================

@@ -15,6 +15,7 @@ import io.ktor.server.request.receive
 import io.ktor.server.util.getOrFail
 import services.CarFilter
 import shared.requests.*
+import kotlin.time.Instant
 
 fun Route.carRoutes(
     carService: CarService,
@@ -95,9 +96,17 @@ private fun Parameters.optionalDouble(name: String): Double? {
         ?: throw ValidationException("'$name' moet een getal zijn")
 }
 
+private fun Parameters.optionalInstant(name: String): Instant? {
+    val raw = this[name] ?: return null
+    return runCatching { Instant.parse(raw) }.getOrNull()
+        ?: throw ValidationException("'$name' moet een ISO-8601-tijdstip zijn, bijvoorbeeld 2027-01-15T10:00:00Z")
+}
+
 private fun Parameters.toCarFilter(): CarFilter = CarFilter(
     maxPrice = optionalDouble("maxPrice"),
     maxDistanceKm = optionalDouble("maxDistanceKm"),
     latitude = optionalDouble("latitude"),
     longitude = optionalDouble("longitude"),
+    startTime = optionalInstant("startTime"),
+    endTime = optionalInstant("endTime"),
 )

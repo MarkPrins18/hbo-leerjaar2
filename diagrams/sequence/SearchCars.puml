@@ -8,15 +8,16 @@ participant "CarService" as svc
 participant "CarRepository" as car
 participant "LocationRepository" as loc
 participant "RentalTermsRepository" as terms
+participant "ReservationRepository" as res
 database "H2-database" as db
 
 g -> app : zoek auto's()
-app -> rt : GET /cars?maxPrice&maxDistanceKm&latitude&longitude
+app -> rt : GET /cars?maxPrice&maxDistanceKm&latitude&longitude&startTime&endTime
 rt -> rt : toCarFilter()
 rt -> svc : getCars(filter)
 svc -> svc : filter.validate()
 
-group flow 3a [ongeldige filterwaarde]
+group flow 3a [ongeldige filterwaarde, of startTime/endTime niet samen of eind niet na begin]
     svc --> rt : throw ValidationException
     rt --> app : 400 Bad Request (StatusPages)
     app --> g : foutmelding (stap 2)
@@ -26,6 +27,14 @@ svc -> car : getAllCars()
 car -> db : SELECT car + subtabellen
 db --> car : rijen
 car --> svc : List<Car>
+
+opt startTime en endTime opgegeven
+    svc -> res : getReservedCarIds(startTime, endTime)
+    res -> db : SELECT car_id FROM reservation\n(PENDING/CONFIRMED + overlap)
+    db --> res : rijen
+    res --> svc : Set<Int>
+    svc -> svc : auto's met een overlappende reservering weglaten
+end
 
 loop voor elke auto
     svc -> loc : getLatestLocationByCarId(car.id)

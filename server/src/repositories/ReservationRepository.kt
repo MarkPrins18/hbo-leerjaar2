@@ -10,6 +10,9 @@ interface ReservationRepository {
         carId: Int, userId: Int, startTime: Instant, endTime: Instant, status: ReservationStatus, totalPrice: Double
     ): Reservation?
 
+    /** Ids of the cars with an active reservation that overlaps the given period. */
+    suspend fun getReservedCarIds(startTime: Instant, endTime: Instant): Set<Int>
+
     suspend fun getReservationById(id: Int): Reservation?
     suspend fun getReservationsByCarAndUser(carId: Int, userId: Int): List<Reservation>
     suspend fun updateStatus(id: Int, status: ReservationStatus): Reservation?

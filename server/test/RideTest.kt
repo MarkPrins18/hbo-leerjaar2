@@ -61,6 +61,7 @@ private class FakeRideReservationRepository(vararg reservations: Reservation) : 
     override suspend fun updateStatus(id: Int, status: ReservationStatus): Reservation? = TODO()
     override suspend fun getReservationsByCarAndUser(carId: Int, userId: Int): List<Reservation> = TODO()
     override suspend fun getReservationsByUserId(userId: Int): List<Reservation> = TODO()
+    override suspend fun getReservedCarIds(startTime: Instant, endTime: Instant): Set<Int> = TODO()
 }
 
 /** [staleReads]: getRideById returns the ride as it was at start, as if another request finishes it in between. */

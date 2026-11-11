@@ -111,6 +111,7 @@ private class FakeMapReservationRepository(vararg reservations: Reservation) : R
     override suspend fun getReservationById(id: Int): Reservation? = TODO()
     override suspend fun updateStatus(id: Int, status: ReservationStatus): Reservation? = TODO()
     override suspend fun getReservationsByUserId(userId: Int): List<Reservation> = TODO()
+    override suspend fun getReservedCarIds(startTime: Instant, endTime: Instant): Set<Int> = TODO()
 }
 
 // ==================== 2. Service: LocationService ====================

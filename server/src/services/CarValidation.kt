@@ -122,6 +122,13 @@ fun CarFilter.validate() {
     if (distanceParameters.any { it != null } && distanceParameters.any { it == null }) {
         throw ValidationException("'maxDistanceKm', 'latitude' en 'longitude' moeten samen worden opgegeven")
     }
+
+    if ((startTime == null) != (endTime == null)) {
+        throw ValidationException("'startTime' en 'endTime' moeten samen worden opgegeven")
+    }
+    if (startTime != null && endTime != null && endTime <= startTime) {
+        throw ValidationException("'endTime' moet na 'startTime' liggen")
+    }
 }
 
 /** Accepts JPEG only (Android camera default), recognised by its FF D8 FF signature. */

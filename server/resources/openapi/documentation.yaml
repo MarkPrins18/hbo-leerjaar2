@@ -14,45 +14,17 @@ paths:
         Geeft alle auto's terug. Filters zijn optioneel en kunnen gecombineerd
         worden, bijvoorbeeld:
         `/cars?maxPrice=50&maxDistanceKm=10&latitude=51.5853&longitude=4.7946`
+
+        Met `startTime` en `endTime` komen alleen auto's terug die in dat tijdvak
+        vrij zijn, bijvoorbeeld:
+        `/cars?startTime=2027-01-15T10:00:00Z&endTime=2027-01-15T17:00:00Z`
       parameters:
-        - name: maxPrice
-          in: query
-          required: false
-          description: Maximale prijs per dag. Auto's zonder verhuurvoorwaarden vallen dan af.
-          schema:
-            type: number
-            format: double
-            minimum: 0
-          example: 50.0
-        - name: maxDistanceKm
-          in: query
-          required: false
-          description: Maximale afstand vanaf de opgegeven coördinaten in kilometer. Alleen samen met latitude en longitude.
-          schema:
-            type: number
-            format: double
-            minimum: 0
-          example: 10.0
-        - name: latitude
-          in: query
-          required: false
-          description: Breedtegraad van het vertrekpunt. Alleen samen met maxDistanceKm en longitude.
-          schema:
-            type: number
-            format: double
-            minimum: -90
-            maximum: 90
-          example: 51.5853
-        - name: longitude
-          in: query
-          required: false
-          description: Lengtegraad van het vertrekpunt. Alleen samen met maxDistanceKm en latitude.
-          schema:
-            type: number
-            format: double
-            minimum: -180
-            maximum: 180
-          example: 4.7946
+        - $ref: "#/components/parameters/MaxPrice"
+        - $ref: "#/components/parameters/MaxDistanceKm"
+        - $ref: "#/components/parameters/Latitude"
+        - $ref: "#/components/parameters/Longitude"
+        - $ref: "#/components/parameters/AvailableFrom"
+        - $ref: "#/components/parameters/AvailableUntil"
       responses:
         "200":
           description: Lijst van alle auto's
@@ -63,7 +35,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/Car"
         "400":
-          description: Ongeldige filterwaarde (geen getal of buiten bereik), of maxDistanceKm, latitude en longitude niet alle drie opgegeven
+          description: Ongeldige filterwaarde (geen getal, geen ISO-8601-tijdstip of buiten bereik), maxDistanceKm, latitude en longitude niet alle drie opgegeven, alleen startTime of endTime opgegeven, of endTime niet na startTime
           content:
             application/json:
               schema:
@@ -1169,6 +1141,67 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+  parameters:
+    MaxPrice:
+      name: maxPrice
+      in: query
+      required: false
+      description: Maximale prijs per dag. Auto's zonder verhuurvoorwaarden vallen dan af.
+      schema:
+        type: number
+        format: double
+        minimum: 0
+      example: 50.0
+    MaxDistanceKm:
+      name: maxDistanceKm
+      in: query
+      required: false
+      description: Maximale afstand vanaf de opgegeven coördinaten in kilometer. Alleen samen met latitude en longitude.
+      schema:
+        type: number
+        format: double
+        minimum: 0
+      example: 10.0
+    Latitude:
+      name: latitude
+      in: query
+      required: false
+      description: Breedtegraad van het vertrekpunt. Alleen samen met maxDistanceKm en longitude.
+      schema:
+        type: number
+        format: double
+        minimum: -90
+        maximum: 90
+      example: 51.5853
+    Longitude:
+      name: longitude
+      in: query
+      required: false
+      description: Lengtegraad van het vertrekpunt. Alleen samen met maxDistanceKm en latitude.
+      schema:
+        type: number
+        format: double
+        minimum: -180
+        maximum: 180
+      example: 4.7946
+    AvailableFrom:
+      name: startTime
+      in: query
+      required: false
+      description: Begin van het tijdvak (ISO-8601). Alleen samen met endTime. Auto's met een actieve reservering (PENDING of CONFIRMED) die het tijdvak overlapt, vallen af.
+      schema:
+        type: string
+        format: date-time
+      example: "2027-01-15T10:00:00Z"
+    AvailableUntil:
+      name: endTime
+      in: query
+      required: false
+      description: Eind van het tijdvak (ISO-8601), na startTime. Alleen samen met startTime.
+      schema:
+        type: string
+        format: date-time
+      example: "2027-01-15T17:00:00Z"
   schemas:
     ErrorResponse:
       type: object

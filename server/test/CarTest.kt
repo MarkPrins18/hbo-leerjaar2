@@ -33,6 +33,7 @@ import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 // ==================== Test data ====================
@@ -114,6 +115,17 @@ private class UnusedOwnedCarLocationRepository : LocationRepository {
     override suspend fun getLatestLocationByCarId(carId: Int): Location? = TODO()
 }
 
+private class UnusedOwnedCarReservationRepository : ReservationRepository {
+    override suspend fun createReservationIfAvailable(
+        carId: Int, userId: Int, startTime: Instant, endTime: Instant, status: ReservationStatus, totalPrice: Double
+    ): Reservation? = TODO()
+    override suspend fun getReservedCarIds(startTime: Instant, endTime: Instant): Set<Int> = TODO()
+    override suspend fun getReservationById(id: Int): Reservation? = TODO()
+    override suspend fun getReservationsByCarAndUser(carId: Int, userId: Int): List<Reservation> = TODO()
+    override suspend fun updateStatus(id: Int, status: ReservationStatus): Reservation? = TODO()
+    override suspend fun getReservationsByUserId(userId: Int): List<Reservation> = TODO()
+}
+
 private class UnusedOwnedCarRentalTermsRepository : RentalTermsRepository {
     override suspend fun carExists(carId: Int): Boolean = TODO()
     override suspend fun getRentalTermsByCarId(carId: Int): RentalTerms? = TODO()
@@ -130,7 +142,8 @@ class CarOwnershipServiceTest {
         UnusedOwnedCarLocationRepository(),
         FakeOwnedCarPhotoRepository(),
         PhotoStorage(Path(SystemTemporaryDirectory, "car-test-${Uuid.random()}")),
-        UnusedOwnedCarRentalTermsRepository()
+        UnusedOwnedCarRentalTermsRepository(),
+        UnusedOwnedCarReservationRepository()
     )
 
     // ---------- updateCar ----------

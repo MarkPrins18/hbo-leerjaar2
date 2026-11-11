@@ -4,12 +4,14 @@ import mappers.toReservation
 import models.ACTIVE_RESERVATION_STATUSES
 import shared.models.Reservation
 import shared.models.ReservationStatus
+import org.jetbrains.exposed.v1.core.Op
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greater
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.update
@@ -25,10 +27,7 @@ class ExposedReservationRepository : ReservationRepository {
         CarTable.selectAll().where { CarTable.id eq carId }.forUpdate().toList()
 
         val hasOverlap = !ReservationTable.selectAll().where {
-            (ReservationTable.carId eq carId) and
-                    (ReservationTable.status inList ACTIVE_RESERVATION_STATUSES) and
-                    (ReservationTable.startTime less endTime) and
-                    (ReservationTable.endTime greater startTime)
+            (ReservationTable.carId eq carId) and overlapsActiveReservation(startTime, endTime)
         }.empty()
         if (hasOverlap) return@suspendTransaction null
 
@@ -44,6 +43,13 @@ class ExposedReservationRepository : ReservationRepository {
         ReservationTable.selectAll().where { ReservationTable.id eq id }.single().toReservation()
     }
 
+
+    override suspend fun getReservedCarIds(startTime: Instant, endTime: Instant): Set<Int> = suspendTransaction {
+        ReservationTable.select(ReservationTable.carId)
+            .where { overlapsActiveReservation(startTime, endTime) }
+            .map { it[ReservationTable.carId] }
+            .toSet()
+    }
 
     override suspend fun getReservationById(id: Int): Reservation? = suspendTransaction {
         ReservationTable.selectAll().where { ReservationTable.id eq id }.singleOrNull()?.toReservation()
@@ -67,4 +73,9 @@ class ExposedReservationRepository : ReservationRepository {
         }
         ReservationTable.selectAll().where { ReservationTable.id eq id }.singleOrNull()?.toReservation()
     }
+
+    private fun overlapsActiveReservation(startTime: Instant, endTime: Instant): Op<Boolean> =
+        (ReservationTable.status inList ACTIVE_RESERVATION_STATUSES) and
+                (ReservationTable.startTime less endTime) and
+                (ReservationTable.endTime greater startTime)
 }
