@@ -1,68 +1,81 @@
 #!/usr/bin/env bash
-# Bisection script to find which test creates unwanted files/state
-# Usage: ./find-polluter.sh <file_or_dir_to_check> <test_pattern>
-# Example: ./find-polluter.sh '.git' 'server/test/*Test.kt'
+# Bisection script to find which test class creates unwanted files/state.
+# Runs every test class in the matching files one by one and stops at the
+# first one after which the file/dir exists. Run from the project root; the
+# path is relative to it, while tests run in server/ (so check server/<file>).
+# Usage: bash .claude/skills/systematic-debugging/find-polluter.sh <file_or_dir_to_check> <test_file_pattern>
+# Example: bash .claude/skills/systematic-debugging/find-polluter.sh 'server/.git' 'server/test/*.kt'
 
-set -e
+set -u
 
 if [ $# -ne 2 ]; then
-  echo "Usage: $0 <file_to_check> <test_pattern>"
-  echo "Example: $0 '.git' 'server/test/*Test.kt'"
+  echo "Usage: $0 <file_or_dir_to_check> <test_file_pattern>"
+  echo "Example: $0 'server/.git' 'server/test/*.kt'"
   exit 1
 fi
 
+if [ ! -f ./kotlin ]; then
+  echo "Run this script from the project root (./kotlin not found in $PWD)" >&2
+  exit 2
+fi
+
 POLLUTION_CHECK="$1"
-TEST_PATTERN="$2"
+TEST_PATTERN="${2#./}"
 
 echo "🔍 Searching for test that creates: $POLLUTION_CHECK"
 echo "Test pattern: $TEST_PATTERN"
 echo ""
 
-# Get list of test files (find . emits ./-prefixed paths, so accept the
-# pattern written with or without a leading ./)
-TEST_PATTERN="${TEST_PATTERN#./}"
-# find -path can't match '**/' against zero directory levels, so a pattern
-# like src/**/*.test.ts would skip src/top.test.ts; also try the pattern
-# with '**/' collapsed to cover files directly under the base directory.
-TEST_FILES=$(find . \( -path "./$TEST_PATTERN" -o -path "./${TEST_PATTERN//\*\*\//}" \) | sort -u)
-if [ -z "$TEST_FILES" ]; then
-  TOTAL=0
-else
-  TOTAL=$(printf '%s\n' "$TEST_FILES" | wc -l | tr -d ' ')
-fi
+# Test classes, not files: one file can hold several classes
+# (MapTest.kt contains LocationServiceTest and MapRoutesTest).
+TEST_CLASSES=$(find . -path "./$TEST_PATTERN" -name '*.kt' -print0 \
+  | xargs -0 -r grep -hoE '^class [A-Za-z0-9_]+' \
+  | cut -d' ' -f2 | sort -u)
 
-echo "Found $TOTAL test files"
+if [ -z "$TEST_CLASSES" ]; then
+  echo "No test classes found for pattern: $TEST_PATTERN" >&2
+  exit 2
+fi
+TOTAL=$(printf '%s\n' "$TEST_CLASSES" | wc -l | tr -d ' ')
+
+echo "Found $TOTAL test classes"
 echo ""
 
+LOG=$(mktemp)
+trap 'rm -f "$LOG"' EXIT
+
 COUNT=0
-for TEST_FILE in $TEST_FILES; do
+for TEST_CLASS in $TEST_CLASSES; do
   COUNT=$((COUNT + 1))
 
-  # Skip if pollution already exists
   if [ -e "$POLLUTION_CHECK" ]; then
     echo "⚠️  Pollution already exists before test $COUNT/$TOTAL"
-    echo "   Skipping: $TEST_FILE"
+    echo "   Remove it and rerun. Skipping: $TEST_CLASS"
     continue
   fi
 
-  echo "[$COUNT/$TOTAL] Testing: $TEST_FILE"
+  echo "[$COUNT/$TOTAL] Testing: $TEST_CLASS"
 
-  # Run the test
-  ./kotlin test --include-classes="$(basename "$TEST_FILE" .kt)" > /dev/null 2>&1 || true
+  # A failing test is fine here; a filter that runs nothing is not.
+  ./kotlin test -m server --include-classes="$TEST_CLASS" > "$LOG" 2>&1 || true
+  if grep -q "no tests were discovered" "$LOG"; then
+    echo "   ERROR: no tests discovered for $TEST_CLASS. Output:" >&2
+    tail -n 5 "$LOG" >&2
+    exit 2
+  fi
 
-  # Check if pollution appeared
   if [ -e "$POLLUTION_CHECK" ]; then
     echo ""
     echo "🎯 FOUND POLLUTER!"
-    echo "   Test: $TEST_FILE"
+    echo "   Test class: $TEST_CLASS"
     echo "   Created: $POLLUTION_CHECK"
     echo ""
     echo "Pollution details:"
     ls -la "$POLLUTION_CHECK"
     echo ""
     echo "To investigate:"
-    echo "  ./kotlin test --include-classes=$(basename $TEST_FILE .kt)    # Run just this test"
-    echo "  cat $TEST_FILE         # Review test code"
+    echo "  ./kotlin test -m server --include-classes=$TEST_CLASS    # Run just this class"
+    echo "  grep -rn 'class $TEST_CLASS' server/test/                # Find its code"
     exit 1
   fi
 done
