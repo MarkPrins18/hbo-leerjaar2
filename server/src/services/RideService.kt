@@ -8,7 +8,7 @@ import repositories.RideRepository
 import shared.dto.RideFinishRequest
 import kotlin.time.Clock
 
-internal const val MAX_RIDE_DISTANCE_M = 1_000_000.0
+internal const val MAX_RIDE_DISTANCE_M = 6_000_000.0
 
 class RideService(
     private val rideRepository: RideRepository,

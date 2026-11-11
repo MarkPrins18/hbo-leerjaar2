@@ -22,7 +22,6 @@ import repositories.RideRepository
 import repositories.ExposedReservationRepository
 import services.ConflictException
 import services.ForbiddenException
-import services.MAX_RIDE_DISTANCE_M
 import services.ResourceNotFoundException
 import services.RideService
 import services.ValidationException
@@ -39,6 +38,7 @@ import kotlin.time.Instant
 private const val RENTER_ID = 1
 private const val OTHER_USER_ID = 2
 private const val RESERVATION_ID = 7
+private const val MAX_DISTANCE_M = 6_000_000.0
 
 private val calmRide = RideFinishRequest(distanceM = 12_500.0, avgAcceleration = 1.0, avgDeceleration = 1.0)
 
@@ -200,20 +200,20 @@ class RideServiceTest {
     }
 
     @Test
-    fun `afstand van precies 1000 km is toegestaan`() = runBlocking {
+    fun `afstand van precies 6000 km is toegestaan`() = runBlocking {
         val ride = service.startRide(RESERVATION_ID, RENTER_ID)
 
-        val finished = service.finishRide(ride.id, RENTER_ID, calmRide.copy(distanceM = MAX_RIDE_DISTANCE_M))
+        val finished = service.finishRide(ride.id, RENTER_ID, calmRide.copy(distanceM = MAX_DISTANCE_M))
 
         assertEquals(RideStatus.COMPLETED, finished.status)
     }
 
     @Test
-    fun `afstand boven 1000 km geeft ValidationException`() = runBlocking {
+    fun `afstand boven 6000 km geeft ValidationException`() = runBlocking {
         val ride = service.startRide(RESERVATION_ID, RENTER_ID)
 
         assertFailsWith<ValidationException> {
-            service.finishRide(ride.id, RENTER_ID, calmRide.copy(distanceM = MAX_RIDE_DISTANCE_M + 1))
+            service.finishRide(ride.id, RENTER_ID, calmRide.copy(distanceM = MAX_DISTANCE_M + 1))
         }
         assertEquals(RideStatus.IN_PROGRESS, rideRepository.getRideById(ride.id)?.status)
     }
