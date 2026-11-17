@@ -28,6 +28,8 @@ import services.CarService
 import services.ConflictException
 import services.ForbiddenException
 import services.ResourceNotFoundException
+import services.ValidationException
+import services.validate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -136,6 +138,33 @@ private class UnusedOwnedCarRentalTermsRepository : RentalTermsRepository {
     override suspend fun getRentalTermsByCarId(carId: Int): RentalTerms? = TODO()
     override suspend fun getAllRentalTerms(): List<RentalTerms> = TODO()
     override suspend fun saveRentalTerms(carId: Int, request: shared.requests.RentalTermsRequest): RentalTerms = TODO()
+}
+
+// ==================== 1. Validation: CarChangeDto.validate() ====================
+
+class CarChangeDtoValidationTest {
+
+    // ---------- licensePlate ----------
+
+    @Test
+    fun `kenteken met streepjes en kleine letters is geldig`() {
+        CarChangeDto(licensePlate = "ab-12-3c").validate(testCar())
+    }
+
+    @Test
+    fun `kenteken van 1 teken geeft ValidationException`() {
+        assertFailsWith<ValidationException> { CarChangeDto(licensePlate = "x").validate(testCar()) }
+    }
+
+    @Test
+    fun `kenteken van 7 tekens geeft ValidationException`() {
+        assertFailsWith<ValidationException> { CarChangeDto(licensePlate = "AB123CD").validate(testCar()) }
+    }
+
+    @Test
+    fun `kenteken met een leesteken geeft ValidationException`() {
+        assertFailsWith<ValidationException> { CarChangeDto(licensePlate = "AB!23C").validate(testCar()) }
+    }
 }
 
 // ==================== 2. Service: CarService ownership ====================
@@ -457,6 +486,30 @@ class CarRoutesTest {
         val token = client.login(OWNER_ID)
 
         assertEquals(HttpStatusCode.OK, client.patchCar(ICE_CAR_ID, CarChangeDto(licensePlate = ICE_CAR_PLATE), token).status)
+    }
+
+    @Test
+    fun `geldig nieuw kenteken wordt genormaliseerd opgeslagen`() = e2eTest { client ->
+        val token = client.login(OWNER_ID)
+
+        val response = client.patchCar(ICE_CAR_ID, CarChangeDto(licensePlate = "ab-12-3c"), token)
+
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertEquals("AB123C", response.body<Car>().licensePlate)
+    }
+
+    @Test
+    fun `ongeldig kenteken geeft 400 en wijzigt niets`() = e2eTest { client ->
+        val token = client.login(OWNER_ID)
+
+        val response = client.patch("/cars/$ICE_CAR_ID") {
+            bearerAuth(token)
+            contentType(ContentType.Application.Json)
+            setBody("""{"licensePlate":"x"}""")
+        }
+
+        assertEquals(HttpStatusCode.BadRequest, response.status)
+        assertEquals(ICE_CAR_PLATE, client.get("/cars/$ICE_CAR_ID").body<Car>().licensePlate)
     }
 
     @Test

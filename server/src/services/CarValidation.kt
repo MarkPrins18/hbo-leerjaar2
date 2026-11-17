@@ -42,11 +42,7 @@ private val EMAIL_PATTERN = Regex("""^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]
 
 /** The RDW only knows Dutch license plates, so check the format before calling it. */
 fun CarDto.validate() {
-    val normalizedLicensePlate = normalizeLicensePlate(licensePlate)
-    checkText("licensePlate", normalizedLicensePlate, LICENSE_PLATE_MAX_LENGTH)
-    if (!normalizedLicensePlate.matches(DUTCH_LICENSE_PLATE)) {
-        throw ValidationException("'licensePlate' moet een Nederlands kenteken zijn van 6 letters en cijfers, bijvoorbeeld AB-123-C")
-    }
+    checkLicensePlate(licensePlate)
     trim?.let { checkText("trim", it, NAME_MAX_LENGTH) }
     tankCapacityL?.let { checkRange("tankCapacityL", it, TANK_CAPACITY_L) }
     batteryCapacityKWh?.let { checkRange("batteryCapacityKWh", it, BATTERY_CAPACITY_KWH) }
@@ -58,7 +54,7 @@ fun CarDto.validate() {
 fun CarChangeDto.validate(car: Car) {
     checkFieldsMatchSubtype(car)
 
-    licensePlate?.let { checkText("licensePlate", normalizeLicensePlate(it), LICENSE_PLATE_MAX_LENGTH) }
+    licensePlate?.let { checkLicensePlate(it) }
     brand?.let { checkText("brand", it, NAME_MAX_LENGTH) }
     model?.let { checkText("model", it, NAME_MAX_LENGTH) }
     trim?.let { checkText("trim", it, NAME_MAX_LENGTH) }
@@ -75,6 +71,14 @@ fun CarChangeDto.validate(car: Car) {
     tankCapacityL?.let { checkRange("tankCapacityL", it, TANK_CAPACITY_L) }
     batteryCapacityKWh?.let { checkRange("batteryCapacityKWh", it, BATTERY_CAPACITY_KWH) }
     tankCapacityKgH2?.let { checkRange("tankCapacityKgH2", it, TANK_CAPACITY_KG_H2) }
+}
+
+private fun checkLicensePlate(licensePlate: String) {
+    val normalizedLicensePlate = normalizeLicensePlate(licensePlate)
+    checkText("licensePlate", normalizedLicensePlate, LICENSE_PLATE_MAX_LENGTH)
+    if (!normalizedLicensePlate.matches(DUTCH_LICENSE_PLATE)) {
+        throw ValidationException("'licensePlate' moet een Nederlands kenteken zijn van 6 letters en cijfers, bijvoorbeeld AB-123-C")
+    }
 }
 
 private fun CarChangeDto.checkFieldsMatchSubtype(car: Car) {
