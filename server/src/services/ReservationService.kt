@@ -17,12 +17,7 @@ class ReservationService(
     private val rentalTermsRepository: RentalTermsRepository
 ) {
     suspend fun createReservation(userId: Int, request: ReservationRequest): Reservation {
-        if (request.startTime <= Clock.System.now()) {
-            throw ValidationException("Starttijd ligt in het verleden")
-        }
-        if (request.endTime <= request.startTime) {
-            throw ValidationException("Eindtijd moet na de starttijd liggen")
-        }
+        request.validate(Clock.System.now())
         val car = carRepository.getCarById(request.carId)
             ?: throw carNotFound(request.carId)
 

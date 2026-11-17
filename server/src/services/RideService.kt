@@ -8,8 +8,6 @@ import repositories.RideRepository
 import shared.requests.RideFinishRequest
 import kotlin.time.Clock
 
-internal const val MAX_RIDE_DISTANCE_M = 6_000_000.0
-
 class RideService(
     private val rideRepository: RideRepository,
     private val reservationRepository: ReservationRepository
@@ -39,13 +37,6 @@ class RideService(
         rideRepository.getRidesByUserId(userId)
 
     suspend fun finishRide(rideId: Int, userId: Int, request: RideFinishRequest): Ride {
-        if (request.distanceM < 0 || request.avgAcceleration < 0 || request.avgDeceleration < 0) {
-            throw ValidationException("Afstand en acceleraties mogen niet negatief zijn")
-        }
-        if (request.distanceM > MAX_RIDE_DISTANCE_M) {
-            throw ValidationException("Afstand mag niet groter zijn dan ${(MAX_RIDE_DISTANCE_M / 1000).toInt()} km per rit")
-        }
-        validateCoordinates(request.latitude, request.longitude)
         val ride = rideRepository.getRideById(rideId)
             ?: throw ResourceNotFoundException("Rit", rideId)
         val reservation = reservationRepository.getReservationById(ride.reservationId)
@@ -54,6 +45,7 @@ class RideService(
         if (reservation.userId != userId) {
             throw ForbiddenException()
         }
+        request.validate()
 
         if (ride.status != RideStatus.IN_PROGRESS) {
             throw rideAlreadyFinished(rideId)

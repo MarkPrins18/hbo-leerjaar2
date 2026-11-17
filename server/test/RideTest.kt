@@ -26,6 +26,7 @@ import services.ForbiddenException
 import services.ResourceNotFoundException
 import services.RideService
 import services.ValidationException
+import services.validate
 import services.validateCoordinates
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -143,6 +144,45 @@ class CoordinateValidationTest {
     }
 }
 
+// ==================== 1. Validation: RideFinishRequest.validate() ====================
+
+class RideFinishValidationTest {
+    @Test
+    fun `nul voor afstand en acceleraties is geldig`() {
+        calmRide.copy(distanceM = 0.0, avgAcceleration = 0.0, avgDeceleration = 0.0).validate()
+    }
+
+    @Test
+    fun `negatieve afstand geeft ValidationException`() {
+        assertFailsWith<ValidationException> { calmRide.copy(distanceM = -0.1).validate() }
+    }
+
+    @Test
+    fun `negatieve gemiddelde acceleratie geeft ValidationException`() {
+        assertFailsWith<ValidationException> { calmRide.copy(avgAcceleration = -0.1).validate() }
+    }
+
+    @Test
+    fun `negatieve gemiddelde deceleratie geeft ValidationException`() {
+        assertFailsWith<ValidationException> { calmRide.copy(avgDeceleration = -0.1).validate() }
+    }
+
+    @Test
+    fun `afstand van precies 6000 km is geldig`() {
+        calmRide.copy(distanceM = MAX_DISTANCE_M).validate()
+    }
+
+    @Test
+    fun `afstand boven 6000 km geeft ValidationException`() {
+        assertFailsWith<ValidationException> { calmRide.copy(distanceM = MAX_DISTANCE_M + 1).validate() }
+    }
+
+    @Test
+    fun `ongeldige coordinaten geven ValidationException`() {
+        assertFailsWith<ValidationException> { calmRide.copy(latitude = 91.0).validate() }
+    }
+}
+
 // ==================== 2. Service: RideService ====================
 
 class RideServiceTest {
@@ -230,6 +270,16 @@ class RideServiceTest {
         val ride = service.startRide(RESERVATION_ID, RENTER_ID)
 
         assertFailsWith<ForbiddenException> { service.finishRide(ride.id, OTHER_USER_ID, calmRide) }
+        assertEquals(RideStatus.IN_PROGRESS, rideRepository.getRideById(ride.id)?.status)
+    }
+
+    @Test
+    fun `rit afronden door een andere gebruiker met ongeldige body geeft ForbiddenException`() = runBlocking {
+        val ride = service.startRide(RESERVATION_ID, RENTER_ID)
+
+        assertFailsWith<ForbiddenException> {
+            service.finishRide(ride.id, OTHER_USER_ID, calmRide.copy(distanceM = -1.0))
+        }
         assertEquals(RideStatus.IN_PROGRESS, rideRepository.getRideById(ride.id)?.status)
     }
 

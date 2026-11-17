@@ -31,6 +31,7 @@ import services.ResourceNotFoundException
 import services.UnprocessableException
 import services.ValidationException
 import services.calculateTotalPrice
+import services.validate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -162,6 +163,32 @@ class TotalPriceTest {
     @Test
     fun `prijs wordt afgerond op centen`() {
         assertEquals(99.99, calculateTotalPrice(33.33, start, start + 72.hours))
+    }
+}
+
+// ==================== 1. Validation: ReservationRequest.validate() ====================
+
+class ReservationValidationTest {
+    private val now = Instant.parse("2099-02-01T12:00:00Z")
+
+    @Test
+    fun `reservering in de toekomst is geldig`() {
+        request().validate(now)
+    }
+
+    @Test
+    fun `starttijd gelijk aan nu geeft ValidationException`() {
+        assertFailsWith<ValidationException> { request(startTime = now).validate(now) }
+    }
+
+    @Test
+    fun `eindtijd gelijk aan starttijd geeft ValidationException`() {
+        assertFailsWith<ValidationException> { request(endTime = start).validate(now) }
+    }
+
+    @Test
+    fun `eindtijd voor de starttijd geeft ValidationException`() {
+        assertFailsWith<ValidationException> { request(endTime = start - 1.hours).validate(now) }
     }
 }
 

@@ -17,15 +17,6 @@ note right of rt
 end note
 rt -> rt : call.authenticatedUserId()
 rt -> svc : finishRide(rideId, userId, request)
-svc -> svc : distanceM, avgAcceleration en\navgDeceleration niet negatief,\ndistanceM <= 6000 km?
-svc -> svc : validateCoordinates(latitude, longitude)\n-90..90 en -180..180, geen NaN?
-
-group flow 7a [negatieve waarde, afstand boven 6000 km of ongeldige coördinaten]
-    svc --> rt : throw ValidationException
-    rt --> app : 400 Bad Request (StatusPages)
-    app --> g : foutmelding (stap 6)
-end
-
 svc -> riderepo : getRideById(rideId)
 riderepo -> db : SELECT FROM ride WHERE id
 db --> riderepo : 0 of 1 rij
@@ -46,6 +37,14 @@ group flow 8b [rit hoort bij een reservering van een andere gebruiker]
     svc --> rt : throw ForbiddenException
     rt --> app : 403 Forbidden (StatusPages)
     app --> g : foutmelding (einde)
+end
+
+svc -> svc : request.validate() (CarValidation.kt):\ndistanceM, avgAcceleration en avgDeceleration\nniet negatief, distanceM <= 6000 km,\nlatitude -90..90 en longitude -180..180?
+
+group flow 7a [negatieve waarde, afstand boven 6000 km of ongeldige coördinaten]
+    svc --> rt : throw ValidationException
+    rt --> app : 400 Bad Request (StatusPages)
+    app --> g : foutmelding (stap 6)
 end
 
 group flow 8c [rit is al afgerond]

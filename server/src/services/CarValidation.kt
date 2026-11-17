@@ -8,6 +8,7 @@ import shared.models.*
 import shared.requests.*
 import models.gemini.CarCostEstimate
 import kotlin.time.Clock
+import kotlin.time.Instant
 
 // Upper limits follow the database columns: decimal(6,2) = 9999.99, decimal(7,2) = 99999.99
 private const val LICENSE_PLATE_MAX_LENGTH = 20
@@ -29,6 +30,12 @@ private val PRICE_PER_DAY = 0.01..999999.99
 private val DISTANCE_KM = 0.0..1_000_000.0
 private val LATITUDE = -90.0..90.0
 private val LONGITUDE = -180.0..180.0
+internal const val MAX_RIDE_DISTANCE_M = 6_000_000.0
+private const val EMAIL_MAX_LENGTH = 255
+private const val PASSWORD_MIN_LENGTH = 8
+// BCrypt ignores everything after the first 72 bytes
+private const val PASSWORD_MAX_BYTES = 72
+private val EMAIL_PATTERN = Regex("""^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$""")
 
 /** The RDW only knows Dutch license plates, so check the format before calling it. */
 fun CarDto.validate() {
@@ -163,6 +170,53 @@ fun RentalTermsRequest.validate() {
     returnLocation?.let { checkText("returnLocation", it, LOCATION_MAX_LENGTH) }
     checkTimeWindow("pickupTime", pickupTimeStart, pickupTimeEnd)
     checkTimeWindow("returnTime", returnTimeStart, returnTimeEnd)
+}
+
+fun ReservationRequest.validate(now: Instant) {
+    if (startTime <= now) {
+        throw ValidationException("Starttijd ligt in het verleden")
+    }
+    if (endTime <= startTime) {
+        throw ValidationException("Eindtijd moet na de starttijd liggen")
+    }
+}
+
+fun RideFinishRequest.validate() {
+    if (distanceM < 0 || avgAcceleration < 0 || avgDeceleration < 0) {
+        throw ValidationException("Afstand en acceleraties mogen niet negatief zijn")
+    }
+    if (distanceM > MAX_RIDE_DISTANCE_M) {
+        throw ValidationException("Afstand mag niet groter zijn dan ${(MAX_RIDE_DISTANCE_M / 1000).toInt()} km per rit")
+    }
+    validateCoordinates(latitude, longitude)
+}
+
+fun RegisterRequest.validate() {
+    validateEmail(email.trim())
+    validatePassword(password)
+}
+
+private fun validateEmail(email: String) {
+    if (email.length > EMAIL_MAX_LENGTH || !EMAIL_PATTERN.matches(email)) {
+        throw ValidationException("Veld 'email' bevat geen geldig e-mailadres")
+    }
+}
+
+private fun validatePassword(password: String) {
+    val missingRequirements = buildList {
+        if (password.length < PASSWORD_MIN_LENGTH) add("minimaal $PASSWORD_MIN_LENGTH tekens")
+        if (password.none(Char::isUpperCase)) add("een hoofdletter")
+        if (password.none(Char::isLowerCase)) add("een kleine letter")
+        if (password.none(Char::isDigit)) add("een cijfer")
+        if (password.all(Char::isLetterOrDigit)) add("een speciaal teken")
+    }
+
+    if (missingRequirements.isNotEmpty()) {
+        throw ValidationException("Veld 'password' is te zwak, het mist: ${missingRequirements.joinToString(", ")}")
+    }
+    if (password.toByteArray().size > PASSWORD_MAX_BYTES) {
+        throw ValidationException("Veld 'password' mag maximaal $PASSWORD_MAX_BYTES bytes lang zijn")
+    }
 }
 
 private fun checkTimeWindow(name: String, start: LocalTime?, end: LocalTime?) {

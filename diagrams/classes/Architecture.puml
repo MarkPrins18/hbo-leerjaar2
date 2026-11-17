@@ -175,7 +175,7 @@ package "services" #DDF2DD {
         }
     }
     class Helpers <<file>> {
-        CarValidation / UserValidation
+        CarValidation
         CarLookup (getOwnedCar, callExternal)
         CarFilter / CarFilterMatching / Distance
         FuelCost / TotalCostOfOwnership
