@@ -42,7 +42,7 @@ fun Application.configureRouting() {
     val reservationService = ReservationService(reservationRepository, carRepository, userRepository, rentalTermsRepository)
     val rideRepository = ExposedRideRepository()
     val rideService = RideService(rideRepository, reservationRepository)
-    val locationService = LocationService(carRepository, locationRepository, reservationRepository)
+    val locationService = LocationService(carRepository, locationRepository)
     val userService = UserService(userRepository, rideRepository)
     val tokenService = TokenService(jwtConfig())
     val authService = AuthService(userRepository, tokenService)

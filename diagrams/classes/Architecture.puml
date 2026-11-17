@@ -146,7 +146,7 @@ package "services" #DDF2DD {
         +setRentalTerms(carId, userId, request): RentalTerms
     }
     class LocationService <<service>> {
-        +getMapsUrl(carId, userId): String
+        +getMapsUrl(carId): String
         +setLocation(carId, userId, request): LocationResponse
     }
     class ReservationService <<service>> {
@@ -293,7 +293,6 @@ RentalTermsService --> RentalTermsRepository
 RentalTermsService --> CarRepository
 LocationService --> CarRepository
 LocationService --> LocationRepository
-LocationService --> ReservationRepository
 ReservationService --> ReservationRepository
 ReservationService --> CarRepository
 ReservationService --> UserRepository

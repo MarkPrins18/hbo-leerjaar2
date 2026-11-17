@@ -16,9 +16,8 @@ fun Route.mapRoutes(
     requireAuthentication {
         get("/cars/{carId}/maps") {
             val carId = call.parameters.getOrFail<Int>("carId")
-            val userId = call.authenticatedUserId()
 
-            val mapsUrl = locationService.getMapsUrl(carId, userId)
+            val mapsUrl = locationService.getMapsUrl(carId)
 
             //automatic redirect to maps
             // call.respondRedirect(mapsUrl)

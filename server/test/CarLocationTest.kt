@@ -13,7 +13,6 @@ import kotlinx.coroutines.runBlocking
 import models.Location
 import repositories.CarRepository
 import repositories.LocationRepository
-import repositories.ReservationRepository
 import services.ForbiddenException
 import services.LocationService
 import services.ResourceNotFoundException
@@ -21,8 +20,6 @@ import services.ValidationException
 import services.validate
 import shared.models.BEVCar
 import shared.models.Car
-import shared.models.Reservation
-import shared.models.ReservationStatus
 import shared.models.VehicleType
 import shared.requests.CarChangeDto
 import shared.requests.LocationRequest
@@ -85,17 +82,6 @@ private class FakeLocationRepository : LocationRepository {
     override suspend fun getLatestLocationByCarId(carId: Int): Location? = TODO()
 }
 
-private class UnusedLocationReservationRepository : ReservationRepository {
-    override suspend fun createReservationIfAvailable(
-        carId: Int, userId: Int, startTime: Instant, endTime: Instant, status: ReservationStatus, totalPrice: Double
-    ): Reservation? = TODO()
-    override suspend fun getReservationById(id: Int): Reservation? = TODO()
-    override suspend fun getReservationsByCarAndUser(carId: Int, userId: Int): List<Reservation> = TODO()
-    override suspend fun updateStatus(id: Int, status: ReservationStatus): Reservation? = TODO()
-    override suspend fun getReservationsByUserId(userId: Int): List<Reservation> = TODO()
-    override suspend fun getReservedCarIds(startTime: Instant, endTime: Instant): Set<Int> = TODO()
-}
-
 // ==================== 1. Validation: LocationRequest ====================
 
 class LocationRequestValidationTest {
@@ -125,9 +111,7 @@ class LocationRequestValidationTest {
 
 class SetLocationServiceTest {
     private val locationRepository = FakeLocationRepository()
-    private val service = LocationService(
-        FakeLocationCarRepository(testCar()), locationRepository, UnusedLocationReservationRepository()
-    )
+    private val service = LocationService(FakeLocationCarRepository(testCar()), locationRepository)
 
     // ---------- setLocation ----------
 

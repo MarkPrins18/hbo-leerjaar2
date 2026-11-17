@@ -1,26 +1,20 @@
 package services
 
 import mappers.toResponse
-import shared.models.Reservation
-import shared.models.ReservationStatus
 import repositories.CarRepository
 import repositories.LocationRepository
-import repositories.ReservationRepository
 import shared.requests.LocationRequest
 import shared.responses.LocationResponse
 import kotlin.time.Clock
-import kotlin.time.Instant
 
 class LocationService(
     private val carRepository: CarRepository,
-    private val locationRepository: LocationRepository,
-    private val reservationRepository: ReservationRepository
+    private val locationRepository: LocationRepository
 ) {
-    suspend fun getMapsUrl(carId: Int, userId: Int): String {
-        val car = carRepository.getCarById(carId)
+    /** Every logged-in user may see where a car is, just like on GET /cars/map. */
+    suspend fun getMapsUrl(carId: Int): String {
+        carRepository.getCarById(carId)
             ?: throw ResourceNotFoundException("Auto", carId)
-
-        if (car.userId != userId && !hasActiveReservation(carId, userId)) throw ForbiddenException()
 
         val location = locationRepository.getLatestLocationByCarId(carId)
             ?: throw ResourceNotFoundException("Geen locatie bekend voor deze auto")
@@ -36,12 +30,4 @@ class LocationService(
         return locationRepository.addLocation(carId, request.latitude, request.longitude, Clock.System.now())
             .toResponse()
     }
-
-    private suspend fun hasActiveReservation(carId: Int, userId: Int): Boolean {
-        val now = Clock.System.now()
-        return reservationRepository.getReservationsByCarAndUser(carId, userId).any { it.isActiveAt(now) }
-    }
-
-    private fun Reservation.isActiveAt(now: Instant): Boolean =
-        status == ReservationStatus.CONFIRMED && now >= startTime && now < endTime
 }
