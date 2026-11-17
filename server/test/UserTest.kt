@@ -41,8 +41,9 @@ private class FakeUserRepository(vararg users: User) : UserRepository {
 
     override suspend fun findById(userId: Int): User? = users[userId]
 
+    override suspend fun findAll(): List<User> = users.values.toList()
+
     override suspend fun findByEmail(email: String): User? = TODO()
-    override suspend fun findAll(): List<User> = TODO()
     override suspend fun userExists(userId: Int): Boolean = TODO()
     override suspend fun create(email: String, passwordHash: String): User = TODO()
 }
@@ -66,29 +67,31 @@ class UserServiceTest {
         FakeUserRideRepository(mapOf(USER_ID to 48))
     )
 
-    // ---------- getUser ----------
+    // ---------- getUserResponse ----------
 
     @Test
-    fun `gebruiker ophalen geeft die gebruiker`() = runBlocking {
-        assertEquals(testUser(), service.getUser(USER_ID))
-    }
-
-    @Test
-    fun `onbekende gebruiker geeft ResourceNotFoundException`() = runBlocking {
-        assertFailsWith<ResourceNotFoundException> { service.getUser(999) }
-        Unit
-    }
-
-    // ---------- getBonusPoints ----------
-
-    @Test
-    fun `saldo is de som uit de repository`() = runBlocking {
-        assertEquals(48, service.getBonusPoints(USER_ID))
+    fun `gebruiker ophalen geeft id, e-mail en het saldo uit de repository`() = runBlocking {
+        assertEquals(UserResponse(USER_ID, "eigenaar$USER_ID@carshare.nl", 48), service.getUserResponse(USER_ID))
     }
 
     @Test
     fun `gebruiker zonder afgeronde ritten heeft saldo 0`() = runBlocking {
-        assertEquals(0, service.getBonusPoints(OTHER_USER_ID))
+        assertEquals(0, service.getUserResponse(OTHER_USER_ID).bonusPoints)
+    }
+
+    @Test
+    fun `onbekende gebruiker geeft ResourceNotFoundException`() = runBlocking {
+        assertFailsWith<ResourceNotFoundException> { service.getUserResponse(999) }
+        Unit
+    }
+
+    // ---------- getAllUserResponses ----------
+
+    @Test
+    fun `alle gebruikers komen terug met hun eigen saldo`() = runBlocking {
+        val responses = service.getAllUserResponses()
+
+        assertEquals(listOf(USER_ID to 48, OTHER_USER_ID to 0), responses.map { it.id to it.bonusPoints })
     }
 }
 

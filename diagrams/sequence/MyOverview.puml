@@ -16,7 +16,7 @@ note right of rt
 end note
 
 app -> rt : GET /users/me
-rt -> svc : UserService.getUser(userId)
+rt -> svc : UserService.getUserResponse(userId)
 svc -> repo : UserRepository.findById(userId)
 repo -> db : SELECT FROM users WHERE id
 db --> repo : 0 of 1 rij
@@ -27,14 +27,12 @@ group flow 1a [gebruiker bestaat niet meer]
     rt --> app : 404 Not Found (StatusPages)
 end
 
-svc --> rt : User
-rt -> svc : UserService.getBonusPoints(userId)
 svc -> repo : RideRepository.getTotalBonusPointsByUserId(userId)
 repo -> db : SELECT SUM(bonus_points) FROM ride JOIN reservation\nWHERE user_id AND status = COMPLETED
 db --> repo : som of NULL
 repo --> svc : Int (NULL = 0)
-svc --> rt : saldo
-rt -> rt : user.toResponse(bonusPoints)
+svc -> svc : user.toResponse(bonusPoints)
+svc --> rt : UserResponse
 rt --> app : 200 OK + UserResponse {id, email, bonusPoints}
 
 app -> rt : GET /cars/mine

@@ -36,7 +36,8 @@ svc -> repo : create(email, passwordHash)
 repo -> db : INSERT INTO users
 db --> repo : id
 repo --> svc : User
-svc --> rt : User
+svc -> svc : user.toResponse(bonusPoints = 0)
+svc --> rt : UserResponse
 rt --> app : 201 Created + UserResponse
 app --> g : account aangemaakt
 

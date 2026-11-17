@@ -161,10 +161,9 @@ package "services" #DDF2DD {
         +finishRide(rideId, userId, request): Ride
     }
     class UserService <<service>> {
-        +register(request): User
-        +getUser(userId): User
-        +getAllUsers(): List<User>
-        +getBonusPoints(userId): Int
+        +register(request): UserResponse
+        +getUserResponse(userId): UserResponse
+        +getAllUserResponses(): List<UserResponse>
     }
     together {
         class AuthService <<service>> {

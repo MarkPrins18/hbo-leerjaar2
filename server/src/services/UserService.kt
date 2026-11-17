@@ -1,17 +1,20 @@
 package services
 
+import mappers.toResponse
 import models.User
 import org.mindrot.jbcrypt.BCrypt
 import repositories.RideRepository
 import repositories.UserRepository
 import shared.requests.RegisterRequest
+import shared.responses.UserResponse
 
 class UserService(
     private val userRepository: UserRepository,
     private val rideRepository: RideRepository
 ) {
 
-    suspend fun register(request: RegisterRequest): User {
+    /** A new account has no rides yet, so its bonus points balance is 0. */
+    suspend fun register(request: RegisterRequest): UserResponse {
         request.validate()
         val email = request.email.trim().lowercase()
 
@@ -20,13 +23,16 @@ class UserService(
         }
 
         val passwordHash = BCrypt.hashpw(request.password, BCrypt.gensalt())
-        return userRepository.create(email, passwordHash)
+        return userRepository.create(email, passwordHash).toResponse(bonusPoints = 0)
     }
 
-    suspend fun getUser(userId: Int): User =
-        userRepository.findById(userId) ?: throw ResourceNotFoundException("Gebruiker", userId)
+    suspend fun getUserResponse(userId: Int): UserResponse {
+        val user = userRepository.findById(userId) ?: throw ResourceNotFoundException("Gebruiker", userId)
+        return user.withBonusPoints()
+    }
 
-    suspend fun getAllUsers(): List<User> = userRepository.findAll()
+    suspend fun getAllUserResponses(): List<UserResponse> = userRepository.findAll().map { it.withBonusPoints() }
 
-    suspend fun getBonusPoints(userId: Int): Int = rideRepository.getTotalBonusPointsByUserId(userId)
+    private suspend fun User.withBonusPoints(): UserResponse =
+        toResponse(rideRepository.getTotalBonusPointsByUserId(id))
 }

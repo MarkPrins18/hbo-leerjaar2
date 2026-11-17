@@ -201,11 +201,12 @@ class UserRegistrationServiceTest {
 
     @Test
     fun `registreren maakt een gebruiker met genormaliseerd e-mailadres en gehasht wachtwoord`() = runBlocking {
-        val user = service.register(registerRequest(email = "  Nieuw@CarShare.nl "))
+        val response = service.register(registerRequest(email = "  Nieuw@CarShare.nl "))
 
-        assertEquals("nieuw@carshare.nl", user.email)
-        assertNotEquals(VALID_PASSWORD, user.passwordHash)
-        assertTrue(BCrypt.checkpw(VALID_PASSWORD, user.passwordHash))
+        val stored = repository.findByEmail("nieuw@carshare.nl")!!
+        assertEquals(UserResponse(stored.id, "nieuw@carshare.nl", 0), response)
+        assertNotEquals(VALID_PASSWORD, stored.passwordHash)
+        assertTrue(BCrypt.checkpw(VALID_PASSWORD, stored.passwordHash))
         assertEquals(2, repository.count())
     }
 
