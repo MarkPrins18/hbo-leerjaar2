@@ -55,12 +55,6 @@ class ExposedReservationRepository : ReservationRepository {
         ReservationTable.selectAll().where { ReservationTable.id eq id }.singleOrNull()?.toReservation()
     }
 
-    override suspend fun getReservationsByCarAndUser(carId: Int, userId: Int): List<Reservation> = suspendTransaction {
-        ReservationTable.selectAll()
-            .where { (ReservationTable.carId eq carId) and (ReservationTable.userId eq userId) }
-            .map { it.toReservation() }
-    }
-
     override suspend fun getReservationsByUserId(userId: Int): List<Reservation> = suspendTransaction {
         ReservationTable.selectAll()
             .where { ReservationTable.userId eq userId }

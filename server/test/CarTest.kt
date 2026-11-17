@@ -127,7 +127,6 @@ private class UnusedOwnedCarReservationRepository : ReservationRepository {
     ): Reservation? = TODO()
     override suspend fun getReservedCarIds(startTime: Instant, endTime: Instant): Set<Int> = TODO()
     override suspend fun getReservationById(id: Int): Reservation? = TODO()
-    override suspend fun getReservationsByCarAndUser(carId: Int, userId: Int): List<Reservation> = TODO()
     override suspend fun updateStatus(id: Int, status: ReservationStatus): Reservation? = TODO()
     override suspend fun getReservationsByUserId(userId: Int): List<Reservation> = TODO()
 }

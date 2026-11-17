@@ -160,7 +160,7 @@ class ConcurrencyTest {
         val created = inParallel(PARALLEL_REQUESTS) { index ->
             repository.createReservationIfAvailable(CAR_ID, users[index], start, end, ReservationStatus.CONFIRMED, 50.0)
         }
-        val stored = users.flatMap { repository.getReservationsByCarAndUser(CAR_ID, it) }
+        val stored = users.flatMap { repository.getReservationsByUserId(it) }.filter { it.carId == CAR_ID }
 
         assertEquals(1, created.count { it != null })
         assertEquals(1, stored.size)

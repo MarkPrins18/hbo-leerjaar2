@@ -142,7 +142,6 @@ private class FakeReservationRepository : ReservationRepository {
     override suspend fun getReservationsByUserId(userId: Int): List<Reservation> =
         reservations.filter { it.userId == userId }
 
-    override suspend fun getReservationsByCarAndUser(carId: Int, userId: Int): List<Reservation> = TODO()
     override suspend fun getReservedCarIds(startTime: Instant, endTime: Instant): Set<Int> = TODO()
 }
 

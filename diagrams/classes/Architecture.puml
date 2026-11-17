@@ -240,7 +240,6 @@ package "repositories" #FFF1D6 {
         +createReservationIfAvailable(carId, userId, startTime, endTime, status, totalPrice): Reservation?
         +getReservedCarIds(startTime, endTime): Set<Int>
         +getReservationById(id): Reservation?
-        +getReservationsByCarAndUser(carId, userId): List<Reservation>
         +getReservationsByUserId(userId): List<Reservation>
         +updateStatus(id, status): Reservation?
     }
