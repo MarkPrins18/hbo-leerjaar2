@@ -42,6 +42,8 @@ import kotlin.time.Instant
 private const val RENTER_ID = 1
 private const val OTHER_USER_ID = 2
 private const val RESERVATION_ID = 7
+private const val OTHER_RESERVATION_ID = 8
+private const val CAR_ID = 10
 private const val MAX_DISTANCE_M = 6_000_000.0
 
 private const val PARKED_LATITUDE = 51.5853
@@ -53,9 +55,9 @@ private val calmRide = RideFinishRequest(
 )
 
 /** A confirmed reservation that is active right now, so a ride can start. */
-private fun activeReservation(): Reservation {
+private fun activeReservation(id: Int = RESERVATION_ID, userId: Int = RENTER_ID): Reservation {
     val now = Clock.System.now()
-    return Reservation(RESERVATION_ID, 10, RENTER_ID, now - 1.hours, now + 1.hours, ReservationStatus.CONFIRMED, 50.0)
+    return Reservation(id, CAR_ID, userId, now - 1.hours, now + 1.hours, ReservationStatus.CONFIRMED, 50.0)
 }
 
 // ==================== Fakes ====================
@@ -92,8 +94,11 @@ private class FakeRideRepository(vararg reservations: Reservation, private val s
 
         rides.any { it.reservationId == reservationId && it.status == RideStatus.IN_PROGRESS }
 
+    private fun carHasRideInProgress(carId: Int?): Boolean =
+        rides.any { it.status == RideStatus.IN_PROGRESS && reservations[it.reservationId]?.carId == carId }
+
     override suspend fun startRideIfNoneInProgress(reservationId: Int, startTime: Instant): Ride? {
-        if (hasRideInProgress(reservationId)) return null
+        if (carHasRideInProgress(reservations[reservationId]?.carId)) return null
         return Ride(rides.size + 1, reservationId, startTime, null, RideStatus.IN_PROGRESS, null, null, null, null)
             .also { rides += it }
     }
@@ -223,6 +228,18 @@ class RideServiceTest {
             assertFailsWith<ConflictException> { inactiveService.startRide(RESERVATION_ID, RENTER_ID) }
             assertEquals(false, inactiveRepository.hasRideInProgress(RESERVATION_ID))
         }
+    }
+
+    @Test
+    fun `rit starten terwijl er al een rit loopt met dezelfde auto geeft ConflictException`() = runBlocking {
+        val first = activeReservation()
+        val second = activeReservation(OTHER_RESERVATION_ID, OTHER_USER_ID)
+        val sharedCarRepository = FakeRideRepository(first, second)
+        val sharedCarService = RideService(sharedCarRepository, FakeRideReservationRepository(first, second))
+        sharedCarService.startRide(RESERVATION_ID, RENTER_ID)
+
+        assertFailsWith<ConflictException> { sharedCarService.startRide(OTHER_RESERVATION_ID, OTHER_USER_ID) }
+        assertEquals(false, sharedCarRepository.hasRideInProgress(OTHER_RESERVATION_ID))
     }
 
     // ---------- finishRide ----------
@@ -428,6 +445,19 @@ class RideRoutesTest {
         val token = client.login(seedRenterId)
 
         assertEquals(HttpStatusCode.Conflict, client.startRide(seedReservationId, token).status)
+    }
+
+    @Test
+    fun `rit starten terwijl een andere huurder nog rijdt met dezelfde auto geeft 409`() = e2eTest { client ->
+        val token = client.login(otherUserId)
+        // The renter of seed reservation 4 is still driving car 4
+        ExposedRideRepository().startRideIfNoneInProgress(seedReservationId, Clock.System.now())!!
+        val reservation = activeSeedReservation(4, otherUserId)
+
+        val response = client.startRide(reservation.id, token)
+
+        assertEquals(HttpStatusCode.Conflict, response.status)
+        assertEquals(emptyList<Ride>(), client.get("/rides") { bearerAuth(token) }.body<List<Ride>>())
     }
 
     // ---------- PATCH /rides/{id}/finish ----------

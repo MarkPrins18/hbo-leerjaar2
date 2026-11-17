@@ -27,7 +27,7 @@ class RideService(
             throw ConflictException("Reservering $reservationId is nu niet actief")
         }
         return rideRepository.startRideIfNoneInProgress(reservationId, now)
-            ?: throw ConflictException("Er loopt al een rit voor reservering $reservationId of de reservering is niet meer bevestigd")
+            ?: throw ConflictException("Er loopt al een rit met auto ${reservation.carId} of reservering $reservationId is niet meer bevestigd")
     }
 
     suspend fun getActiveRide(userId: Int): Ride? =

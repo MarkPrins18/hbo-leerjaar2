@@ -34,6 +34,7 @@ private const val PARALLEL_REQUESTS = 10
 // Seed: car 1 belongs to user 1, so every other user may reserve it
 private const val CAR_ID = 1
 private const val RENTER_ID = 2
+private const val OTHER_RENTER_ID = 3
 
 private val start = Instant.parse("2099-06-01T09:00:00Z")
 private val end = Instant.parse("2099-06-01T17:00:00Z")
@@ -141,5 +142,25 @@ class ConcurrencyTest {
 
         assertEquals(1, started.count { it != null })
         assertEquals(started.single { it != null }!!.id, repository.getRideInProgressByUserId(RENTER_ID)?.id)
+    }
+
+    @Test
+    fun `repository start bij gelijktijdige aanroepen op twee reserveringen van dezelfde auto maar een rit`() = e2eTest { client ->
+        client.login(RENTER_ID)
+        val active = insertActiveReservation()
+        // The repository does not check the time slot, so the second reservation may lie in the future
+        val later = ExposedReservationRepository().createReservationIfAvailable(
+            CAR_ID, OTHER_RENTER_ID, start, end, ReservationStatus.CONFIRMED, 89.0
+        )!!
+        val reservationIds = listOf(active.id, later.id)
+        val repository = ExposedRideRepository()
+
+        val started = inParallel(PARALLEL_REQUESTS) { index ->
+            repository.startRideIfNoneInProgress(reservationIds[index % 2], Clock.System.now())
+        }
+        val ridesInProgress = listOf(RENTER_ID, OTHER_RENTER_ID).mapNotNull { repository.getRideInProgressByUserId(it) }
+
+        assertEquals(1, started.count { it != null })
+        assertEquals(listOf(started.single { it != null }!!.id), ridesInProgress.map { it.id })
     }
 }

@@ -11,6 +11,6 @@ Bewuste keuzes. Alleen wijzigen op basis van instructies.
 **Waarom:** De Kotlin stdlib heeft geen alternatief om classpath-resources te lezen.
 
 ## Overlap- en ritcontrole in de repository
-**Keuze:** De overlapcontrole bij reserveren (`createReservationIfAvailable`) en de check "er loopt al een rit" (`startRideIfNoneInProgress`) staan in de repository, samen met de insert in één `suspendTransaction` met `forUpdate()`. Zo zijn check en insert atomair. `startRideIfNoneInProgress` controleert onder de lock ook of de reservering nog CONFIRMED is. `finishRide` rondt in één transactie de rit af, slaat de locatie op en zet de reservering op COMPLETED.
+**Keuze:** De overlapcontrole bij reserveren (`createReservationIfAvailable`) en de check "er loopt al een rit" (`startRideIfNoneInProgress`) staan in de repository, samen met de insert in één `suspendTransaction` met `forUpdate()`. Zo zijn check en insert atomair. `startRideIfNoneInProgress` vergrendelt eerst de auto en dan de reservering (dezelfde volgorde als bij reserveren), controleert of de reservering nog CONFIRMED is en of er met de auto nog een rit loopt op een willekeurige reservering, bijvoorbeeld van een vorige huurder die uitloopt. `finishRide` rondt in één transactie de rit af, slaat de locatie op en zet de reservering op COMPLETED.
 **Waarom:** Niet terug verplaatsen naar de service, want dan komt de race condition terug. `ConcurrencyTest` bewaakt dit.
 

@@ -17,6 +17,7 @@ import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.update
+import tables.CarTable
 import tables.ReservationTable
 import tables.RideTable
 import kotlin.time.Instant
@@ -24,14 +25,21 @@ import kotlin.time.Instant
 class ExposedRideRepository : RideRepository {
 
     override suspend fun startRideIfNoneInProgress(reservationId: Int, startTime: Instant): Ride? = suspendTransaction {
-        val reservation = ReservationTable.selectAll().where { ReservationTable.id eq reservationId }.forUpdate().singleOrNull()
+        val carId = ReservationTable.select(ReservationTable.carId)
+            .where { ReservationTable.id eq reservationId }
+            .singleOrNull()?.get(ReservationTable.carId)
+            ?: return@suspendTransaction null
+        // Car first, then reservation: the same lock order as createReservationIfAvailable
+        CarTable.selectAll().where { CarTable.id eq carId }.forUpdate().toList()
+        val reservation = ReservationTable.selectAll().where { ReservationTable.id eq reservationId }.forUpdate().single()
         // Checked again under the lock: a finish in between may have completed the reservation
-        if (reservation?.get(ReservationTable.status) != ReservationStatus.CONFIRMED) return@suspendTransaction null
+        if (reservation[ReservationTable.status] != ReservationStatus.CONFIRMED) return@suspendTransaction null
 
-        val hasRideInProgress = !RideTable.selectAll().where {
-            (RideTable.reservationId eq reservationId) and (RideTable.status eq RideStatus.IN_PROGRESS)
-        }.empty()
-        if (hasRideInProgress) return@suspendTransaction null
+        val carHasRideInProgress = !RideTable.innerJoin(ReservationTable, { RideTable.reservationId }, { ReservationTable.id })
+            .selectAll()
+            .where { (ReservationTable.carId eq carId) and (RideTable.status eq RideStatus.IN_PROGRESS) }
+            .empty()
+        if (carHasRideInProgress) return@suspendTransaction null
 
         val inserted = RideTable.insert {
             it[RideTable.reservationId] = reservationId

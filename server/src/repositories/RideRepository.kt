@@ -6,8 +6,9 @@ import kotlin.time.Instant
 
 interface RideRepository {
     /**
-     * Locks the reservation, checks that it is still CONFIRMED and has no ride in progress, and inserts
-     * in one transaction. Returns null if a ride is already running or the reservation is no longer confirmed.
+     * Locks the car and the reservation, checks that the reservation is still CONFIRMED and that the car has no
+     * ride in progress on any reservation, and inserts in one transaction. Returns null if the car is already
+     * being driven or the reservation is no longer confirmed.
      */
     suspend fun startRideIfNoneInProgress(reservationId: Int, startTime: Instant): Ride?
     suspend fun getRideById(rideId: Int): Ride?
