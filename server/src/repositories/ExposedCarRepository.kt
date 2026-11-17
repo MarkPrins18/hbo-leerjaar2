@@ -2,12 +2,18 @@ package repositories
 
 import mappers.normalizeLicensePlate
 import mappers.toCar
+import models.ACTIVE_RESERVATION_STATUSES
 import shared.models.BEVCar
 import shared.models.Car
 import shared.models.FCEVCar
 import shared.models.ICECar
+import shared.models.RideStatus
+import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.greater
+import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.inSubQuery
+import org.jetbrains.exposed.v1.core.innerJoin
 import org.jetbrains.exposed.v1.core.leftJoin
 import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
@@ -26,6 +32,7 @@ import tables.PhotoTable
 import tables.RentalTermsTable
 import tables.ReservationTable
 import tables.RideTable
+import kotlin.time.Clock
 
 class ExposedCarRepository : CarRepository {
 
@@ -181,6 +188,12 @@ class ExposedCarRepository : CarRepository {
     }
 
     override suspend fun deleteCar(carId: Int): Boolean = suspendTransaction {
+        // Same locks as reserving (car row) and starting a ride (reservation rows), so check and delete are atomic
+        val carExists = CarTable.selectAll().where { CarTable.id eq carId }.forUpdate().toList().isNotEmpty()
+        if (!carExists) return@suspendTransaction false
+        ReservationTable.selectAll().where { ReservationTable.carId eq carId }.forUpdate().toList()
+        if (isCarInUse(carId)) return@suspendTransaction false
+
         // Important! Delete subtype and references first, they reference car.
         RideTable.deleteWhere {
             RideTable.reservationId inSubQuery ReservationTable.select(ReservationTable.id).where { ReservationTable.carId eq carId }
@@ -194,6 +207,21 @@ class ExposedCarRepository : CarRepository {
         FcevCarTable.deleteWhere { FcevCarTable.carId eq carId }
 
         CarTable.deleteWhere { CarTable.id eq carId } > 0
+    }
+
+    private fun JdbcTransaction.isCarInUse(carId: Int): Boolean {
+        val hasActiveReservation = !ReservationTable.selectAll().where {
+            (ReservationTable.carId eq carId) and
+                    (ReservationTable.status inList ACTIVE_RESERVATION_STATUSES) and
+                    (ReservationTable.endTime greater Clock.System.now())
+        }.empty()
+
+        val hasRideInProgress = !RideTable.innerJoin(ReservationTable, { RideTable.reservationId }, { ReservationTable.id })
+            .selectAll()
+            .where { (ReservationTable.carId eq carId) and (RideTable.status eq RideStatus.IN_PROGRESS) }
+            .empty()
+
+        return hasActiveReservation || hasRideInProgress
     }
 
 }

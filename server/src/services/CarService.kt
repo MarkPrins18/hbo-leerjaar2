@@ -43,7 +43,8 @@ class CarService(
         val photoFileNames = photoRepository.getFileNamesByCarId(carId)
 
         if (!carRepository.deleteCar(carId)) {
-            throw carNotFound(carId)
+            carRepository.getCarById(carId) ?: throw carNotFound(carId)
+            throw ConflictException("Auto $carId heeft nog een actieve reservering of lopende rit en kan niet worden verwijderd")
         }
 
         photoFileNames.forEach(photoStorage::delete)
