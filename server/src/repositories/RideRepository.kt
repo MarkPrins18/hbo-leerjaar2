@@ -23,7 +23,6 @@ interface RideRepository {
     /**
      * Only finishes a ride that is still in progress, sets its reservation to COMPLETED and stores
      * the car's new location from [request], all in one transaction. Returns null if no such ride was updated.
-
      */
     suspend fun finishRide(id: Int, endTime: Instant, request: RideFinishRequest, bonusPoints: Int): Ride?
 }

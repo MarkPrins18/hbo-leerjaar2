@@ -90,7 +90,6 @@ private class FakeRideRepository(vararg reservations: Reservation, private val s
     override suspend fun getTotalBonusPointsByUserId(userId: Int): Int = TODO()
 
     fun hasRideInProgress(reservationId: Int): Boolean =
-
         rides.any { it.reservationId == reservationId && it.status == RideStatus.IN_PROGRESS }
 
     private fun carHasRideInProgress(carId: Int?): Boolean =
@@ -320,6 +319,25 @@ class RideServiceTest {
     }
 
     @Test
+    fun `afstand van precies 6000 km is toegestaan`() = runBlocking {
+        val ride = service.startRide(RESERVATION_ID, RENTER_ID)
+
+        val finished = service.finishRide(ride.id, RENTER_ID, calmRide.copy(distanceM = MAX_DISTANCE_M))
+
+        assertEquals(RideStatus.COMPLETED, finished.status)
+    }
+
+    @Test
+    fun `afstand boven 6000 km geeft ValidationException`() = runBlocking {
+        val ride = service.startRide(RESERVATION_ID, RENTER_ID)
+
+        assertFailsWith<ValidationException> {
+            service.finishRide(ride.id, RENTER_ID, calmRide.copy(distanceM = MAX_DISTANCE_M + 1))
+        }
+        assertEquals(RideStatus.IN_PROGRESS, rideRepository.getRideById(ride.id)?.status)
+    }
+
+    @Test
     fun `rit afronden door een andere gebruiker geeft ForbiddenException`() = runBlocking {
         val ride = service.startRide(RESERVATION_ID, RENTER_ID)
 
@@ -403,25 +421,6 @@ class RideServiceTest {
         service.startRide(RESERVATION_ID, RENTER_ID)
 
         assertNull(service.getActiveRide(OTHER_USER_ID))
-    }
-
-    @Test
-    fun `afstand van precies 6000 km is toegestaan`() = runBlocking {
-        val ride = service.startRide(RESERVATION_ID, RENTER_ID)
-
-        val finished = service.finishRide(ride.id, RENTER_ID, calmRide.copy(distanceM = MAX_DISTANCE_M))
-
-        assertEquals(RideStatus.COMPLETED, finished.status)
-    }
-
-    @Test
-    fun `afstand boven 6000 km geeft ValidationException`() = runBlocking {
-        val ride = service.startRide(RESERVATION_ID, RENTER_ID)
-
-        assertFailsWith<ValidationException> {
-            service.finishRide(ride.id, RENTER_ID, calmRide.copy(distanceM = MAX_DISTANCE_M + 1))
-        }
-        assertEquals(RideStatus.IN_PROGRESS, rideRepository.getRideById(ride.id)?.status)
     }
 
     @Test
@@ -617,7 +616,6 @@ class RideRoutesTest {
 
     // ---------- GET /rides/active ----------
 
-
     @Test
     fun `lopende rit opvragen geeft 200 met de rit van de huurder`() = e2eTest { client ->
         val token = client.login(seedRenterId)
@@ -673,5 +671,4 @@ class RideRoutesTest {
     fun `ritoverzicht zonder token geeft 401`() = e2eTest { client ->
         assertEquals(HttpStatusCode.Unauthorized, client.get("/rides").status)
     }
-
 }

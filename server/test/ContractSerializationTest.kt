@@ -274,7 +274,6 @@ class ContractSerializationTest {
         val obj = DefaultJson.parseToJsonElement(DefaultJson.encodeToString(response)).jsonObject
 
         assertEquals(setOf("id", "email", "bonusPoints"), obj.keys)
-
     }
 
     @Test

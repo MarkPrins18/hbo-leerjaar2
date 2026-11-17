@@ -9,7 +9,6 @@ import io.ktor.http.contentType
 import repositories.ExposedReservationRepository
 import repositories.ExposedRideRepository
 import shared.models.ReservationStatus
-
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.runBlocking
 import models.User

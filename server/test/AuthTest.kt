@@ -332,7 +332,6 @@ class AuthRoutesTest {
         assertEquals(HttpStatusCode.OK, me.status)
         assertEquals(registered, me.body<UserResponse>())
         assertEquals(0, registered.bonusPoints)
-
     }
 
     @Test

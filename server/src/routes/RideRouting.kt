@@ -37,7 +37,6 @@ fun Route.rideRoutes(rideService: RideService) {
             val request = call.receive<RideFinishRequest>()
             val ride = rideService.finishRide(rideId, userId, request)
             call.respond(HttpStatusCode.OK, ride)
-
         }
     }
 }
