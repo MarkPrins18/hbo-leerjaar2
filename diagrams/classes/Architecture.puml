@@ -233,6 +233,7 @@ package "repositories" #FFF1D6 {
     }
     interface LocationRepository {
         +getLatestLocationByCarId(carId): Location?
+        +getLatestLocationsByCarId(): Map<Int, Location>
         +addLocation(carId, latitude, longitude, timestamp): Location
     }
     interface ReservationRepository {

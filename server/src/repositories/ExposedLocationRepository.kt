@@ -3,7 +3,12 @@ package repositories
 import models.Location
 import mappers.toLocation
 import org.jetbrains.exposed.v1.core.SortOrder
+import org.jetbrains.exposed.v1.core.alias
+import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.greater
+import org.jetbrains.exposed.v1.core.notExists
+import org.jetbrains.exposed.v1.core.or
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
@@ -19,6 +24,25 @@ class ExposedLocationRepository : LocationRepository {
             .limit(1)
             .singleOrNull()
             ?.toLocation()
+    }
+
+    /** Keeps a row only if no row of the same car is newer, with the same tie-break on id as above. */
+    override suspend fun getLatestLocationsByCarId(): Map<Int, Location> = suspendTransaction {
+        val newer = LocationTable.alias("newer")
+        LocationTable
+            .selectAll()
+            .where {
+                notExists(
+                    newer.selectAll().where {
+                        (newer[LocationTable.carId] eq LocationTable.carId) and (
+                            (newer[LocationTable.timestamp] greater LocationTable.timestamp) or
+                                ((newer[LocationTable.timestamp] eq LocationTable.timestamp) and
+                                    (newer[LocationTable.id] greater LocationTable.id))
+                        )
+                    }
+                )
+            }
+            .associate { it[LocationTable.carId] to it.toLocation() }
     }
 
     override suspend fun addLocation(carId: Int, latitude: Double, longitude: Double, timestamp: Instant): Location =

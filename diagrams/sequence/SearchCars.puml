@@ -41,17 +41,19 @@ opt startTime en endTime opgegeven
     svc -> svc : auto's met een overlappende reservering weglaten
 end
 
+svc -> loc : getLatestLocationsByCarId()
+loc -> db : SELECT location WHERE NOT EXISTS
+(nieuwere rij van dezelfde auto)
+db --> loc : nieuwste rij per auto
+loc --> svc : Map<Int, Location>
+
 svc -> terms : getAllRentalTerms()
 terms -> db : SELECT rental_terms
 db --> terms : rijen
 terms --> svc : List<RentalTerms>
 
 loop voor elke auto
-    svc -> loc : getLatestLocationByCarId(car.id)
-    loc -> db : SELECT location (nieuwste)
-    db --> loc : 0 of 1 rij
-    loc --> svc : Location?
-    svc -> svc : filter.matches(location, rentalTerms)
+    svc -> svc : filter.matches(locations[car.id], rentalTerms)
 end
 note right of svc
   getCars slaat locaties en huurvoorwaarden over

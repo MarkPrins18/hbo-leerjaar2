@@ -46,6 +46,8 @@ private const val OTHER_RESERVATION_ID = 8
 private const val CAR_ID = 10
 private const val MAX_DISTANCE_M = 6_000_000.0
 
+private val nonFiniteValues = listOf(Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY)
+
 private const val PARKED_LATITUDE = 51.5853
 private const val PARKED_LONGITUDE = 4.7946
 
@@ -183,6 +185,27 @@ class RideFinishValidationTest {
     @Test
     fun `ongeldige coordinaten geven ValidationException`() {
         assertFailsWith<ValidationException> { calmRide.copy(latitude = 91.0).validate() }
+    }
+
+    @Test
+    fun `NaN of oneindig in de afstand geeft ValidationException`() {
+        nonFiniteValues.forEach { value ->
+            assertFailsWith<ValidationException> { calmRide.copy(distanceM = value).validate() }
+        }
+    }
+
+    @Test
+    fun `NaN of oneindig in de gemiddelde acceleratie geeft ValidationException`() {
+        nonFiniteValues.forEach { value ->
+            assertFailsWith<ValidationException> { calmRide.copy(avgAcceleration = value).validate() }
+        }
+    }
+
+    @Test
+    fun `NaN of oneindig in de gemiddelde deceleratie geeft ValidationException`() {
+        nonFiniteValues.forEach { value ->
+            assertFailsWith<ValidationException> { calmRide.copy(avgDeceleration = value).validate() }
+        }
     }
 }
 

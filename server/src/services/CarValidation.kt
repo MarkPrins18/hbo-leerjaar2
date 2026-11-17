@@ -192,6 +192,9 @@ fun ReservationRequest.validate(now: Instant) {
 }
 
 fun RideFinishRequest.validate() {
+    if (!distanceM.isFinite() || !avgAcceleration.isFinite() || !avgDeceleration.isFinite()) {
+        throw ValidationException("Afstand en acceleraties moeten een geldig getal zijn")
+    }
     if (distanceM < 0 || avgAcceleration < 0 || avgDeceleration < 0) {
         throw ValidationException("Afstand en acceleraties mogen niet negatief zijn")
     }

@@ -56,21 +56,20 @@ class CarService(
         val cars = getAvailableCars(filter)
         if (filter.maxDistanceKm == null && filter.maxPrice == null) return cars
 
+        val locationsByCarId = locationRepository.getLatestLocationsByCarId()
         val rentalTermsByCarId = getRentalTermsByCarId()
-        return cars.filter { car ->
-            val location = locationRepository.getLatestLocationByCarId(car.id)
-            filter.matches(location, rentalTermsByCarId[car.id])
-        }
+        return cars.filter { car -> filter.matches(locationsByCarId[car.id], rentalTermsByCarId[car.id]) }
     }
 
-    /** One query for all rental terms; the latest location is still fetched per car. */
+    /** One query for all latest locations and one for all rental terms, not one per car. */
     suspend fun getCarMap(filter: CarFilter): List<CarMapResponse> {
         filter.validate()
 
         val cars = getAvailableCars(filter)
+        val locationsByCarId = locationRepository.getLatestLocationsByCarId()
         val rentalTermsByCarId = getRentalTermsByCarId()
         return cars.mapNotNull { car ->
-            val location = locationRepository.getLatestLocationByCarId(car.id)
+            val location = locationsByCarId[car.id]
             val rentalTerms = rentalTermsByCarId[car.id]
             if (!filter.matches(location, rentalTerms)) return@mapNotNull null
 

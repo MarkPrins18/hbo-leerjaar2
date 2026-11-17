@@ -120,6 +120,7 @@ private class FakeOwnedCarCostEstimator : CostEstimator {
 
 private class UnusedOwnedCarLocationRepository : LocationRepository {
     override suspend fun getLatestLocationByCarId(carId: Int): Location? = TODO()
+    override suspend fun getLatestLocationsByCarId(): Map<Int, Location> = TODO()
     override suspend fun addLocation(carId: Int, latitude: Double, longitude: Double, timestamp: kotlin.time.Instant): Location = TODO()
 }
 

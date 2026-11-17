@@ -1,3 +1,16 @@
+import io.ktor.client.HttpClient
+import io.ktor.client.request.put
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.deleteWhere
+import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
+import repositories.ExposedLocationRepository
+import shared.requests.LocationRequest
+import tables.LocationTable
+import kotlin.test.assertNull
 import config.PhotoStorage
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -106,11 +119,17 @@ private class FakeSearchReservationRepository(private val reservedCarIds: Set<In
     override suspend fun getReservationsByUserId(userId: Int): List<Reservation> = TODO()
 }
 
+/** Counts the bulk calls, so a test can check that the locations are not fetched per car. */
 private class FakeSearchLocationRepository(vararg locations: Location) : LocationRepository {
     private val locations = locations.associateBy { it.carId }
+    var bulkCalls = 0
 
-    override suspend fun getLatestLocationByCarId(carId: Int): Location? = locations[carId]
+    override suspend fun getLatestLocationsByCarId(): Map<Int, Location> {
+        bulkCalls++
+        return locations
+    }
 
+    override suspend fun getLatestLocationByCarId(carId: Int): Location? = TODO()
     override suspend fun addLocation(carId: Int, latitude: Double, longitude: Double, timestamp: Instant): Location = TODO()
 }
 
@@ -174,9 +193,11 @@ class CarSearchServiceTest {
         RentalTerms(id = 1, carId = FREE_CAR_ID, pricePerDay = PRICE_PER_DAY, pickupLocation = "Breda")
     )
 
+    private val locationRepository = FakeSearchLocationRepository(testLocation(FREE_CAR_ID))
+
     private val service = CarService(
         FakeSearchCarRepository(testCar(FREE_CAR_ID), testCar(RESERVED_CAR_ID), testCar(BARE_CAR_ID)),
-        FakeSearchLocationRepository(testLocation(FREE_CAR_ID)),
+        locationRepository,
         UnusedSearchPhotoRepository(),
         PhotoStorage(Path(SystemTemporaryDirectory, "car-search-test-${Uuid.random()}")),
         rentalTermsRepository,
@@ -194,6 +215,7 @@ class CarSearchServiceTest {
         assertEquals(LONGITUDE, marker.longitude)
         assertEquals(PRICE_PER_DAY, marker.pricePerDay)
         assertEquals(1, rentalTermsRepository.bulkCalls)
+        assertEquals(1, locationRepository.bulkCalls)
     }
 
     @Test
@@ -242,6 +264,14 @@ class CarSearchServiceTest {
     }
 
     @Test
+    fun `afstandsfilter haalt alle locaties in een keer op`() = runBlocking {
+        val cars = service.getCars(CarFilter(maxDistanceKm = 1.0, latitude = LATITUDE, longitude = LONGITUDE))
+
+        assertEquals(listOf(FREE_CAR_ID), cars.map { it.id })
+        assertEquals(1, locationRepository.bulkCalls)
+    }
+
+    @Test
     fun `ongeldig tijdvak geeft ValidationException`() = runBlocking {
         assertFailsWith<ValidationException> { service.getCars(CarFilter(startTime = periodStart)) }
         Unit
@@ -257,6 +287,15 @@ class CarSearchRoutesTest {
     private val reservedSeedCarId = 4
     private val reservedDay = "startTime=2099-01-15T00:00:00Z&endTime=2099-01-16T00:00:00Z"
     private val cancelledDay = "startTime=2026-10-01T00:00:00Z&endTime=2026-10-02T00:00:00Z"
+    // Seed: auto 3 staat in Utrecht en is van gebruiker 3
+    private val utrechtSeedCarId = 3
+
+    private suspend fun HttpClient.putLocation(carId: Int, token: String): HttpResponse =
+        put("/cars/$carId/location") {
+            bearerAuth(token)
+            contentType(ContentType.Application.Json)
+            setBody(LocationRequest(LATITUDE, LONGITUDE))
+        }
 
     // ---------- GET /cars ----------
 
@@ -286,6 +325,18 @@ class CarSearchRoutesTest {
     }
 
     @Test
+    fun `afstandsfilter gebruikt de nieuwste locatie na het verplaatsen van een auto`() = e2eTest { client ->
+        val token = client.login(utrechtSeedCarId)
+        client.putLocation(utrechtSeedCarId, token)
+
+        val response = client.get("/cars?maxDistanceKm=5&latitude=$LATITUDE&longitude=$LONGITUDE")
+
+        // Seed: alleen auto 4 staat binnen 5 km van Breda; auto 3 staat in Utrecht tot hij wordt verplaatst
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertEquals(listOf(utrechtSeedCarId, 4), response.body<List<Car>>().map { it.id }.sorted())
+    }
+
+    @Test
     fun `tijdstip dat geen ISO-8601 is geeft 400`() = e2eTest { client ->
         val response = client.get("/cars?startTime=morgen&endTime=2099-01-15T00:00:00Z")
 
@@ -309,6 +360,32 @@ class CarSearchRoutesTest {
         assertEquals(4.860440, car1.longitude)
         assertEquals(89.0, car1.pricePerDay)
         assertEquals(null, markers.single { it.car.id == 8 }.pricePerDay)
+    }
+
+    @Test
+    fun `kaart toont de nieuwe positie na het verplaatsen van een auto`() = e2eTest { client ->
+        val token = client.login(utrechtSeedCarId)
+        client.putLocation(utrechtSeedCarId, token)
+
+        val response = client.get("/cars/map") { bearerAuth(token) }
+
+        assertEquals(HttpStatusCode.OK, response.status)
+        val marker = response.body<List<CarMapResponse>>().single { it.car.id == utrechtSeedCarId }
+        assertEquals(LATITUDE, marker.latitude)
+        assertEquals(LONGITUDE, marker.longitude)
+    }
+
+    @Test
+    fun `kaart toont een auto zonder locatie zonder positie`() = e2eTest { client ->
+        val token = client.login(2)
+        suspendTransaction { LocationTable.deleteWhere { LocationTable.carId eq 8 } }
+
+        val response = client.get("/cars/map") { bearerAuth(token) }
+
+        assertEquals(HttpStatusCode.OK, response.status)
+        val marker = response.body<List<CarMapResponse>>().single { it.car.id == 8 }
+        assertNull(marker.latitude)
+        assertNull(marker.longitude)
     }
 
     @Test
@@ -336,5 +413,23 @@ class CarSearchRoutesTest {
         val response = client.get("/cars/map?startTime=2099-01-16T00:00:00Z&endTime=2099-01-15T00:00:00Z") { bearerAuth(token) }
 
         assertEquals(HttpStatusCode.BadRequest, response.status)
+    }
+
+    // ---------- LocationRepository.getLatestLocationsByCarId ----------
+
+    @Test
+    fun `bulkquery geeft per auto dezelfde laatste locatie als de query per auto`() = e2eTest { client ->
+        client.login(1)
+        val repository = ExposedLocationRepository()
+        val timestamp = Instant.parse("2099-01-01T12:00:00Z")
+        repository.addLocation(1, 52.0, 5.0, timestamp)
+        val newest = repository.addLocation(1, LATITUDE, LONGITUDE, timestamp)
+
+        val latest = repository.getLatestLocationsByCarId()
+
+        // Gelijk tijdstip: de rij met het hoogste id wint
+        assertEquals(newest, latest[1])
+        assertEquals((1..seedCarCount).toSet(), latest.keys)
+        for ((carId, location) in latest) assertEquals(repository.getLatestLocationByCarId(carId), location)
     }
 }

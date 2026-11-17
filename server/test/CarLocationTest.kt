@@ -79,6 +79,7 @@ private class FakeLocationRepository : LocationRepository {
             .also { locations += it }
 
     override suspend fun getLatestLocationByCarId(carId: Int): Location? = TODO()
+    override suspend fun getLatestLocationsByCarId(): Map<Int, Location> = TODO()
 }
 
 // ==================== 2. Service: LocationService.setLocation ====================
