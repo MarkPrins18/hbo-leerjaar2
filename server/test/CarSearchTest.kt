@@ -252,11 +252,11 @@ class CarSearchServiceTest {
 // ==================== 3. E2E: car search routes ====================
 
 class CarSearchRoutesTest {
-    // Seed: reservering 4 (auto 4, CONFIRMED) valt op 2027-01-15,
+    // Seed: reservering 4 (auto 4, CONFIRMED) valt op 2099-01-15,
     // reservering 3 (auto 3, CANCELLED) op 2026-10-01. Er zijn 8 seedauto's.
     private val seedCarCount = 8
     private val reservedSeedCarId = 4
-    private val reservedDay = "startTime=2027-01-15T00:00:00Z&endTime=2027-01-16T00:00:00Z"
+    private val reservedDay = "startTime=2099-01-15T00:00:00Z&endTime=2099-01-16T00:00:00Z"
     private val cancelledDay = "startTime=2026-10-01T00:00:00Z&endTime=2026-10-02T00:00:00Z"
 
     // ---------- GET /cars ----------
@@ -288,19 +288,19 @@ class CarSearchRoutesTest {
 
     @Test
     fun `alleen startTime geeft 400`() = e2eTest { client ->
-        assertEquals(HttpStatusCode.BadRequest, client.get("/cars?startTime=2027-01-15T00:00:00Z").status)
+        assertEquals(HttpStatusCode.BadRequest, client.get("/cars?startTime=2099-01-15T00:00:00Z").status)
     }
 
     @Test
     fun `eind voor begin geeft 400`() = e2eTest { client ->
-        val response = client.get("/cars?startTime=2027-01-16T00:00:00Z&endTime=2027-01-15T00:00:00Z")
+        val response = client.get("/cars?startTime=2099-01-16T00:00:00Z&endTime=2099-01-15T00:00:00Z")
 
         assertEquals(HttpStatusCode.BadRequest, response.status)
     }
 
     @Test
     fun `tijdstip dat geen ISO-8601 is geeft 400`() = e2eTest { client ->
-        val response = client.get("/cars?startTime=morgen&endTime=2027-01-15T00:00:00Z")
+        val response = client.get("/cars?startTime=morgen&endTime=2099-01-15T00:00:00Z")
 
         assertEquals(HttpStatusCode.BadRequest, response.status)
     }
@@ -346,7 +346,7 @@ class CarSearchRoutesTest {
     fun `kaart met eind voor begin geeft 400`() = e2eTest { client ->
         val token = client.login(2)
 
-        val response = client.get("/cars/map?startTime=2027-01-16T00:00:00Z&endTime=2027-01-15T00:00:00Z") { bearerAuth(token) }
+        val response = client.get("/cars/map?startTime=2099-01-16T00:00:00Z&endTime=2099-01-15T00:00:00Z") { bearerAuth(token) }
 
         assertEquals(HttpStatusCode.BadRequest, response.status)
     }

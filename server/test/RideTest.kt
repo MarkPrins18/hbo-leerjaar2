@@ -332,7 +332,7 @@ class RideServiceTest {
 // ==================== 3. E2E: ride routes ====================
 
 class RideRoutesTest {
-    // Seed: reservering 4 is van gebruiker 3 en start pas op 2027-01-15.
+    // Seed: reservering 4 (auto 4) is van gebruiker 3 en start pas op 2099-01-15.
     // Seed: rit 1 hoort bij reservering 1 van gebruiker 3 en is al COMPLETED.
     private val seedReservationId = 4
     private val seedRideId = 1
