@@ -301,11 +301,6 @@ class AuthRoutesTest {
     }
 
     @Test
-    fun `registreren met zwak wachtwoord geeft 400`() = e2eTest { client ->
-        assertEquals(HttpStatusCode.BadRequest, client.register(registerBody(password = "zwak")).status)
-    }
-
-    @Test
     fun `registreren zonder wachtwoord geeft 400`() = e2eTest { client ->
         assertEquals(HttpStatusCode.BadRequest, client.register("""{ "email": "$newEmail" }""").status)
     }

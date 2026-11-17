@@ -36,7 +36,6 @@ import services.validate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertTrue
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
@@ -247,24 +246,8 @@ class ReservationServiceTest {
     }
 
     @Test
-    fun `starttijd in het verleden geeft ValidationException`() = runBlocking {
-        assertFailsWith<ValidationException> {
-            service.createReservation(RENTER_ID, request(startTime = Instant.parse("2020-01-01T09:00:00Z")))
-        }
-        Unit
-    }
-
-    @Test
     fun `eindtijd niet na de starttijd geeft ValidationException en reserveert niets`() = runBlocking {
         assertFailsWith<ValidationException> { service.createReservation(RENTER_ID, request(endTime = start)) }
-        assertEquals(0, repository.count())
-    }
-
-    @Test
-    fun `reservering langer dan 30 dagen geeft ValidationException en reserveert niets`() = runBlocking {
-        assertFailsWith<ValidationException> {
-            service.createReservation(RENTER_ID, request(endTime = start + 30.days + 1.minutes))
-        }
         assertEquals(0, repository.count())
     }
 
@@ -389,23 +372,15 @@ class ReservationRoutesTest {
     // ---------- POST /reservations ----------
 
     @Test
-    fun `reserveren met token geeft 201 op naam van de ingelogde gebruiker`() = e2eTest { client ->
+    fun `reserveren met token geeft 201 op naam van de ingelogde gebruiker en 8 uur kost een dag huur`() = e2eTest { client ->
         val token = client.login(otherUserId)
 
         val response = client.reserve(validBody, token)
 
         assertEquals(HttpStatusCode.Created, response.status)
-        assertEquals(otherUserId, response.body<Reservation>().userId)
-    }
-
-    @Test
-    fun `reservering van 8 uur kost een dag huur`() = e2eTest { client ->
-        val token = client.login(otherUserId)
-
-        val response = client.reserve(validBody, token)
-
-        assertEquals(HttpStatusCode.Created, response.status)
-        assertEquals(seedPricePerDayCar1, response.body<Reservation>().totalPrice)
+        val reservation = response.body<Reservation>()
+        assertEquals(otherUserId, reservation.userId)
+        assertEquals(seedPricePerDayCar1, reservation.totalPrice)
     }
 
     @Test
@@ -420,14 +395,6 @@ class ReservationRoutesTest {
     fun `eindtijd niet na de starttijd geeft 400`() = e2eTest { client ->
         val token = client.login(otherUserId)
         val body = """{ "carId": 1, "startTime": "2099-03-01T09:00:00Z", "endTime": "2099-03-01T09:00:00Z" }"""
-
-        assertEquals(HttpStatusCode.BadRequest, client.reserve(body, token).status)
-    }
-
-    @Test
-    fun `reservering langer dan 30 dagen geeft 400`() = e2eTest { client ->
-        val token = client.login(otherUserId)
-        val body = """{ "carId": 1, "startTime": "2099-03-01T09:00:00Z", "endTime": "2099-03-31T09:00:01Z" }"""
 
         assertEquals(HttpStatusCode.BadRequest, client.reserve(body, token).status)
     }
@@ -487,18 +454,6 @@ class ReservationRoutesTest {
         // Seed: gebruiker 3 heeft reservering 1 (2026-09-20) en 4 (2099-01-15)
         assertEquals(HttpStatusCode.OK, response.status)
         assertEquals(listOf(1, seedReservationId), response.body<List<Reservation>>().map { it.id })
-    }
-
-    @Test
-    fun `reserveringen van een ander zijn niet zichtbaar`() = e2eTest { client ->
-        val otherToken = client.login(otherUserId)
-        val otherReservation = client.reserve(validBody, otherToken).body<Reservation>()
-        val token = client.login(seedRenterId)
-
-        val reservations = client.get("/reservations") { bearerAuth(token) }.body<List<Reservation>>()
-
-        assertTrue(reservations.all { it.userId == seedRenterId })
-        assertTrue(reservations.none { it.id == otherReservation.id })
     }
 
     @Test

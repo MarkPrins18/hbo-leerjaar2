@@ -21,3 +21,7 @@ Bewuste keuzes. Alleen wijzigen op basis van instructies.
 ## Locatie van een auto is zichtbaar voor elke ingelogde gebruiker
 **Keuze:** `GET /cars/{carId}/maps` controleert niet op eigenaar of reservering; alleen inloggen is nodig.
 **Waarom:** Teambesluit: `GET /cars/map` toont de posities van alle auto's al, dus een extra controle hier beschermt niets.
+
+## API-contract in een aparte `shared`-module
+**Keuze:** Vier modules: `shared` (KMP-lib, alleen `@Serializable` contractklassen), `server`, `composeApp` (KMP-lib met de Compose-UI) en `androidApp` (alleen het Android-startpunt). Het contract staat in `shared.models`, `shared.requests` en `shared.responses`; `models.User` (met `passwordHash`), `User.toResponse()` en `ACTIVE_RESERVATION_STATUSES` blijven op de server.
+**Waarom:** Server en app delen één contract, dus een contractbreuk zie je bij het bouwen en niet pas in de app. De UI staat in een KMP-lib zodat er later een platform bij kan zonder de UI te verhuizen, en `shared` blijft vrij van Compose. Het `shared.`-voorvoegsel laat aan de import zien waar een klasse vandaan komt. Server-only gegevens zoals de wachtwoordhash mogen nooit in de app belanden.

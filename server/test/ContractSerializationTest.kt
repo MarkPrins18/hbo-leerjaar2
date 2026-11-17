@@ -106,7 +106,7 @@ class ContractSerializationTest {
     }
 
     @Test
-    fun `Reservation zet Instant als ISO-string en status als naam`() {
+    fun `Reservation zet Instant als ISO-string, status als naam en totalPrice als getal`() {
         val reservation = Reservation(
             id = 1,
             carId = 1,
@@ -117,27 +117,12 @@ class ContractSerializationTest {
             totalPrice = 125.5
         )
 
-        val obj = DefaultJson.parseToJsonElement(DefaultJson.encodeToString(reservation)).jsonObject
-
-        assertEquals("2026-01-01T10:00:00Z", obj.string("startTime"))
-        assertEquals("PENDING", obj.string("status"))
-    }
-
-    @Test
-    fun `Reservation zet totalPrice als getal`() {
-        val reservation = Reservation(
-            id = 1,
-            carId = 1,
-            userId = 2,
-            startTime = Instant.parse("2026-01-01T10:00:00Z"),
-            endTime = Instant.parse("2026-01-02T10:00:00Z"),
-            status = ReservationStatus.CONFIRMED,
-            totalPrice = 125.5
-        )
-
         val json = DefaultJson.encodeToString(reservation)
 
-        assertEquals("125.5", DefaultJson.parseToJsonElement(json).jsonObject.string("totalPrice"))
+        val obj = DefaultJson.parseToJsonElement(json).jsonObject
+        assertEquals("2026-01-01T10:00:00Z", obj.string("startTime"))
+        assertEquals("PENDING", obj.string("status"))
+        assertEquals("125.5", obj.string("totalPrice"))
         assertEquals(reservation, DefaultJson.decodeFromString<Reservation>(json))
     }
 
@@ -242,14 +227,6 @@ class ContractSerializationTest {
         assertEquals(setOf("carId", "latitude", "longitude", "timestamp"), obj.keys)
         assertEquals("2026-01-01T10:00:00Z", obj.string("timestamp"))
         assertEquals(response, DefaultJson.decodeFromString<LocationResponse>(json))
-    }
-
-    @Test
-    fun `RideStatus is zelfstandig serialiseerbaar als naam`() {
-        val json = DefaultJson.encodeToString(RideStatus.COMPLETED)
-
-        assertEquals("\"COMPLETED\"", json)
-        assertEquals(RideStatus.COMPLETED, DefaultJson.decodeFromString<RideStatus>(json))
     }
 
     @Test

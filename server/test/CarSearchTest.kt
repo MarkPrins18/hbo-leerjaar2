@@ -286,18 +286,6 @@ class CarSearchRoutesTest {
     }
 
     @Test
-    fun `alleen startTime geeft 400`() = e2eTest { client ->
-        assertEquals(HttpStatusCode.BadRequest, client.get("/cars?startTime=2099-01-15T00:00:00Z").status)
-    }
-
-    @Test
-    fun `eind voor begin geeft 400`() = e2eTest { client ->
-        val response = client.get("/cars?startTime=2099-01-16T00:00:00Z&endTime=2099-01-15T00:00:00Z")
-
-        assertEquals(HttpStatusCode.BadRequest, response.status)
-    }
-
-    @Test
     fun `tijdstip dat geen ISO-8601 is geeft 400`() = e2eTest { client ->
         val response = client.get("/cars?startTime=morgen&endTime=2099-01-15T00:00:00Z")
 

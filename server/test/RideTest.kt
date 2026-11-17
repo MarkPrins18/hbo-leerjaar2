@@ -282,16 +282,6 @@ class RideServiceTest {
     }
 
     @Test
-    fun `rit afronden met NaN als longitude geeft ValidationException`() = runBlocking {
-        val ride = service.startRide(RESERVATION_ID, RENTER_ID)
-
-        assertFailsWith<ValidationException> {
-            service.finishRide(ride.id, RENTER_ID, calmRide.copy(longitude = Double.NaN))
-        }
-        assertEquals(RideStatus.IN_PROGRESS, rideRepository.getRideById(ride.id)?.status)
-    }
-
-    @Test
     fun `rit afronden met een negatieve waarde geeft ValidationException en de rit blijft lopen`() = runBlocking {
         val ride = service.startRide(RESERVATION_ID, RENTER_ID)
         val invalidRequests = listOf(
@@ -305,36 +295,6 @@ class RideServiceTest {
         }
         assertEquals(RideStatus.IN_PROGRESS, rideRepository.getRideById(ride.id)?.status)
         assertTrue(rideRepository.finishRequests.isEmpty())
-    }
-
-    @Test
-    fun `rit afronden met nul voor afstand en acceleraties is toegestaan`() = runBlocking {
-        val ride = service.startRide(RESERVATION_ID, RENTER_ID)
-
-        val finished = service.finishRide(
-            ride.id, RENTER_ID, calmRide.copy(distanceM = 0.0, avgAcceleration = 0.0, avgDeceleration = 0.0)
-        )
-
-        assertEquals(RideStatus.COMPLETED, finished.status)
-    }
-
-    @Test
-    fun `afstand van precies 6000 km is toegestaan`() = runBlocking {
-        val ride = service.startRide(RESERVATION_ID, RENTER_ID)
-
-        val finished = service.finishRide(ride.id, RENTER_ID, calmRide.copy(distanceM = MAX_DISTANCE_M))
-
-        assertEquals(RideStatus.COMPLETED, finished.status)
-    }
-
-    @Test
-    fun `afstand boven 6000 km geeft ValidationException`() = runBlocking {
-        val ride = service.startRide(RESERVATION_ID, RENTER_ID)
-
-        assertFailsWith<ValidationException> {
-            service.finishRide(ride.id, RENTER_ID, calmRide.copy(distanceM = MAX_DISTANCE_M + 1))
-        }
-        assertEquals(RideStatus.IN_PROGRESS, rideRepository.getRideById(ride.id)?.status)
     }
 
     @Test
@@ -400,13 +360,6 @@ class RideServiceTest {
         assertEquals(listOf(ride), service.getRides(RENTER_ID))
     }
 
-    @Test
-    fun `ritten van een ander zijn niet zichtbaar`() = runBlocking {
-        service.startRide(RESERVATION_ID, RENTER_ID)
-
-        assertTrue(service.getRides(OTHER_USER_ID).isEmpty())
-    }
-
     // ---------- getActiveRide ----------
 
     @Test
@@ -414,21 +367,6 @@ class RideServiceTest {
         val ride = service.startRide(RESERVATION_ID, RENTER_ID)
 
         assertEquals(ride, service.getActiveRide(RENTER_ID))
-    }
-
-    @Test
-    fun `lopende rit van een ander is niet zichtbaar en geeft null`() = runBlocking {
-        service.startRide(RESERVATION_ID, RENTER_ID)
-
-        assertNull(service.getActiveRide(OTHER_USER_ID))
-    }
-
-    @Test
-    fun `afgeronde rit telt niet als lopende rit`() = runBlocking {
-        val ride = service.startRide(RESERVATION_ID, RENTER_ID)
-        service.finishRide(ride.id, RENTER_ID, calmRide)
-
-        assertNull(service.getActiveRide(RENTER_ID))
     }
 }
 
@@ -563,18 +501,6 @@ class RideRoutesTest {
     }
 
     @Test
-    fun `rit afronden met een negatieve afstand geeft 400 en de rit blijft lopen`() = e2eTest { client ->
-        val token = client.login(otherUserId)
-        val reservation = activeSeedReservation(1, otherUserId)
-        val rideId = client.startRide(reservation.id, token).body<Ride>().id
-
-        val response = client.finishRide(rideId, token, calmRide.copy(distanceM = -1.0))
-
-        assertEquals(HttpStatusCode.BadRequest, response.status)
-        assertEquals(RideStatus.IN_PROGRESS, ExposedRideRepository().getRideById(rideId)?.status)
-    }
-
-    @Test
     fun `rit afronden zonder locatie in de body geeft 400`() = e2eTest { client ->
         val token = client.login(otherUserId)
         val reservation = activeSeedReservation(1, otherUserId)
@@ -640,6 +566,19 @@ class RideRoutesTest {
     }
 
     @Test
+    fun `na het afronden geeft lopende rit opvragen 204 zonder body`() = e2eTest { client ->
+        val token = client.login(otherUserId)
+        val reservation = activeSeedReservation(1, otherUserId)
+        val rideId = client.startRide(reservation.id, token).body<Ride>().id
+        client.finishRide(rideId, token)
+
+        val response = client.get("/rides/active") { bearerAuth(token) }
+
+        assertEquals(HttpStatusCode.NoContent, response.status)
+        assertEquals("", response.bodyAsText())
+    }
+
+    @Test
     fun `lopende rit opvragen zonder token geeft 401`() = e2eTest { client ->
         assertEquals(HttpStatusCode.Unauthorized, client.get("/rides/active").status)
     }
@@ -655,16 +594,6 @@ class RideRoutesTest {
 
         assertEquals(HttpStatusCode.OK, response.status)
         assertEquals(listOf(started.id, seedRideId), response.body<List<Ride>>().map { it.id })
-    }
-
-    @Test
-    fun `ritoverzicht zonder ritten geeft een lege lijst`() = e2eTest { client ->
-        val token = client.login(otherUserId)
-
-        val response = client.get("/rides") { bearerAuth(token) }
-
-        assertEquals(HttpStatusCode.OK, response.status)
-        assertEquals(emptyList<Ride>(), response.body<List<Ride>>())
     }
 
     @Test

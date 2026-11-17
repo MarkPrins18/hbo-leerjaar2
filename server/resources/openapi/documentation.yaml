@@ -66,11 +66,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Car"
         "404":
-          description: Auto niet gevonden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/CarNotFound"
 
   /cars/mine:
     get:
@@ -90,11 +86,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/Car"
         "401":
-          description: Niet ingelogd
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/Unauthorized"
 
   /cars/map:
     get:
@@ -132,11 +124,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "401":
-          description: Niet ingelogd
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/Unauthorized"
 
   /cars/{id}:
     get:
@@ -146,14 +134,7 @@ paths:
       tags:
         - Cars
       parameters:
-        - name: id
-          in: path
-          required: true
-          description: Het id van de auto
-          schema:
-            type: integer
-            format: int32
-          example: 1
+        - $ref: "#/components/parameters/CarId"
       responses:
         "200":
           description: Auto gevonden
@@ -162,17 +143,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Car"
         "400":
-          description: Ongeldig auto-id
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/InvalidCarId"
         "404":
-          description: Auto niet gevonden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/CarNotFound"
     patch:
       summary: Werk een auto bij via het id
       operationId: updateCar
@@ -181,14 +154,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: id
-          in: path
-          required: true
-          description: Het id van de auto
-          schema:
-            type: integer
-            format: int32
-          example: 1
+        - $ref: "#/components/parameters/CarId"
       requestBody:
         required: true
         content:
@@ -212,23 +178,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "401":
-          description: Niet ingelogd
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/Unauthorized"
         "403":
-          description: Ingelogde gebruiker is niet de eigenaar van de auto
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/NotCarOwner"
         "404":
-          description: Auto niet gevonden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/CarNotFound"
         "409":
           description: Kenteken bestaat al
           content:
@@ -249,41 +203,18 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: id
-          in: path
-          required: true
-          description: Het id van de auto
-          schema:
-            type: integer
-            format: int32
-          example: 1
+        - $ref: "#/components/parameters/CarId"
       responses:
         "204":
           description: Auto succesvol verwijderd
         "400":
-          description: Ongeldig auto-id
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/InvalidCarId"
         "401":
-          description: Niet ingelogd
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/Unauthorized"
         "403":
-          description: Ingelogde gebruiker is niet de eigenaar van de auto
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/NotCarOwner"
         "404":
-          description: Auto niet gevonden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/CarNotFound"
         "409":
           description: Auto heeft nog een actieve reservering of lopende rit en kan niet worden verwijderd
           content:
@@ -320,35 +251,15 @@ paths:
               schema:
                 $ref: "#/components/schemas/Car"
         "400":
-          description: Ongeldig auto-id
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/InvalidCarId"
         "401":
-          description: Niet ingelogd
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/Unauthorized"
         "403":
-          description: Ingelogde gebruiker is niet de eigenaar van de auto
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/NotCarOwner"
         "404":
-          description: Auto niet gevonden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/CarNotFound"
         "502":
-          description: De Gemini API is niet bereikbaar of gaf een ongeldig antwoord
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/GeminiUnavailable"
   /cars/{id}/fuel-cost:
     get:
       summary: Bereken de geschatte verbruikskosten voor een afstand
@@ -362,14 +273,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: id
-          in: path
-          required: true
-          description: Het id van de auto
-          schema:
-            type: integer
-            format: int32
-          example: 1
+        - $ref: "#/components/parameters/CarId"
         - name: distanceKm
           in: query
           required: true
@@ -392,23 +296,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "401":
-          description: Niet ingelogd
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/Unauthorized"
         "403":
-          description: De ingelogde gebruiker is geen eigenaar van deze auto
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/NotCarOwner"
         "404":
-          description: Auto niet gevonden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/CarNotFound"
         "422":
           description: Het verbruik van de auto is onbekend, ook na aanvullen via Gemini
           content:
@@ -416,11 +308,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "502":
-          description: De Gemini API is niet bereikbaar of gaf een ongeldig antwoord
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/GeminiUnavailable"
   /cars/{id}/tco:
     get:
       summary: Bereken de Total Cost of Ownership per jaar en per maand
@@ -434,14 +322,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: id
-          in: path
-          required: true
-          description: Het id van de auto
-          schema:
-            type: integer
-            format: int32
-          example: 1
+        - $ref: "#/components/parameters/CarId"
         - name: annualKm
           in: query
           required: false
@@ -465,23 +346,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "401":
-          description: Niet ingelogd
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/Unauthorized"
         "403":
-          description: De ingelogde gebruiker is geen eigenaar van deze auto
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/NotCarOwner"
         "404":
-          description: Auto niet gevonden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/CarNotFound"
         "422":
           description: Het verbruik of de wegenbelasting van de auto is onbekend, ook na aanvullen via Gemini
           content:
@@ -489,11 +358,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "502":
-          description: De Gemini API is niet bereikbaar of gaf een ongeldig antwoord
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/GeminiUnavailable"
   /cars/import:
     post:
       summary: Importeer een auto via het kenteken
@@ -525,11 +390,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "401":
-          description: Niet ingelogd
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/Unauthorized"
         "409":
           description: Kenteken bestaat al
           content:
@@ -563,14 +424,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: id
-          in: path
-          required: true
-          description: Het id van de auto
-          schema:
-            type: integer
-            format: int32
-          example: 1
+        - $ref: "#/components/parameters/CarId"
       requestBody:
         required: true
         content:
@@ -597,23 +451,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "401":
-          description: Niet ingelogd
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/Unauthorized"
         "403":
-          description: De ingelogde gebruiker is geen eigenaar van deze auto
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/NotCarOwner"
         "404":
-          description: Auto niet gevonden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/CarNotFound"
         "413":
           description: Foto is groter dan 5 MB
           content:
@@ -633,14 +475,7 @@ paths:
       tags:
         - Photos
       parameters:
-        - name: id
-          in: path
-          required: true
-          description: Het id van de auto
-          schema:
-            type: integer
-            format: int32
-          example: 1
+        - $ref: "#/components/parameters/CarId"
       responses:
         "200":
           description: Lijst met foto's van de auto
@@ -651,17 +486,9 @@ paths:
                 items:
                   $ref: "#/components/schemas/Photo"
         "400":
-          description: Ongeldig auto-id
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/InvalidCarId"
         "404":
-          description: Auto niet gevonden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/CarNotFound"
   /photos/{id}:
     get:
       summary: Haal een foto op
@@ -728,17 +555,9 @@ paths:
                 format: uri
               example: https://www.google.com/maps/dir/?api=1&destination=51.6436,4.86044
         "400":
-          description: Ongeldig auto-id
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/InvalidCarId"
         "401":
-          description: Niet ingelogd
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/Unauthorized"
         "404":
           description: Auto niet gevonden of geen locatie bekend voor deze auto
           content:
@@ -757,14 +576,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: id
-          in: path
-          required: true
-          description: Het id van de auto
-          schema:
-            type: integer
-            format: int32
-          example: 1
+        - $ref: "#/components/parameters/CarId"
       requestBody:
         required: true
         content:
@@ -785,23 +597,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "401":
-          description: Niet ingelogd
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/Unauthorized"
         "403":
-          description: Ingelogde gebruiker is niet de eigenaar van de auto
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/NotCarOwner"
         "404":
-          description: Auto niet gevonden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/CarNotFound"
         "415":
           $ref: "#/components/responses/UnsupportedMediaType"
   /cars/{id}/rental-terms:
@@ -812,14 +612,7 @@ paths:
       tags:
         - RentalTerms
       parameters:
-        - name: id
-          in: path
-          required: true
-          description: Het id van de auto
-          schema:
-            type: integer
-            format: int32
-          example: 1
+        - $ref: "#/components/parameters/CarId"
       responses:
         "200":
           description: De verhuurvoorwaarden van de auto
@@ -828,11 +621,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/RentalTerms"
         "400":
-          description: Ongeldig auto-id
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/InvalidCarId"
         "404":
           description: Auto niet gevonden of geen verhuurvoorwaarden bekend
           content:
@@ -848,14 +637,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: id
-          in: path
-          required: true
-          description: Het id van de auto
-          schema:
-            type: integer
-            format: int32
-          example: 1
+        - $ref: "#/components/parameters/CarId"
       requestBody:
         required: true
         content:
@@ -876,23 +658,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "401":
-          description: Niet ingelogd
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/Unauthorized"
         "403":
-          description: Ingelogde gebruiker is niet de eigenaar van de auto
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/NotCarOwner"
         "404":
-          description: Auto niet gevonden
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/CarNotFound"
         "415":
           $ref: "#/components/responses/UnsupportedMediaType"
   /reservations:
@@ -914,11 +684,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/Reservation"
         "401":
-          description: Niet ingelogd
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/Unauthorized"
     post:
       summary: Maak een reservering aan
       description: |
@@ -952,11 +718,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "401":
-          description: Niet ingelogd
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/Unauthorized"
         "403":
           description: Je kunt je eigen auto niet reserveren
           content:
@@ -993,14 +755,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: id
-          in: path
-          required: true
-          description: Het id van de reservering
-          schema:
-            type: integer
-            format: int32
-          example: 1
+        - $ref: "#/components/parameters/ReservationId"
       responses:
         "200":
           description: Reservering succesvol geannuleerd
@@ -1015,11 +770,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "401":
-          description: Niet ingelogd
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/Unauthorized"
         "403":
           description: De reservering is van een andere gebruiker
           content:
@@ -1048,14 +799,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: id
-          in: path
-          required: true
-          description: Het id van de reservering
-          schema:
-            type: integer
-            format: int32
-          example: 1
+        - $ref: "#/components/parameters/ReservationId"
       responses:
         "201":
           description: Rit succesvol gestart
@@ -1070,11 +814,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "401":
-          description: Niet ingelogd
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/Unauthorized"
         "403":
           description: De reservering is van een andere gebruiker
           content:
@@ -1145,11 +885,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "401":
-          description: Niet ingelogd
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/Unauthorized"
         "403":
           description: De rit hoort bij een reservering van een andere gebruiker
           content:
@@ -1188,11 +924,7 @@ paths:
         "204":
           description: De ingelogde gebruiker heeft geen lopende rit (geen body)
         "401":
-          description: Niet ingelogd
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/Unauthorized"
   /rides:
     get:
       summary: Haal alle ritten van de ingelogde gebruiker op
@@ -1212,12 +944,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/Ride"
         "401":
-          description: Niet ingelogd
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
+          $ref: "#/components/responses/Unauthorized"
 
   /users:
     get:
@@ -1326,11 +1053,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/User"
         "401":
-          description: Niet ingelogd
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
+          $ref: "#/components/responses/Unauthorized"
         "404":
           description: Gebruiker bestaat niet meer
           content:
@@ -1345,6 +1068,36 @@ components:
       scheme: bearer
       bearerFormat: JWT
   responses:
+    Unauthorized:
+      description: Niet ingelogd
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    InvalidCarId:
+      description: Ongeldig auto-id
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotCarOwner:
+      description: De ingelogde gebruiker is niet de eigenaar van de auto
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    CarNotFound:
+      description: Auto niet gevonden
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    GeminiUnavailable:
+      description: De Gemini API is niet bereikbaar of gaf een ongeldig antwoord
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
     UnsupportedMediaType:
       description: De body heeft een ander Content-Type dan application/json
       content:
@@ -1352,6 +1105,24 @@ components:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
   parameters:
+    CarId:
+      name: id
+      in: path
+      required: true
+      description: Het id van de auto
+      schema:
+        type: integer
+        format: int32
+      example: 1
+    ReservationId:
+      name: id
+      in: path
+      required: true
+      description: Het id van de reservering
+      schema:
+        type: integer
+        format: int32
+      example: 1
     MaxPrice:
       name: maxPrice
       in: query

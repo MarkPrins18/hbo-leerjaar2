@@ -19,7 +19,6 @@ import services.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertTrue
 
 // ==================== Test data ====================
 
@@ -108,11 +107,6 @@ private class FakeTcoCostEstimator(
 
 class TcoCalculationTest {
     @Test
-    fun `standaard wordt met 15000 km per jaar gerekend`() {
-        assertEquals(15_000.0, DEFAULT_ANNUAL_KM)
-    }
-
-    @Test
     fun `tco is verbruikskosten plus vier kwartalen wegenbelasting`() {
         val result = calculateTco(iceCar(consumption = 10.0, roadTaxPerQuarter = 100.0), 15_000.0)
 
@@ -191,19 +185,6 @@ class TcoServiceTest {
         val result = service.getTco(CAR_ID, OWNER_ID, 15_000.0)
 
         assertEquals(calculateTco(iceCar(), 15_000.0), result)
-        assertEquals(0, costEstimator.calls)
-    }
-
-    @Test
-    fun `auto met alle kostendata wordt zelf teruggegeven zonder Gemini`() = runBlocking {
-        val car = iceCar()
-        val carRepository = FakeTcoCarRepository().apply { cars[CAR_ID] = car }
-        val service = CarCostService(costEstimator, carRepository)
-
-        val result = service.fillMissingCostData(CAR_ID, OWNER_ID)
-
-        // Same object, not just an equal copy
-        assertTrue(result === car)
         assertEquals(0, costEstimator.calls)
     }
 

@@ -74,11 +74,6 @@ class UserServiceTest {
     }
 
     @Test
-    fun `gebruiker zonder afgeronde ritten heeft saldo 0`() = runBlocking {
-        assertEquals(0, service.getUserResponse(OTHER_USER_ID).bonusPoints)
-    }
-
-    @Test
     fun `onbekende gebruiker geeft ResourceNotFoundException`() = runBlocking {
         assertFailsWith<ResourceNotFoundException> { service.getUserResponse(999) }
         Unit

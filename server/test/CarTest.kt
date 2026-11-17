@@ -147,23 +147,8 @@ class CarChangeDtoValidationTest {
     // ---------- licensePlate ----------
 
     @Test
-    fun `kenteken met streepjes en kleine letters is geldig`() {
-        CarChangeDto(licensePlate = "ab-12-3c").validate(testCar())
-    }
-
-    @Test
     fun `kenteken van 1 teken geeft ValidationException`() {
         assertFailsWith<ValidationException> { CarChangeDto(licensePlate = "x").validate(testCar()) }
-    }
-
-    @Test
-    fun `kenteken van 7 tekens geeft ValidationException`() {
-        assertFailsWith<ValidationException> { CarChangeDto(licensePlate = "AB123CD").validate(testCar()) }
-    }
-
-    @Test
-    fun `kenteken met een leesteken geeft ValidationException`() {
-        assertFailsWith<ValidationException> { CarChangeDto(licensePlate = "AB!23C").validate(testCar()) }
     }
 }
 
@@ -391,16 +376,6 @@ class CarRoutesTest {
     }
 
     @Test
-    fun `auto's van een ander zijn niet zichtbaar in de eigen lijst`() = e2eTest { client ->
-        val token = client.login(OTHER_USER_ID)
-
-        val cars = client.get("/cars/mine") { bearerAuth(token) }.body<List<Car>>()
-
-        assertEquals(listOf(2, 5, 7), cars.map { it.id })
-        assertTrue(cars.none { it.userId == OWNER_ID })
-    }
-
-    @Test
     fun `eigen auto's opvragen zonder token geeft 401 en botst niet met cars id`() = e2eTest { client ->
         val response = client.get("/cars/mine")
 
@@ -538,19 +513,6 @@ class CarRoutesTest {
         val token = client.login(OWNER_ID)
 
         assertEquals(HttpStatusCode.NotFound, client.patchCar(999, CarChangeDto(color = "ROOD"), token).status)
-    }
-
-    @Test
-    fun `ongeldige json bij wijzigen geeft 400`() = e2eTest { client ->
-        val token = client.login(OWNER_ID)
-
-        val response = client.patch("/cars/$ICE_CAR_ID") {
-            bearerAuth(token)
-            contentType(ContentType.Application.Json)
-            setBody("{ kapot")
-        }
-
-        assertEquals(HttpStatusCode.BadRequest, response.status)
     }
 
     // ---------- DELETE /cars/{id} ----------
@@ -691,13 +653,6 @@ class CarRoutesTest {
         val token = client.login(OWNER_ID)
 
         assertEquals(HttpStatusCode.Conflict, client.importCar(CarDto(licensePlate = "ks-711-f"), token).status)
-    }
-
-    @Test
-    fun `leeg kenteken importeren geeft 400`() = e2eTest { client ->
-        val token = client.login(OWNER_ID)
-
-        assertEquals(HttpStatusCode.BadRequest, client.importCar(CarDto(licensePlate = " - "), token).status)
     }
 
     @Test

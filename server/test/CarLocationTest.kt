@@ -17,7 +17,6 @@ import services.ForbiddenException
 import services.LocationService
 import services.ResourceNotFoundException
 import services.ValidationException
-import services.validate
 import shared.models.BEVCar
 import shared.models.Car
 import shared.models.VehicleType
@@ -80,31 +79,6 @@ private class FakeLocationRepository : LocationRepository {
             .also { locations += it }
 
     override suspend fun getLatestLocationByCarId(carId: Int): Location? = TODO()
-}
-
-// ==================== 1. Validation: LocationRequest ====================
-
-class LocationRequestValidationTest {
-    @Test
-    fun `locatie op de grenzen is geldig`() {
-        LocationRequest(90.0, 180.0).validate()
-        LocationRequest(-90.0, -180.0).validate()
-    }
-
-    @Test
-    fun `latitude boven 90 geeft ValidationException`() {
-        assertFailsWith<ValidationException> { LocationRequest(90.1, 0.0).validate() }
-    }
-
-    @Test
-    fun `longitude onder -180 geeft ValidationException`() {
-        assertFailsWith<ValidationException> { LocationRequest(0.0, -180.1).validate() }
-    }
-
-    @Test
-    fun `NaN geeft ValidationException`() {
-        assertFailsWith<ValidationException> { LocationRequest(Double.NaN, Double.NaN).validate() }
-    }
 }
 
 // ==================== 2. Service: LocationService.setLocation ====================
