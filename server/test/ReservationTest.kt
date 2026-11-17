@@ -37,6 +37,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
@@ -255,6 +256,12 @@ class ReservationServiceTest {
     }
 
     @Test
+    fun `eindtijd niet na de starttijd geeft ValidationException en reserveert niets`() = runBlocking {
+        assertFailsWith<ValidationException> { service.createReservation(RENTER_ID, request(endTime = start)) }
+        assertEquals(0, repository.count())
+    }
+
+    @Test
     fun `reservering langer dan 30 dagen geeft ValidationException en reserveert niets`() = runBlocking {
         assertFailsWith<ValidationException> {
             service.createReservation(RENTER_ID, request(endTime = start + 30.days + 1.minutes))
@@ -320,6 +327,16 @@ class ReservationServiceTest {
 
         assertFailsWith<ConflictException> { service.cancelReservation(reservation.id, RENTER_ID) }
         Unit
+    }
+
+    @Test
+    fun `annuleren nadat de starttijd verstreken is geeft ConflictException`() = runBlocking {
+        val now = Clock.System.now()
+        // The service only accepts future reservations, so put a started one in the fake directly
+        val started = repository.createReservationIfAvailable(CAR_ID, RENTER_ID, now - 1.hours, now + 1.hours, ReservationStatus.CONFIRMED, 89.0)!!
+
+        assertFailsWith<ConflictException> { service.cancelReservation(started.id, RENTER_ID) }
+        assertEquals(ReservationStatus.CONFIRMED, repository.getReservationById(started.id)?.status)
     }
 
     // ---------- getReservationsForUser ----------
@@ -398,6 +415,14 @@ class ReservationRoutesTest {
         val body = """{ "carId": $carWithoutTermsId, "startTime": "2099-03-01T09:00:00Z", "endTime": "2099-03-01T17:00:00Z" }"""
 
         assertEquals(HttpStatusCode.UnprocessableEntity, client.reserve(body, token).status)
+    }
+
+    @Test
+    fun `eindtijd niet na de starttijd geeft 400`() = e2eTest { client ->
+        val token = client.login(otherUserId)
+        val body = """{ "carId": 1, "startTime": "2099-03-01T09:00:00Z", "endTime": "2099-03-01T09:00:00Z" }"""
+
+        assertEquals(HttpStatusCode.BadRequest, client.reserve(body, token).status)
     }
 
     @Test

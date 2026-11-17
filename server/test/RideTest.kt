@@ -231,6 +231,17 @@ class RideServiceTest {
     }
 
     @Test
+    fun `rit starten op een verlopen reservering geeft ConflictException en maakt geen rit`() = runBlocking {
+        val now = Clock.System.now()
+        val expired = activeReservation().copy(startTime = now - 2.hours, endTime = now)
+        val expiredRepository = FakeRideRepository(expired)
+        val expiredService = RideService(expiredRepository, FakeRideReservationRepository(expired))
+
+        assertFailsWith<ConflictException> { expiredService.startRide(RESERVATION_ID, RENTER_ID) }
+        assertTrue(expiredRepository.getRidesByUserId(RENTER_ID).isEmpty())
+    }
+
+    @Test
     fun `rit starten terwijl er al een rit loopt met dezelfde auto geeft ConflictException`() = runBlocking {
         val first = activeReservation()
         val second = activeReservation(OTHER_RESERVATION_ID, OTHER_USER_ID)
@@ -280,6 +291,33 @@ class RideServiceTest {
             service.finishRide(ride.id, RENTER_ID, calmRide.copy(longitude = Double.NaN))
         }
         assertEquals(RideStatus.IN_PROGRESS, rideRepository.getRideById(ride.id)?.status)
+    }
+
+    @Test
+    fun `rit afronden met een negatieve waarde geeft ValidationException en de rit blijft lopen`() = runBlocking {
+        val ride = service.startRide(RESERVATION_ID, RENTER_ID)
+        val invalidRequests = listOf(
+            calmRide.copy(distanceM = -1.0),
+            calmRide.copy(avgAcceleration = -1.0),
+            calmRide.copy(avgDeceleration = -1.0)
+        )
+
+        for (request in invalidRequests) {
+            assertFailsWith<ValidationException> { service.finishRide(ride.id, RENTER_ID, request) }
+        }
+        assertEquals(RideStatus.IN_PROGRESS, rideRepository.getRideById(ride.id)?.status)
+        assertTrue(rideRepository.finishRequests.isEmpty())
+    }
+
+    @Test
+    fun `rit afronden met nul voor afstand en acceleraties is toegestaan`() = runBlocking {
+        val ride = service.startRide(RESERVATION_ID, RENTER_ID)
+
+        val finished = service.finishRide(
+            ride.id, RENTER_ID, calmRide.copy(distanceM = 0.0, avgAcceleration = 0.0, avgDeceleration = 0.0)
+        )
+
+        assertEquals(RideStatus.COMPLETED, finished.status)
     }
 
     @Test
@@ -521,6 +559,18 @@ class RideRoutesTest {
         val rideId = client.startRide(reservation.id, token).body<Ride>().id
 
         val response = client.finishRide(rideId, token, calmRide.copy(longitude = 181.0))
+
+        assertEquals(HttpStatusCode.BadRequest, response.status)
+        assertEquals(RideStatus.IN_PROGRESS, ExposedRideRepository().getRideById(rideId)?.status)
+    }
+
+    @Test
+    fun `rit afronden met een negatieve afstand geeft 400 en de rit blijft lopen`() = e2eTest { client ->
+        val token = client.login(otherUserId)
+        val reservation = activeSeedReservation(1, otherUserId)
+        val rideId = client.startRide(reservation.id, token).body<Ride>().id
+
+        val response = client.finishRide(rideId, token, calmRide.copy(distanceM = -1.0))
 
         assertEquals(HttpStatusCode.BadRequest, response.status)
         assertEquals(RideStatus.IN_PROGRESS, ExposedRideRepository().getRideById(rideId)?.status)

@@ -2,6 +2,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
+import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
@@ -11,6 +12,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import repositories.ExposedReservationRepository
 import repositories.ExposedRideRepository
 import shared.models.Reservation
@@ -19,8 +23,10 @@ import shared.models.Ride
 import shared.requests.LoginRequest
 import shared.requests.RegisterRequest
 import shared.requests.ReservationRequest
+import shared.requests.RideFinishRequest
 import shared.responses.LoginResponse
 import shared.responses.UserResponse
+import tables.LocationTable
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Clock
@@ -63,6 +69,14 @@ private suspend fun insertActiveReservation(): Reservation {
     return ExposedReservationRepository().createReservationIfAvailable(
         CAR_ID, RENTER_ID, now - 1.hours, now + 1.hours, ReservationStatus.CONFIRMED, 50.0
     )!!
+}
+
+private val calmRide = RideFinishRequest(
+    distanceM = 12_500.0, avgAcceleration = 1.0, avgDeceleration = 1.0, latitude = 51.5853, longitude = 4.7946
+)
+
+private suspend fun locationCount(carId: Int): Long = suspendTransaction {
+    LocationTable.selectAll().where { LocationTable.carId eq carId }.count()
 }
 
 // ==================== 3. E2E: concurrency ====================
@@ -109,6 +123,31 @@ class ConcurrencyTest {
         assertEquals(1, statuses.count { it == HttpStatusCode.Created }, "statuses: $statuses")
         assertEquals(PARALLEL_REQUESTS - 1, statuses.count { it == HttpStatusCode.Conflict }, "statuses: $statuses")
         assertEquals(started.id, active.id)
+    }
+
+    // ---------- PATCH /rides/{id}/finish ----------
+
+    @Test
+    fun `gelijktijdig dezelfde rit afronden geeft precies een 200 en de rest 409`() = e2eTest { client ->
+        val token = client.login(RENTER_ID)
+        val reservation = insertActiveReservation()
+        val rideId = client.post("/reservations/${reservation.id}/rides") { bearerAuth(token) }.body<Ride>().id
+        val locationsBefore = locationCount(CAR_ID)
+
+        val statuses = inParallel(PARALLEL_REQUESTS) {
+            client.patch("/rides/$rideId/finish") {
+                bearerAuth(token)
+                contentType(ContentType.Application.Json)
+                setBody(calmRide)
+            }.status
+        }
+        val finished = ExposedRideRepository().getRideById(rideId)!!
+        val user = client.get("/users/me") { bearerAuth(token) }.body<UserResponse>()
+
+        assertEquals(1, statuses.count { it == HttpStatusCode.OK }, "statuses: $statuses")
+        assertEquals(PARALLEL_REQUESTS - 1, statuses.count { it == HttpStatusCode.Conflict }, "statuses: $statuses")
+        assertEquals(locationsBefore + 1, locationCount(CAR_ID))
+        assertEquals(finished.bonusPoints, user.bonusPoints)
     }
 
     // ---------- ExposedReservationRepository.createReservationIfAvailable ----------
