@@ -8,6 +8,7 @@ import shared.models.*
 import shared.requests.*
 import models.gemini.CarCostEstimate
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
 
 // Upper limits follow the database columns: decimal(6,2) = 9999.99, decimal(7,2) = 99999.99
@@ -31,6 +32,8 @@ private val DISTANCE_KM = 0.0..1_000_000.0
 private val LATITUDE = -90.0..90.0
 private val LONGITUDE = -180.0..180.0
 internal const val MAX_RIDE_DISTANCE_M = 6_000_000.0
+// Keeps total_price (decimal(10,2)) within range, also at the highest pricePerDay
+private val MAX_RESERVATION_DURATION = 30.days
 private const val EMAIL_MAX_LENGTH = 255
 private const val PASSWORD_MIN_LENGTH = 8
 // BCrypt ignores everything after the first 72 bytes
@@ -178,6 +181,9 @@ fun ReservationRequest.validate(now: Instant) {
     }
     if (endTime <= startTime) {
         throw ValidationException("Eindtijd moet na de starttijd liggen")
+    }
+    if (endTime - startTime > MAX_RESERVATION_DURATION) {
+        throw ValidationException("Een reservering mag maximaal ${MAX_RESERVATION_DURATION.inWholeDays} dagen duren")
     }
 }
 

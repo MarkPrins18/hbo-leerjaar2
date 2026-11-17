@@ -4,6 +4,7 @@ import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
+import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
@@ -36,7 +37,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
@@ -164,6 +167,11 @@ class TotalPriceTest {
     fun `prijs wordt afgerond op centen`() {
         assertEquals(99.99, calculateTotalPrice(33.33, start, start + 72.hours))
     }
+
+    @Test
+    fun `30 dagen tegen de hoogste dagprijs past in de prijskolom`() {
+        assertEquals(29_999_999.7, calculateTotalPrice(999_999.99, start, start + 30.days))
+    }
 }
 
 // ==================== 1. Validation: ReservationRequest.validate() ====================
@@ -189,6 +197,16 @@ class ReservationValidationTest {
     @Test
     fun `eindtijd voor de starttijd geeft ValidationException`() {
         assertFailsWith<ValidationException> { request(endTime = start - 1.hours).validate(now) }
+    }
+
+    @Test
+    fun `reservering van precies 30 dagen is geldig`() {
+        request(endTime = start + 30.days).validate(now)
+    }
+
+    @Test
+    fun `reservering langer dan 30 dagen geeft ValidationException`() {
+        assertFailsWith<ValidationException> { request(endTime = start + 30.days + 1.milliseconds).validate(now) }
     }
 }
 
@@ -234,6 +252,14 @@ class ReservationServiceTest {
             service.createReservation(RENTER_ID, request(startTime = Instant.parse("2020-01-01T09:00:00Z")))
         }
         Unit
+    }
+
+    @Test
+    fun `reservering langer dan 30 dagen geeft ValidationException en reserveert niets`() = runBlocking {
+        assertFailsWith<ValidationException> {
+            service.createReservation(RENTER_ID, request(endTime = start + 30.days + 1.minutes))
+        }
+        assertEquals(0, repository.count())
     }
 
     @Test
@@ -372,6 +398,30 @@ class ReservationRoutesTest {
         val body = """{ "carId": $carWithoutTermsId, "startTime": "2099-03-01T09:00:00Z", "endTime": "2099-03-01T17:00:00Z" }"""
 
         assertEquals(HttpStatusCode.UnprocessableEntity, client.reserve(body, token).status)
+    }
+
+    @Test
+    fun `reservering langer dan 30 dagen geeft 400`() = e2eTest { client ->
+        val token = client.login(otherUserId)
+        val body = """{ "carId": 1, "startTime": "2099-03-01T09:00:00Z", "endTime": "2099-03-31T09:00:01Z" }"""
+
+        assertEquals(HttpStatusCode.BadRequest, client.reserve(body, token).status)
+    }
+
+    @Test
+    fun `reservering van 30 dagen tegen de hoogste dagprijs geeft 201`() = e2eTest { client ->
+        client.put("/cars/1/rental-terms") {
+            bearerAuth(client.login(seedOwnerOfCar1))
+            contentType(ContentType.Application.Json)
+            setBody(RentalTermsRequest(pricePerDay = 999_999.99, pickupLocation = "Stationsplein 1, Gorinchem"))
+        }
+        val token = client.login(otherUserId)
+        val body = """{ "carId": 1, "startTime": "2099-03-01T09:00:00Z", "endTime": "2099-03-31T09:00:00Z" }"""
+
+        val response = client.reserve(body, token)
+
+        assertEquals(HttpStatusCode.Created, response.status)
+        assertEquals(29_999_999.7, response.body<Reservation>().totalPrice)
     }
 
     @Test

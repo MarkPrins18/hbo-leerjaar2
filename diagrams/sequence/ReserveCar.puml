@@ -19,9 +19,9 @@ note right of rt
 end note
 rt -> rt : call.authenticatedUserId()
 rt -> svc : createReservation(userId, request)
-svc -> svc : startTime > nu en endTime > startTime?
+svc -> svc : request.validate(nu) (CarValidation.kt):\nstartTime > nu, endTime > startTime\nen duur hoogstens 30 dagen?
 
-group flow 3a [starttijd in het verleden of eindtijd niet na starttijd]
+group flow 3a [starttijd in het verleden, eindtijd niet na starttijd of langer dan 30 dagen]
     svc --> rt : throw ValidationException
     rt --> app : 400 Bad Request (StatusPages)
     app --> g : foutmelding (stap 1)
