@@ -50,13 +50,13 @@ private fun hash(password: String): String = BCrypt.hashpw(password, BCrypt.gens
 
 private fun existingUser() = User(EXISTING_USER_ID, EXISTING_EMAIL, hash(VALID_PASSWORD))
 
-private fun tokenService() = TokenService(
+private fun tokenService(secret: String = TEST_JWT_SECRET, expirationMinutes: Long = 60) = TokenService(
     JwtConfig(
-        secret = TEST_JWT_SECRET,
+        secret = secret,
         issuer = "carshare",
         audience = "carshare-users",
         realm = "carshare",
-        expirationMinutes = 60
+        expirationMinutes = expirationMinutes
     )
 )
 
@@ -349,5 +349,34 @@ class AuthRoutesTest {
 
         assertEquals(HttpStatusCode.Unauthorized, response.status)
         assertEquals(ErrorResponse(401, "Onjuist e-mailadres of wachtwoord"), response.body<ErrorResponse>())
+    }
+
+    // ---------- GET /users/me with a JWT ----------
+
+    @Test
+    fun `geldig token van de server zelf geeft 200`() = e2eTest { client ->
+        val token = tokenService().createToken(existingUser())
+
+        assertEquals(HttpStatusCode.OK, client.get("/users/me") { bearerAuth(token) }.status)
+    }
+
+    @Test
+    fun `token gesigneerd met een ander secret geeft 401 als ErrorResponse`() = e2eTest { client ->
+        val token = tokenService(secret = "ander-secret-dat-de-server-niet-kent-0123456789").createToken(existingUser())
+
+        val response = client.get("/users/me") { bearerAuth(token) }
+
+        assertEquals(HttpStatusCode.Unauthorized, response.status)
+        assertEquals(401, response.body<ErrorResponse>().status)
+    }
+
+    @Test
+    fun `verlopen token geeft 401 als ErrorResponse`() = e2eTest { client ->
+        val token = tokenService(expirationMinutes = -1).createToken(existingUser())
+
+        val response = client.get("/users/me") { bearerAuth(token) }
+
+        assertEquals(HttpStatusCode.Unauthorized, response.status)
+        assertEquals(401, response.body<ErrorResponse>().status)
     }
 }
