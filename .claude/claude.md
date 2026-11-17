@@ -20,7 +20,7 @@ Schoolproject: Kotlin/Ktor Web API voor een autodeelplatform, gebouwd door een t
 - Eigendomscontrole hoort in de service: geef `userId` door en gooi `ForbiddenException` als het niet klopt.
 
 ## Modules
-- `shared`: alleen `@Serializable` contractklassen (packages `shared.models`, `shared.dto`, `shared.requests`, `shared.responses`), geen logica, geen server-only velden.
+- `shared`: alleen `@Serializable` contractklassen (packages `shared.models`, `shared.requests`, `shared.responses`), geen logica, geen server-only velden.
 - `server`: alle bestaande regels.
 - `composeApp` / `androidApp`: regels volgen zodra er schermen komen.
 

@@ -20,6 +20,7 @@ Here's a list of features included in this project:
 | [kotlinx.serialization](https://start.ktor.io/p/io.ktor/server-kotlinx-serialization) | Handles JSON serialization using kotlinx.serialization library                     |
 | [Exposed](https://start.ktor.io/p/org.jetbrains/server-exposed)                       | Adds Exposed database to your application                                          |
 | [Status Pages](https://start.ktor.io/p/io.ktor/server-status-pages)                   | Provides exception handling for routes                                             |
+| [JWT Authentication](https://start.ktor.io/p/io.ktor/server-auth-jwt)                 | Handles JSON Web Token (JWT) bearer authentication                                 |
 
 ## Modules
 
@@ -57,12 +58,21 @@ export JWT_SECRET="<random string of at least 32 characters>"   # Windows PowerS
 ./kotlin run
 ```
 
+The external APIs use two optional environment variables:
+
+| Variable         | Used for                                                              | Without it                                                       |
+|------------------|-----------------------------------------------------------------------|------------------------------------------------------------------|
+| `RDW_APP_TOKEN`  | RDW open data API, for `POST /cars/import`                            | Importing still works, but the RDW applies stricter rate limits  |
+| `GEMINI_API_KEY` | Gemini API, fills in missing road tax and consumption for `/cost-data`, `/fuel-cost` and `/tco` | Those endpoints return 502 when Gemini is needed |
+
 If the server starts successfully, you'll see the following output:
 
 ```
 2024-12-04 14:32:45.584 [main] INFO  Application - Application started in 0.303 seconds.
 2024-12-04 14:32:45.682 [main] INFO  Application - Responding at http://0.0.0.0:8080
 ```
+
+The API documentation (Swagger UI) is available at `http://localhost:8080/swagger`.
 
 De debug-APK van de Android-app staat na een build in
 `build/tasks/_androidApp_buildAndroidDebug/gradle-project-debug.apk`.
