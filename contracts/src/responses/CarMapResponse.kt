@@ -1,7 +1,7 @@
-package shared.responses
+package contracts.responses
 
 import kotlinx.serialization.Serializable
-import shared.models.Car
+import contracts.models.Car
 
 @Serializable
 data class CarMapResponse(

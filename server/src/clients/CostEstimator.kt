@@ -1,6 +1,6 @@
 package clients
 
-import shared.models.Car
+import contracts.models.Car
 import models.gemini.CarCostEstimate
 
 interface CostEstimator {

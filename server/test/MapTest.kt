@@ -1,4 +1,4 @@
-import shared.requests.CarChangeDto
+import contracts.requests.CarChangeDto
 import io.ktor.client.HttpClient
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
@@ -6,10 +6,10 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.runBlocking
-import shared.models.BEVCar
-import shared.models.Car
+import contracts.models.BEVCar
+import contracts.models.Car
 import models.Location
-import shared.models.VehicleType
+import contracts.models.VehicleType
 import repositories.CarRepository
 import repositories.LocationRepository
 import services.LocationService

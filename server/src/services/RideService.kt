@@ -1,11 +1,11 @@
 package services
 
-import shared.models.ReservationStatus
-import shared.models.Ride
-import shared.models.RideStatus
+import contracts.models.ReservationStatus
+import contracts.models.Ride
+import contracts.models.RideStatus
 import repositories.ReservationRepository
 import repositories.RideRepository
-import shared.requests.RideFinishRequest
+import contracts.requests.RideFinishRequest
 import kotlin.time.Clock
 
 class RideService(

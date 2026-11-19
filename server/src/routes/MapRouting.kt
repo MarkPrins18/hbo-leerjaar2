@@ -8,7 +8,7 @@ import io.ktor.server.routing.*
 import io.ktor.server.util.getOrFail
 import requireAuthentication
 import services.LocationService
-import shared.requests.LocationRequest
+import contracts.requests.LocationRequest
 
 fun Route.mapRoutes(
     locationService: LocationService,

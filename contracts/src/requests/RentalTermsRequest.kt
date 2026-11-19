@@ -1,4 +1,4 @@
-package shared.requests
+package contracts.requests
 
 import kotlinx.datetime.LocalTime
 import kotlinx.serialization.Serializable

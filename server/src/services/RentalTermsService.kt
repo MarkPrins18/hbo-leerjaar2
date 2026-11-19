@@ -1,7 +1,7 @@
 package services
 
-import shared.requests.RentalTermsRequest
-import shared.models.RentalTerms
+import contracts.requests.RentalTermsRequest
+import contracts.models.RentalTerms
 import repositories.CarRepository
 import repositories.RentalTermsRepository
 

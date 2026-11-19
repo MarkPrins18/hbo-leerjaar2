@@ -1,11 +1,11 @@
 package services
 
 import clients.CostEstimator
-import shared.requests.CarChangeDto
-import shared.models.Car
+import contracts.requests.CarChangeDto
+import contracts.models.Car
 import repositories.CarRepository
-import shared.responses.FuelCostResponse
-import shared.responses.TcoResponse
+import contracts.responses.FuelCostResponse
+import contracts.responses.TcoResponse
 
 class CarCostService(
     private val costEstimator: CostEstimator,

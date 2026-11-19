@@ -3,8 +3,8 @@ package services
 import mappers.toResponse
 import repositories.CarRepository
 import repositories.LocationRepository
-import shared.requests.LocationRequest
-import shared.responses.LocationResponse
+import contracts.requests.LocationRequest
+import contracts.responses.LocationResponse
 import kotlin.time.Clock
 
 class LocationService(

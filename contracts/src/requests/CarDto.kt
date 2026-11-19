@@ -1,8 +1,8 @@
-package shared.requests
+package contracts.requests
 
 import kotlinx.serialization.Serializable
-import shared.models.FuelType
-import shared.models.VehicleType
+import contracts.models.FuelType
+import contracts.models.VehicleType
 
 @Serializable
 data class CarDto(

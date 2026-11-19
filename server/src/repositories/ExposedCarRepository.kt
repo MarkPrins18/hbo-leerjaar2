@@ -3,11 +3,11 @@ package repositories
 import mappers.normalizeLicensePlate
 import mappers.toCar
 import models.ACTIVE_RESERVATION_STATUSES
-import shared.models.BEVCar
-import shared.models.Car
-import shared.models.FCEVCar
-import shared.models.ICECar
-import shared.models.RideStatus
+import contracts.models.BEVCar
+import contracts.models.Car
+import contracts.models.FCEVCar
+import contracts.models.ICECar
+import contracts.models.RideStatus
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greater
@@ -22,7 +22,7 @@ import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.update
-import shared.requests.CarChangeDto
+import contracts.requests.CarChangeDto
 import tables.BevCarTable
 import tables.CarTable
 import tables.FcevCarTable

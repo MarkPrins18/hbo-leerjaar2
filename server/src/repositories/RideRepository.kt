@@ -1,7 +1,7 @@
 package repositories
 
-import shared.models.Ride
-import shared.requests.RideFinishRequest
+import contracts.models.Ride
+import contracts.requests.RideFinishRequest
 import kotlin.time.Instant
 
 interface RideRepository {

@@ -1,5 +1,6 @@
 modules:
   - androidApp
-  - composeApp
+  - contracts
+  - iosApp
   - server
   - shared

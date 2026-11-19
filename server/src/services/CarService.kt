@@ -1,14 +1,14 @@
 package services
 
 import repositories.CarRepository
-import shared.requests.*
-import shared.models.*
+import contracts.requests.*
+import contracts.models.*
 import config.PhotoStorage
 import repositories.LocationRepository
 import repositories.PhotoRepository
 import repositories.RentalTermsRepository
 import repositories.ReservationRepository
-import shared.responses.CarMapResponse
+import contracts.responses.CarMapResponse
 
 class CarService(
     private val carRepository: CarRepository,

@@ -1,8 +1,8 @@
 import clients.CostEstimator
 import config.PhotoStorage
-import shared.requests.CarChangeDto
-import shared.requests.CarDto
-import shared.requests.ReservationRequest
+import contracts.requests.CarChangeDto
+import contracts.requests.CarDto
+import contracts.requests.ReservationRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
@@ -19,8 +19,8 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemTemporaryDirectory
 import models.*
-import shared.models.*
-import shared.responses.ErrorResponse
+import contracts.models.*
+import contracts.responses.ErrorResponse
 import models.gemini.CarCostEstimate
 import repositories.*
 import services.CarCostService
@@ -138,7 +138,7 @@ private class UnusedOwnedCarRentalTermsRepository : RentalTermsRepository {
     override suspend fun carExists(carId: Int): Boolean = TODO()
     override suspend fun getRentalTermsByCarId(carId: Int): RentalTerms? = TODO()
     override suspend fun getAllRentalTerms(): List<RentalTerms> = TODO()
-    override suspend fun saveRentalTerms(carId: Int, request: shared.requests.RentalTermsRequest): RentalTerms = TODO()
+    override suspend fun saveRentalTerms(carId: Int, request: contracts.requests.RentalTermsRequest): RentalTerms = TODO()
 }
 
 // ==================== 1. Validation: CarChangeDto.validate() ====================

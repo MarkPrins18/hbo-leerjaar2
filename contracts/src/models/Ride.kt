@@ -1,4 +1,4 @@
-package shared.models
+package contracts.models
 
 import kotlinx.serialization.Serializable
 import kotlin.time.Instant

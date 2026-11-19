@@ -2,7 +2,7 @@ package mappers
 
 import models.Location
 import org.jetbrains.exposed.v1.core.ResultRow
-import shared.responses.LocationResponse
+import contracts.responses.LocationResponse
 import tables.LocationTable
 
 fun ResultRow.toLocation(): Location = Location(

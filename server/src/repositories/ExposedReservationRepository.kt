@@ -2,8 +2,8 @@ package repositories
 
 import mappers.toReservation
 import models.ACTIVE_RESERVATION_STATUSES
-import shared.models.Reservation
-import shared.models.ReservationStatus
+import contracts.models.Reservation
+import contracts.models.ReservationStatus
 import org.jetbrains.exposed.v1.core.Op
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq

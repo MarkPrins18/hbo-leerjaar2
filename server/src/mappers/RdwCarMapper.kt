@@ -1,6 +1,6 @@
 package mappers
 
-import shared.models.*
+import contracts.models.*
 import models.rdw.RdwFuelDto
 import models.rdw.RdwVehicleDto
 import services.UnprocessableException

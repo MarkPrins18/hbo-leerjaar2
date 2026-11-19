@@ -14,7 +14,7 @@ import io.ktor.http.Parameters
 import io.ktor.server.request.receive
 import io.ktor.server.util.getOrFail
 import services.CarFilter
-import shared.requests.*
+import contracts.requests.*
 import kotlin.time.Instant
 
 fun Route.carRoutes(

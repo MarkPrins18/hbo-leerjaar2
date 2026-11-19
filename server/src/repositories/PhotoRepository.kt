@@ -1,6 +1,6 @@
 package repositories
 
-import shared.models.Photo
+import contracts.models.Photo
 
 interface PhotoRepository {
     suspend fun createPhoto(carId: Int, fileName: String): Photo

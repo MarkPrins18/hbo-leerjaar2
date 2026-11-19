@@ -1,4 +1,4 @@
-import shared.requests.RideFinishRequest
+import contracts.requests.RideFinishRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
@@ -12,10 +12,10 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import kotlinx.coroutines.runBlocking
-import shared.models.Reservation
-import shared.models.ReservationStatus
-import shared.models.Ride
-import shared.models.RideStatus
+import contracts.models.Reservation
+import contracts.models.ReservationStatus
+import contracts.models.Ride
+import contracts.models.RideStatus
 import repositories.ExposedLocationRepository
 import repositories.ExposedRideRepository
 import repositories.ReservationRepository

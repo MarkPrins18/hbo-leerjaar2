@@ -1,6 +1,6 @@
 @startuml CarDataModel
 
-package shared.models {
+package contracts.models {
 
     enum FuelType {
         PETROL

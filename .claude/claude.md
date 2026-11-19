@@ -22,9 +22,10 @@ Schoolproject: Kotlin/Ktor Web API voor een autodeelplatform, gebouwd door een t
 - Eigendomscontrole hoort in de service: geef `userId` door en gooi `ForbiddenException` als het niet klopt.
 
 ## Modules
-- `shared`: alleen `@Serializable` contractklassen (packages `shared.models`, `shared.requests`, `shared.responses`), geen logica, geen server-only velden.
+- `contracts`: alleen `@Serializable` contractklassen (packages `contracts.models`, `contracts.requests`, `contracts.responses`), geen logica, geen server-only velden.
 - `server`: alle bestaande regels.
-- `composeApp` / `androidApp`: regels volgen zodra er schermen komen.
+- `shared`: de Compose-UI (Android + iOS), opgezet zoals de demo's van de docent. Regels volgen zodra er schermen komen.
+- `androidApp` / `iosApp`: alleen het startpunt dat `App()` toont. `iosApp` bouwt alleen op macOS; op Windows slaat `./kotlin build` iOS over.
 
 ## Database
 - H2-bestand (`MODE=MySQL`) via Exposed. Bij elke start wordt het schema gereset en opnieuw geseed.

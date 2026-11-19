@@ -26,13 +26,13 @@ skinparam legendBorderColor #8A94A6
 
 package "shared" #E8E0F5 {
     class SharedModels <<file>> {
-        shared.models
+        contracts.models
         --
         Car (ICE / BEV / FCEV), Photo
         RentalTerms, Reservation, Ride
     }
     class SharedRequests <<file>> {
-        shared.requests
+        contracts.requests
         --
         CarDto, CarChangeDto
         RentalTermsRequest, RideFinishRequest
@@ -40,7 +40,7 @@ package "shared" #E8E0F5 {
         ReservationRequest, LocationRequest
     }
     class SharedResponses <<file>> {
-        shared.responses
+        contracts.responses
         --
         LoginResponse, UserResponse
         FuelCostResponse, TcoResponse

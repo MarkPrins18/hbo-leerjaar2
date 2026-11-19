@@ -1,4 +1,4 @@
-package shared.models
+package contracts.models
 
 import kotlinx.datetime.LocalTime
 import kotlinx.serialization.Serializable

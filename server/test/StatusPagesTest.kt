@@ -3,7 +3,7 @@ import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
-import shared.responses.ErrorResponse
+import contracts.responses.ErrorResponse
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

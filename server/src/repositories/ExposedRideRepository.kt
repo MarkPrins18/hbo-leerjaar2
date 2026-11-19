@@ -1,10 +1,10 @@
 package repositories
 
 import mappers.toRide
-import shared.models.Ride
-import shared.models.ReservationStatus
-import shared.models.RideStatus
-import shared.requests.RideFinishRequest
+import contracts.models.Ride
+import contracts.models.ReservationStatus
+import contracts.models.RideStatus
+import contracts.requests.RideFinishRequest
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq

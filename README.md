@@ -27,13 +27,14 @@ Here's a list of features included in this project:
 | Module       | Type              | Beschrijving                                                        |
 |--------------|-------------------|---------------------------------------------------------------------|
 | `server`     | JVM (Ktor)        | De Web API: routes, services, repositories en database              |
-| `shared`     | KMP-bibliotheek   | `@Serializable` contractklassen (models, requests, responses)      |
-| `composeApp` | KMP-bibliotheek   | Compose Multiplatform-UI (voorlopig alleen Android)                 |
-| `androidApp` | Android-app       | Android-app (`nl.carsharing.app`) die `composeApp` start            |
+| `contracts`  | KMP-bibliotheek   | `@Serializable` contractklassen (models, requests, responses)      |
+| `shared`     | KMP-bibliotheek   | Compose Multiplatform-UI (Android en iOS)                           |
+| `androidApp` | Android-app       | Android-app (`nl.carsharing.app`) die `shared` start                |
+| `iosApp`     | iOS-app           | iOS-app die `shared` start; alleen te bouwen op macOS met Xcode     |
 
 ## Android SDK
 
-Voor `composeApp` en `androidApp` is een Android SDK nodig. Amper downloadt ontbrekende SDK-onderdelen (build-tools,
+Voor `shared` en `androidApp` is een Android SDK nodig. Amper downloadt ontbrekende SDK-onderdelen (build-tools,
 platform) zelf bij de eerste build; die build duurt daardoor langer en heeft internet nodig. Op een machine zonder enige
 Android SDK is dit nog niet geverifieerd (getest met een bestaande Android Studio-SDK met geaccepteerde licenties in
 `%LOCALAPPDATA%\Android\Sdk`). Faalt de build daar: installeer de SDK via Android Studio of accepteer de licenties met
@@ -81,7 +82,7 @@ De debug-APK van de Android-app staat na een build in
 
 De server luistert lokaal op `http://0.0.0.0:8080`. In de Android-emulator is de eigen machine bereikbaar via
 `10.0.2.2`, dus de app praat standaard met `http://10.0.2.2:8080` (`DEFAULT_BASE_URL` in
-`composeApp/src/api/ApiClient.kt`). Start eerst de server met `./kotlin run` en daarna de app in de emulator.
+`shared/src/api/ApiClient.kt`). Start eerst de server met `./kotlin run` en daarna de app in de emulator.
 
 - Onversleuteld HTTP is alleen toegestaan voor `10.0.2.2` en `localhost`
   (`androidApp/res/xml/network_security_config.xml`).

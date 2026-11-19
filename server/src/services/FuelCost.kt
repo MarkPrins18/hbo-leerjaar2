@@ -1,7 +1,7 @@
 package services
 
-import shared.models.*
-import shared.responses.FuelCostResponse
+import contracts.models.*
+import contracts.responses.FuelCostResponse
 import kotlin.math.round
 
 // Prices in EUR per unit. Fixed values: update them by hand when prices change.

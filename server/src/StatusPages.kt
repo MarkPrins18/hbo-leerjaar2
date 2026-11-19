@@ -11,7 +11,7 @@ import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
 import org.jetbrains.exposed.v1.exceptions.ExposedSQLException
 import services.ApiException
-import shared.responses.ErrorResponse
+import contracts.responses.ErrorResponse
 
 fun Application.configureStatusPages() {
     install(StatusPages) {

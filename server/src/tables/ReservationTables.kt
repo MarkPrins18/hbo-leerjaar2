@@ -1,6 +1,6 @@
 package tables
 
-import shared.models.ReservationStatus
+import contracts.models.ReservationStatus
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.datetime.timestamp
 import org.jetbrains.exposed.v1.core.less

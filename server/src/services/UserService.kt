@@ -5,8 +5,8 @@ import models.User
 import org.mindrot.jbcrypt.BCrypt
 import repositories.RideRepository
 import repositories.UserRepository
-import shared.requests.RegisterRequest
-import shared.responses.UserResponse
+import contracts.requests.RegisterRequest
+import contracts.responses.UserResponse
 
 class UserService(
     private val userRepository: UserRepository,

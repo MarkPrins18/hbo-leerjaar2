@@ -6,9 +6,9 @@ import requireAuthentication
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.*
-import shared.requests.LoginRequest
-import shared.requests.RegisterRequest
-import shared.responses.LoginResponse
+import contracts.requests.LoginRequest
+import contracts.requests.RegisterRequest
+import contracts.responses.LoginResponse
 import services.AuthService
 import services.UserService
 

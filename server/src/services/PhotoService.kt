@@ -1,6 +1,6 @@
 package services
 
-import shared.models.Photo
+import contracts.models.Photo
 import repositories.CarRepository
 import repositories.PhotoRepository
 import config.PhotoStorage

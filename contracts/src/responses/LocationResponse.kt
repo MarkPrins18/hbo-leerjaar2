@@ -1,4 +1,4 @@
-package shared.responses
+package contracts.responses
 
 import kotlinx.serialization.Serializable
 import kotlin.time.Instant

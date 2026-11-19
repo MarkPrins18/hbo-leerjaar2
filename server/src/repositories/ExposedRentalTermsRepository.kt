@@ -1,8 +1,8 @@
 package repositories
 
-import shared.requests.RentalTermsRequest
+import contracts.requests.RentalTermsRequest
 import mappers.toRentalTerms
-import shared.models.RentalTerms
+import contracts.models.RentalTerms
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.statements.UpdateBuilder
 import org.jetbrains.exposed.v1.jdbc.insert

@@ -1,12 +1,12 @@
 import clients.VehicleRegistry
-import shared.requests.CarChangeDto
-import shared.requests.CarDto
+import contracts.requests.CarChangeDto
+import contracts.requests.CarDto
 import kotlinx.coroutines.runBlocking
 import mappers.normalizeLicensePlate
-import shared.models.BEVCar
-import shared.models.Car
+import contracts.models.BEVCar
+import contracts.models.Car
 import models.User
-import shared.models.VehicleType
+import contracts.models.VehicleType
 import models.rdw.RdwFuelDto
 import models.rdw.RdwVehicleDto
 import repositories.CarRepository

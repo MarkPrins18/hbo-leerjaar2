@@ -4,8 +4,8 @@ import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 import mappers.normalizeLicensePlate
-import shared.models.*
-import shared.requests.*
+import contracts.models.*
+import contracts.requests.*
 import models.gemini.CarCostEstimate
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days

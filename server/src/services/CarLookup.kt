@@ -1,6 +1,6 @@
 package services
 
-import shared.models.Car
+import contracts.models.Car
 import repositories.CarRepository
 import kotlin.coroutines.cancellation.CancellationException
 

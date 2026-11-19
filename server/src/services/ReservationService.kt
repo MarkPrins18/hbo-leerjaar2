@@ -5,9 +5,9 @@ import repositories.CarRepository
 import repositories.RentalTermsRepository
 import repositories.ReservationRepository
 import repositories.UserRepository
-import shared.models.Reservation
-import shared.models.ReservationStatus
-import shared.requests.ReservationRequest
+import contracts.models.Reservation
+import contracts.models.ReservationStatus
+import contracts.requests.ReservationRequest
 import kotlin.time.Clock
 
 class ReservationService(
