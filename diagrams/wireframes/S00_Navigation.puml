@@ -45,6 +45,7 @@ state "Account (ingelogd)" as Account {
   state "S08a2 wachtwoord wijzigen\n(dialog)" as S08a2 <<popup>>
   state "S08a3 account verwijderen\n(dialog)" as S08a3 <<popup>>
   state "S08b probleem melden\n(dialog)" as S08b <<popup>>
+  state "S08c taal\n(dialog)" as S08c <<popup>>
   state "S09 RideHistoryScreen\nrittenhistorie" as S09
   state "S09a ritdetails\n(dialog)" as S09a <<popup>>
   state "S10 MyCarsScreen\nmijn auto's" as S10
@@ -95,6 +96,9 @@ S08a3 --> S01 : [Verwijderen]\n(uitgelogd)
 S08 --> S08b : Probleem melden
 S08b -[dashed]-> S08 : [Annuleren]
 S08b --> S08 : [Versturen]
+S08 --> S08c : Taal
+S08c -[dashed]-> S08 : [Annuleren]
+S08c --> S08 : [Opslaan]
 S08 --> S09 : Rittenhistorie
 S09 -[dashed]-> S08 : terug
 S09 --> S09a : tik op rit

@@ -1,14 +1,20 @@
 @startsalt S08_AccountScreen
 !include _phone.iuml
-title S08 – Wireframe: account (AccountScreen) met S08a account, S08a1–S08a3 wijzigen en S08b probleem melden
+title S08 – Wireframe: account (AccountScreen) met S08a account, S08a1–S08a3 wijzigen, S08b probleem melden en S08c taal
 
 ' Empty row between two rows of phones.
 !procedure $phones_row_gap()
-<size:24><U+200B></size> | . | . | . | .
+<size:24><U+200B></size> | . | . | . | . | . | .
+!endprocedure
+
+' Four phones side by side (same layout as $phones_begin3).
+!procedure $phones_begin4($caption1, $caption2, $caption3, $caption4)
+<b>$caption1 | $hs(40) | <b>$caption2 | $hs(40) | <b>$caption3 | $hs(40) | <b>$caption4
+{+
 !endprocedure
 
 {
-$phones_begin3("S08 – AccountScreen", "S08a – account (dialog)", "S08b – probleem melden (dialog)")
+$phones_begin4("S08 – AccountScreen", "S08a – account (dialog)", "S08b – probleem melden (dialog)", "S08c – taal (dialog)")
 $phone_top("Account", %false())
   $card_begin("")
     { <color:$grey_icon><&person*4></color> | $hs(4) | {
@@ -20,6 +26,10 @@ $phone_top("Account", %false())
   .
   $section("Uiterlijk")
   $toggle_row("Donkere modus", %false())
+  $section("Taal")
+  $list_begin()
+    <&globe> $hs(6)Taal$hs(176)$muted_text("Nederlands") | $hs(12)<size:16>></size>
+  $list_end()
   $section("Jouw auto's")
   $menu_row("key", "Mijn auto's (2)")
   $section("Ritten")
@@ -30,7 +40,8 @@ $phone_top("Account", %false())
   [                Uitloggen                ]
   ..
   $menu_row("bug", "Probleem melden")
-  $note("Mijn auto's: S10 · Rittenhistorie: S09 · Probleem melden: S08b")
+  $note("Taal: S08c · Mijn auto's: S10 · Rittenhistorie: S09")
+  $note("Probleem melden: S08b")
 $phone_bottom("Account")
 $phones_next()
 $phone_top("Account", %false())
@@ -73,6 +84,22 @@ $phone_top("Account", %false())
     { [     Annuleren    ] | [     Versturen      ] }
   $dialog_end()
   $scrim(113, "")
+$phone_bottom("Account")
+$phones_next()
+$phone_top("Account", %false())
+  $scrim(160, "overlay op S08")
+  $dialog_begin("Taal")
+    $muted_text("Kies de taal van de app")
+    ..
+    (X) Nederlands (standaard)
+    ..
+    () English
+    ..
+    $note("de app wordt direct in de gekozen taal getoond")
+    .
+    { [     Annuleren    ] | [      Opslaan       ] }
+  $dialog_end()
+  $scrim(160, "")
 $phone_bottom("Account")
 $phones_end()
 $phones_row_gap()
@@ -148,6 +175,9 @@ legend bottom
   S08b probleem melden: geen endpoint (nog uit te werken); bugs, crashes en suggesties voor de ontwikkelaars
   S08a [Sluiten] en S08b [Annuleren]/[Versturen]: terug naar S08; S08a1–S08a3 [Annuleren]/[Opslaan]: terug naar S08a,
     S08a3 [Verwijderen]: uitgelogd, naar S01
+  S08c [Annuleren]/[Opslaan]: terug naar S08
+  Taal: alleen in de app (lokaal opgeslagen, standaard Nederlands); geen endpoint nodig;
+    foutmeldingen van de server zijn voorlopig alleen Nederlands
   Donkere modus en uitloggen (token weg): alleen in de app
 endlegend
 @endsalt
