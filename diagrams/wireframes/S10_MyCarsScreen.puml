@@ -1,0 +1,27 @@
+@startsalt S10_MyCarsScreen
+!include _phone.iuml
+title S10 – Wireframe: mijn auto's (MyCarsScreen)
+{+
+$phone_top("Mijn auto's", %true())
+  {+
+    <b>Toyota Yaris$hs(258)
+    AB-123-C
+    { [      Bewerken      ] | [    Voorwaarden    ] }
+    { [       Kosten       ] | [    Verwijderen    ] }
+  }
+  {+
+    <b>Tesla Model 3$hs(251)
+    XY-456-Z
+    { [      Bewerken      ] | [    Voorwaarden    ] }
+    { [       Kosten       ] | [    Verwijderen    ] }
+  }
+  ..
+  [            + Auto toevoegen             ]
+$phone_bottom("Account")
+}
+legend bottom
+  Backendfuncties:
+  * carService.getCarsByOwner — GET /cars/mine (#13)
+  * carService.deleteCar — DELETE /cars/{id} (#3)
+endlegend
+@endsalt

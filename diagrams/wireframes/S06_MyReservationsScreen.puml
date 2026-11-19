@@ -1,0 +1,36 @@
+@startsalt S06_MyReservationsScreen
+!include _phone.iuml
+title S06 – Wireframe: mijn reserveringen (MyReservationsScreen)
+{+
+$phone_top("Ritten", %false())
+  {+
+    <b>Lopende rit$hs(265)
+    { Gestart om 14:05$hs(130) | [  Bekijken  ] }
+  }
+  <i>alleen als er een lopende rit is, Bekijken: S07 ActiveRideScreen
+  ..
+  <b>Mijn reserveringen
+  {+
+    <b>Toyota Yaris$hs(258)
+    20-11-2026 10:00 - 21-11-2026 10:00
+    { Bevestigd$hs(187) | € 45,00 }
+    { [    Route    ] | [ Start rit  ] | [  Annuleren  ] }
+  }
+  {+
+    <b>Tesla Model 3$hs(251)
+    02-12-2026 09:00 - 04-12-2026 18:00
+    { In afwachting$hs(169) | € 158,00 }
+    { [    Route    ] | [ Start rit  ] | [  Annuleren  ] }
+  }
+  <i>Route: opent Google Maps
+$phone_bottom("Ritten")
+}
+legend bottom
+  Backendfuncties:
+  * reservationService.getReservationsForUser — GET /reservations (#13)
+  * rideService.getActiveRide — GET /rides/active (#13)
+  * locationService.getMapsUrl — GET /cars/{carId}/maps (#10)
+  * reservationService.cancelReservation — PATCH /reservations/{id}/cancel (#9)
+  * rideService.startRide — POST /reservations/{id}/rides (#11)
+endlegend
+@endsalt

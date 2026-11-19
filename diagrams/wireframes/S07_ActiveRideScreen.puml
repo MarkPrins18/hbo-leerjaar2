@@ -1,0 +1,39 @@
+@startsalt S07_ActiveRideScreen
+!include _phone.iuml
+title S07 – Wireframe: lopende rit (ActiveRideScreen)
+{+
+$phone_top("Lopende rit", %true())
+  {
+    Reservering$hs(79) | 12
+    Gestart            | 20-11-2026 14:05
+    Status             | Bezig
+  }
+  [                  Route                  ]
+  ..
+  <b>Rit afronden
+  <i>gemeten via GPS/sensoren (alleen-lezen)
+  {
+    Afstand$hs(103)       | 42.300 m
+    Gem. acceleratie      | 1,4 m/s²
+    Gem. vertraging       | 1,9 m/s²
+    Parkeerplek (breedte) | 51.5890
+    Parkeerplek (lengte)  | 4.7760
+  }
+  <i>sensoren nog uit te werken
+  [              Rit afronden               ]
+  ..
+  <b>Resultaat
+  {
+    Beëindigd$hs(91) | 20-11-2026 15:20
+    Afstand          | 42.300 m
+    Bonuspunten      | +12
+  }
+$phone_bottom("Ritten")
+}
+legend bottom
+  Backendfuncties:
+  * rideService.getActiveRide — GET /rides/active (#13)
+  * locationService.getMapsUrl — GET /cars/{carId}/maps (#10)
+  * rideService.finishRide — PATCH /rides/{id}/finish (#11, #12)
+endlegend
+@endsalt

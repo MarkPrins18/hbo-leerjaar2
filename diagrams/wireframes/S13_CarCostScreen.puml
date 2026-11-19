@@ -1,0 +1,36 @@
+@startsalt S13_CarCostScreen
+!include _phone.iuml
+title S13 – Wireframe: kosten van de auto (CarCostScreen)
+{+
+$phone_top("Kosten", %true())
+  <b>Toyota Yaris (AB-123-C)
+  ..
+  <b>Totale kosten (TCO)
+  {
+    Jaarkilometers$hs(66) | "15000     " | [ Berekenen  ]
+  }
+  {
+    Brandstof per jaar$hs(49) | € 798,00
+    Wegenbelasting per jaar   | € 392,00
+    Totaal per jaar           | <b>€ 1.190,00
+    Totaal per maand          | € 99,17
+  }
+  ..
+  <b>Verbruikskosten
+  {
+    Afstand (km)$hs(76) | "100       " | [ Berekenen  ]
+  }
+  {
+    Categorie$hs(92)    | benzine
+    Verbruik per 100 km | 3,8 l
+    Prijs per eenheid   | € 2,10 per l
+    Geschatte kosten    | <b>€ 7,98
+  }
+$phone_bottom("Account")
+}
+legend bottom
+  Backendfuncties:
+  * carCostService.getTco — GET /cars/{id}/tco?annualKm (#6)
+  * carCostService.getFuelCost — GET /cars/{id}/fuel-cost?distanceKm (#7)
+endlegend
+@endsalt

@@ -1,0 +1,54 @@
+@startsalt S11_CarFormScreen
+!include _phone.iuml
+title S11 – Wireframe: auto toevoegen of bewerken (CarFormScreen)
+{+
+$phone_top("Auto toevoegen / bewerken", %true())
+  <b>Toevoegen
+  {
+    Kenteken$hs(93) | "AB-123-C               "
+  }
+  [             Ophalen bij RDW             ]
+  <i>daarna verder als bewerken
+  ..
+  <b>Bewerken
+  {
+    Kenteken$hs(93)         | "AB-123-C               "
+    Merk                    | "Toyota                 "
+    Model                   | "Yaris                  "
+    Bouwjaar                | "2021                   "
+    Uitvoering              | "1.5 Hybrid             "
+    Kleur                   | "Wit                    "
+    Stoelen                 | "5                      "
+    Deuren                  | "5                      "
+    Voertuigsoort           | ^Personenauto         ^
+    Gewicht rijklaar (kg)   | "1165                   "
+    Verbruik per 100 km     | "3,8                    "
+    CO2-uitstoot (g/km)     | "87                     "
+    Wegenbelasting/kwartaal | "98,00                  "
+    Brandstof               | ^Benzine              ^
+    Tankinhoud (l)          | "36                     "
+    Automaat                | [X]
+    Accucapaciteit (kWh)    | "                       "
+    Tankinhoud (kg H2)      | "                       "
+  }
+  <i>alleen velden van eigen type (brandstof/elektrisch/waterstof)
+  <b>Foto's
+  { [  Foto 1   ] | [  Foto 2   ] | [ Foto toevoegen ] }
+  <b>Locatie
+  {
+    Breedtegraad$hs(71) | "51.5890                "
+    Lengtegraad         | "4.7760                 "
+  }
+  [                 Opslaan                 ]
+$phone_bottom("Account")
+}
+legend bottom
+  Backendfuncties:
+  * carImportService.importCar — POST /cars/import (#3)
+  * carService.getCarByLicensePlate — GET /cars/license-plate/{licensePlate} (#3)
+  * carService.updateCar — PATCH /cars/{id} (#3)
+  * locationService.setLocation — PUT /cars/{id}/location (#3)
+  * photoService.uploadPhoto — POST /cars/{id}/photos (#4)
+  * photoService.getPhotos — GET /cars/{id}/photos (#4)
+endlegend
+@endsalt

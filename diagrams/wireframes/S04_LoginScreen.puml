@@ -1,0 +1,22 @@
+@startsalt S04_LoginScreen
+!include _phone.iuml
+title S04 – Wireframe: inloggen (LoginScreen)
+{+
+$phone_top("Rent my car", %false())
+  <b>Inloggen
+  .
+  E-mailadres
+  "                                         "
+  Wachtwoord
+  "••••••••••                               "
+  .
+  [                Inloggen                 ]
+  .
+  Nog geen account? <u>Registreren</u>
+$phone_bottom("")
+}
+legend bottom
+  Backendfuncties:
+  * authService.login — POST /users/login (#2)
+endlegend
+@endsalt

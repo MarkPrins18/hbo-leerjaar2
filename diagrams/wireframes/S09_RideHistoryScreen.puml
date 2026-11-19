@@ -1,0 +1,18 @@
+@startsalt S09_RideHistoryScreen
+!include _phone.iuml
+title S09 – Wireframe: rittenhistorie (RideHistoryScreen)
+{+
+$phone_top("Rittenhistorie", %true())
+  {#
+    Start$hs(79) | Einde$hs(73) | Afstand$hs(25) | Punten$hs(6)
+    18-11-2026 09:10 | 18-11-2026 10:02 | 31.400 m | 9
+    12-11-2026 13:30 | 12-11-2026 16:45 | 88.000 m | 20
+    05-11-2026 08:15 | 05-11-2026 08:50 | 12.700 m | 4
+  }
+$phone_bottom("Account")
+}
+legend bottom
+  Backendfuncties:
+  * rideService.getRides — GET /rides (#13)
+endlegend
+@endsalt

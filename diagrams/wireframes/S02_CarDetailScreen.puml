@@ -1,0 +1,48 @@
+@startsalt S02_CarDetailScreen
+!include _phone.iuml
+title S02 – Wireframe: autodetails (CarDetailScreen)
+{+
+$phone_top("Toyota Yaris", %true())
+  { [   Foto 1    ] | [   Foto 2   ] | [   Foto 3    ] }
+  ..
+  <b>Auto
+  {
+    Kenteken$hs(93)  | AB-123-C
+    Merk / model     | Toyota Yaris
+    Uitvoering       | 1.5 Hybrid
+    Bouwjaar         | 2021
+    Kleur            | Wit
+    Stoelen / deuren | 5 / 5
+    Voertuigsoort    | Personenauto
+    Gewicht rijklaar | 1.165 kg
+    Verbruik         | 3,8 l/100 km
+    CO2-uitstoot     | 87 g/km
+    Wegenbelasting   | € 98,00 per kwartaal
+    Brandstof        | Benzine
+    Tankinhoud       | 36 l
+    Automaat         | ja
+  }
+  <i>elektrisch: accucapaciteit (kWh),
+  <i>waterstof: tankinhoud (kg H2)
+  ..
+  <b>Huurvoorwaarden
+  {
+    Prijs per dag$hs(77) | € 45,00
+    Ophaallocatie        | Hoofdstraat 1, Breda
+    Ophalen tussen       | 08:00 - 20:00
+    Inleverlocatie       | Hoofdstraat 1, Breda
+    Inleveren tussen     | 08:00 - 22:00
+  }
+  [                  Huren                  ]
+  <i>niet ingelogd: eerst S04 LoginScreen,
+  <i>daarna S03 ReservationScreen
+$phone_bottom("Zoeken")
+}
+legend bottom
+  Backendfuncties:
+  * carService.getCarById — GET /cars/{id}
+  * photoService.getPhotos — GET /cars/{id}/photos (#4)
+  * photoService.getPhotoData — GET /photos/{id} (#4)
+  * rentalTermsService.getRentalTerms — GET /cars/{id}/rental-terms (#5)
+endlegend
+@endsalt

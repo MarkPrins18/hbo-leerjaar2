@@ -1,0 +1,36 @@
+@startsalt S01_HomeScreen
+!include _phone.iuml
+title S01 – Wireframe: auto's zoeken (HomeScreen)
+{+
+$phone_top("Rent my car", %false())
+  <b>Filters
+  {
+    Max prijs per dag (€)$hs(34) | "                       "
+    Max afstand (km)             | "                       "
+    Periode start                | "dd-mm-jjjj uu:mm       "
+    Periode eind                 | "dd-mm-jjjj uu:mm       "
+  }
+  [                 Zoeken                  ]
+  ..
+  <b>Beschikbare auto's
+  {+
+    <b>Toyota Yaris$hs(258)
+    { € 45,00 per dag$hs(156) | 2,4 km }
+  }
+  {+
+    <b>Tesla Model 3$hs(251)
+    { € 79,00 per dag$hs(156) | 5,1 km }
+  }
+  {+
+    <b>Hyundai Nexo$hs(250)
+    { € 65,00 per dag$hs(156) | 8,7 km }
+  }
+  <i>tik op een auto: S02 CarDetailScreen
+$phone_bottom("Zoeken")
+}
+legend bottom
+  Backendfuncties:
+  * carService.getCarMap — GET /cars/map?maxPrice&maxDistanceKm&latitude&longitude&startTime&endTime (#8)
+  let op: endpoint vereist nu nog login, moet openbaar worden
+endlegend
+@endsalt

@@ -1,0 +1,27 @@
+@startsalt S12_RentalTermsScreen
+!include _phone.iuml
+title S12 – Wireframe: huurvoorwaarden (RentalTermsScreen)
+{+
+$phone_top("Huurvoorwaarden", %true())
+  <b>Toyota Yaris (AB-123-C)
+  ..
+  {
+    Prijs per dag (€)$hs(59) | "45,00                  "
+    Ophaallocatie            | "Hoofdstraat 1, Breda   "
+    Ophalen vanaf            | "08:00                  "
+    Ophalen tot              | "20:00                  "
+    Inleverlocatie           | "Hoofdstraat 1, Breda   "
+    Inleveren vanaf          | "08:00                  "
+    Inleveren tot            | "22:00                  "
+  }
+  <i>prijs en ophaallocatie verplicht, de rest optioneel
+  .
+  [                 Opslaan                 ]
+$phone_bottom("Account")
+}
+legend bottom
+  Backendfuncties:
+  * rentalTermsService.getRentalTerms — GET /cars/{id}/rental-terms (#5)
+  * rentalTermsService.setRentalTerms — PUT /cars/{id}/rental-terms (#5)
+endlegend
+@endsalt

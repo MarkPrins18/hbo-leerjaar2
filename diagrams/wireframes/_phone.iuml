@@ -1,0 +1,63 @@
+' Shared phone frame for all wireframes (reference: Samsung Galaxy S26, portrait, ~360x800 dp, 20:9).
+' Usage inside the outer {+ block:
+'   $phone_top("Title", %true())     back arrow, %false() for a tab root screen
+'   ... content ...
+'   $phone_bottom("Ritten")          active tab: Ritten, Zoeken or Account; "" = no bottom navigation
+'
+' Fixed sizes keep every screen 362 x 803 px with aligned columns:
+'   Salt sizes fields and buttons by character count (8 px per character, spaces included).
+'   label/value grid : first label padded with $hs(..) to a 144 px label column, fields of 23 characters
+'   full width       : fields and buttons of 41 characters (332 px)
+'   card ({+ ... })  : title padded with $hs(..) to 330 px
+'   content taller than the screen does not fit: shorten it or add a "scrollt verder" note
+
+!$frame_width = 360
+!$content_height = 476
+!$nav_height = 47
+
+' Invisible horizontal spacer of $px pixels (em spaces at font size 1).
+!function $hs($px)
+!$s = ""
+!$i = 0
+!while $i < $px
+!$s = $s + "<U+2003>"
+!$i = $i + 1
+!endwhile
+!return "<size:1>" + $s + "</size>"
+!endfunction
+
+!procedure $phone_top($title, $back)
+{ $hs(14)12:30 | $hs(226) | <&signal> <&wifi> <&battery-full> 100% }
+.
+!if $back
+{ $hs(14)<size:18>← | <size:18>$title }
+!else
+{ $hs(14)<size:18>$title }
+!endif
+==
+{
+$hs(10)<size:$content_height><U+200B></size> | {
+!endprocedure
+
+!procedure $phone_bottom($active)
+}
+}
+!if $active != ""
+--
+{
+$hs(50)<&list*2> | $hs(50)<&magnifying-glass*2> | $hs(50)<&person*2>
+!if $active == "Ritten"
+$hs(42)<b>Ritten | $hs(38)Zoeken | $hs(36)Account
+!elseif $active == "Zoeken"
+$hs(44)Ritten | $hs(38)<b>Zoeken | $hs(36)Account
+!else
+$hs(44)Ritten | $hs(38)Zoeken | $hs(34)<b>Account
+!endif
+$hs(118) | $hs(118) | $hs(118)
+}
+!else
+<size:$nav_height><U+200B></size>
+!endif
+{ $hs(130) | {+ $hs(96) } }
+$hs($frame_width)
+!endprocedure

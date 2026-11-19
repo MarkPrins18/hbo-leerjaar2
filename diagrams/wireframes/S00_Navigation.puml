@@ -1,0 +1,82 @@
+@startuml S00_Navigation
+title S00 – Navigatie tussen de schermen (Rent my car)
+hide empty description
+left to right direction
+skinparam shadowing false
+skinparam state {
+  BackgroundColor White
+  BorderColor #444444
+  ArrowColor #444444
+  FontSize 12
+}
+
+state "Bottom navigation\n(op elk scherm behalve S04/S05)" as Nav #EEEEEE
+
+state "Zoeken (openbaar)" as Zoeken {
+  state "S01 HomeScreen\nauto's zoeken" as S01
+  state "S02 CarDetailScreen\nautodetails" as S02
+  state "S03 ReservationScreen\nreserveren" as S03
+}
+
+state "Login / Registratie" as Auth {
+  state "S04 LoginScreen\ninloggen" as S04
+  state "S05 RegisterScreen\nregistreren" as S05
+  state "ingelogd" as Ingelogd <<choice>>
+}
+
+state "Ritten (ingelogd)" as Ritten {
+  state "S06 MyReservationsScreen\nmijn reserveringen" as S06
+  state "S07 ActiveRideScreen\nlopende rit" as S07
+}
+
+state "Account (ingelogd)" as Account {
+  state "S08 AccountScreen\naccount" as S08
+  state "S09 RideHistoryScreen\nrittenhistorie" as S09
+  state "S10 MyCarsScreen\nmijn auto's" as S10
+  state "S11 CarFormScreen\nauto toevoegen/bewerken" as S11
+  state "S12 RentalTermsScreen\nhuurvoorwaarden" as S12
+  state "S13 CarCostScreen\nkosten" as S13
+}
+
+[*] --> S01 : app start
+
+S01 --> S02 : tik op auto
+S02 -[dashed]-> S01 : terug
+S02 --> S03 : [Huren]
+S03 -[dashed]-> S02 : terug
+S02 --> S04 : [Huren]\n(niet ingelogd)
+
+S04 --> S05 : Registreren
+S05 -[dashed]-> S04 : terug
+S04 --> Ingelogd : [Inloggen]
+S05 --> Ingelogd : [Registreren]\n(logt automatisch in)
+Ingelogd --> S03 : kwam van [Huren]
+Ingelogd --> S06 : kwam van tab Ritten
+Ingelogd --> S08 : kwam van tab Account
+
+S06 --> S07 : [Start rit] /\nbanner "Lopende rit"
+S07 -[dashed]-> S06 : terug\n(na [Rit afronden])
+
+S08 --> S09 : Rittenhistorie
+S09 -[dashed]-> S08 : terug
+S08 --> S10 : Mijn auto's
+S10 -[dashed]-> S08 : terug
+S10 --> S11 : [Bewerken] /\n[+ Auto toevoegen]
+S11 -[dashed]-> S10 : terug
+S11 --> S10 : [Opslaan]
+S10 --> S12 : [Voorwaarden]
+S12 -[dashed]-> S10 : terug
+S12 --> S10 : [Opslaan]
+S10 --> S13 : [Kosten]
+S13 -[dashed]-> S10 : terug
+S08 --> S01 : [Uitloggen]
+
+Nav --> S01 : tab Zoeken
+Nav --> S06 : tab Ritten
+Nav --> S08 : tab Account
+Nav --> S04 : tab Ritten/Account\n(niet ingelogd)
+
+legend bottom
+  doorgetrokken pijl: knop of actie, gestippeld: terug (←)
+endlegend
+@enduml

@@ -1,0 +1,21 @@
+@startsalt S05_RegisterScreen
+!include _phone.iuml
+title S05 – Wireframe: registreren (RegisterScreen)
+{+
+$phone_top("Registreren", %true())
+  E-mailadres
+  "                                         "
+  Wachtwoord
+  "••••••••••                               "
+  .
+  [               Registreren               ]
+  .
+  <i>na registreren logt de app automatisch in
+$phone_bottom("")
+}
+legend bottom
+  Backendfuncties:
+  * userService.register — POST /users/register (#1)
+  * authService.login — POST /users/login (#2)
+endlegend
+@endsalt

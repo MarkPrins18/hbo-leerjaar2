@@ -1,0 +1,26 @@
+@startsalt S03_ReservationScreen
+!include _phone.iuml
+title S03 – Wireframe: reserveren (ReservationScreen)
+{+
+$phone_top("Reserveren", %true())
+  {+
+    <b>Toyota Yaris$hs(258)
+    AB-123-C
+    € 45,00 per dag
+  }
+  ..
+  Starttijd
+  "dd-mm-jjjj uu:mm                         "
+  Eindtijd
+  "dd-mm-jjjj uu:mm                         "
+  .
+  [         Reservering bevestigen          ]
+  ..
+  <i>na bevestigen: status en totaalprijs van de reservering
+$phone_bottom("Zoeken")
+}
+legend bottom
+  Backendfuncties:
+  * reservationService.createReservation — POST /reservations (#9)
+endlegend
+@endsalt

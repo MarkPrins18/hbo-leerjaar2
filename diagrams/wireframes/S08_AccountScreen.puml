@@ -1,0 +1,25 @@
+@startsalt S08_AccountScreen
+!include _phone.iuml
+title S08 – Wireframe: account (AccountScreen)
+{+
+$phone_top("Account", %false())
+  {+
+    <b>jan@voorbeeld.nl$hs(230)
+    Bonuspunten: 128
+  }
+  .
+  { <&clock> $hs(6)Rittenhistorie$hs(229) | <size:16>> }
+  ..
+  { <&key> $hs(6)Mijn auto's (verhuurder)$hs(172) | <size:16>> }
+  ..
+  .
+  [                Uitloggen                ]
+  <i>Uitloggen: de app verwijdert het token
+$phone_bottom("Account")
+}
+legend bottom
+  Backendfuncties:
+  * userService.getUserResponse — GET /users/me (#13)
+  uitloggen: alleen in de app (token weg)
+endlegend
+@endsalt
