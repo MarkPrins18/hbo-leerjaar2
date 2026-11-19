@@ -25,7 +25,7 @@ gemini:
   model: "$GEMINI_MODEL:gemini-flash-lite-latest"
 
 jwt:
-  secret: "$JWT_SECRET:dev-secret-change-me"
+  secret: "$JWT_SECRET:"
   issuer: "carshare"
   audience: "carshare-users"
   realm: "carshare"

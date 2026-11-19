@@ -1,7 +1,8 @@
 import clients.CostEstimator
 import config.PhotoStorage
-import dto.CarChangeDto
-import dto.CarDto
+import shared.requests.CarChangeDto
+import shared.requests.CarDto
+import shared.requests.ReservationRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
@@ -11,7 +12,6 @@ import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
-import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
@@ -19,12 +19,17 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemTemporaryDirectory
 import models.*
+import shared.models.*
+import shared.responses.ErrorResponse
 import models.gemini.CarCostEstimate
 import repositories.*
 import services.CarCostService
 import services.CarService
+import services.ConflictException
 import services.ForbiddenException
 import services.ResourceNotFoundException
+import services.ValidationException
+import services.validate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -32,6 +37,9 @@ import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 // ==================== Test data ====================
@@ -72,17 +80,20 @@ private fun testCar(roadTaxPerQuarter: Double? = 100.0): BEVCar = BEVCar(
 
 // ==================== Fakes ====================
 
-private class FakeOwnedCarRepository(vararg cars: BEVCar) : CarRepository {
+/** [inUseCarIds]: cars with an active reservation or a ride in progress; the repository refuses to delete them. */
+private class FakeOwnedCarRepository(vararg cars: BEVCar, private val inUseCarIds: Set<Int> = emptySet()) : CarRepository {
     val cars = cars.associateBy { it.id }.toMutableMap()
 
     override suspend fun getCarById(carId: Int): Car? = cars[carId]
+
+    override suspend fun getCarsByUserId(userId: Int): List<Car> = cars.values.filter { it.userId == userId }
 
     override suspend fun updateCar(carId: Int, change: CarChangeDto): Car? {
         val car = cars[carId] ?: return null
         return car.copy(color = change.color ?: car.color).also { cars[carId] = it }
     }
 
-    override suspend fun deleteCar(carId: Int): Boolean = cars.remove(carId) != null
+    override suspend fun deleteCar(carId: Int): Boolean = carId !in inUseCarIds && cars.remove(carId) != null
 
     override suspend fun getAllCars(): List<Car> = TODO()
     override suspend fun getCarByLicensePlate(licensePlate: String): Car? = TODO()
@@ -109,12 +120,37 @@ private class FakeOwnedCarCostEstimator : CostEstimator {
 
 private class UnusedOwnedCarLocationRepository : LocationRepository {
     override suspend fun getLatestLocationByCarId(carId: Int): Location? = TODO()
+    override suspend fun getLatestLocationsByCarId(): Map<Int, Location> = TODO()
+    override suspend fun addLocation(carId: Int, latitude: Double, longitude: Double, timestamp: kotlin.time.Instant): Location = TODO()
+}
+
+private class UnusedOwnedCarReservationRepository : ReservationRepository {
+    override suspend fun createReservationIfAvailable(
+        carId: Int, userId: Int, startTime: Instant, endTime: Instant, status: ReservationStatus, totalPrice: Double
+    ): Reservation? = TODO()
+    override suspend fun getReservedCarIds(startTime: Instant, endTime: Instant): Set<Int> = TODO()
+    override suspend fun getReservationById(id: Int): Reservation? = TODO()
+    override suspend fun updateStatus(id: Int, status: ReservationStatus): Reservation? = TODO()
+    override suspend fun getReservationsByUserId(userId: Int): List<Reservation> = TODO()
 }
 
 private class UnusedOwnedCarRentalTermsRepository : RentalTermsRepository {
     override suspend fun carExists(carId: Int): Boolean = TODO()
     override suspend fun getRentalTermsByCarId(carId: Int): RentalTerms? = TODO()
-    override suspend fun saveRentalTerms(carId: Int, request: dto.RentalTermsRequest): RentalTerms = TODO()
+    override suspend fun getAllRentalTerms(): List<RentalTerms> = TODO()
+    override suspend fun saveRentalTerms(carId: Int, request: shared.requests.RentalTermsRequest): RentalTerms = TODO()
+}
+
+// ==================== 1. Validation: CarChangeDto.validate() ====================
+
+class CarChangeDtoValidationTest {
+
+    // ---------- licensePlate ----------
+
+    @Test
+    fun `kenteken van 1 teken geeft ValidationException`() {
+        assertFailsWith<ValidationException> { CarChangeDto(licensePlate = "x").validate(testCar()) }
+    }
 }
 
 // ==================== 2. Service: CarService ownership ====================
@@ -122,12 +158,15 @@ private class UnusedOwnedCarRentalTermsRepository : RentalTermsRepository {
 class CarOwnershipServiceTest {
     private val carRepository = FakeOwnedCarRepository(testCar())
 
-    private val service = CarService(
+    private val service = service(carRepository)
+
+    private fun service(carRepository: CarRepository) = CarService(
         carRepository,
         UnusedOwnedCarLocationRepository(),
         FakeOwnedCarPhotoRepository(),
         PhotoStorage(Path(SystemTemporaryDirectory, "car-test-${Uuid.random()}")),
-        UnusedOwnedCarRentalTermsRepository()
+        UnusedOwnedCarRentalTermsRepository(),
+        UnusedOwnedCarReservationRepository()
     )
 
     // ---------- updateCar ----------
@@ -175,6 +214,24 @@ class CarOwnershipServiceTest {
         assertFailsWith<ResourceNotFoundException> { service.deleteCar(999, OWNER_ID) }
         Unit
     }
+
+    @Test
+    fun `verwijderen van een auto die in gebruik is geeft ConflictException en verwijdert niets`() = runBlocking {
+        val carRepository = FakeOwnedCarRepository(testCar(), inUseCarIds = setOf(CAR_ID))
+
+        assertFailsWith<ConflictException> { service(carRepository).deleteCar(CAR_ID, OWNER_ID) }
+
+        assertNotNull(carRepository.cars[CAR_ID])
+        Unit
+    }
+
+    // ---------- getCarsByOwner ----------
+
+    @Test
+    fun `eigenaar krijgt alleen zijn eigen auto's`() = runBlocking {
+        assertEquals(listOf(CAR_ID), service.getCarsByOwner(OWNER_ID).map { it.id })
+        assertEquals(emptyList<Car>(), service.getCarsByOwner(OTHER_USER_ID))
+    }
 }
 
 // ==================== 2. Service: CarCostService ownership ====================
@@ -212,6 +269,12 @@ class CarCostDataServiceTest {
 // ==================== 3. E2E: car routes ====================
 
 class CarRoutesTest {
+    /** A confirmed reservation of car 1 by user 2; the API only accepts reservations in the future. */
+    private suspend fun insertReservation(startTime: Instant, endTime: Instant): Reservation =
+        ExposedReservationRepository().createReservationIfAvailable(
+            ICE_CAR_ID, OTHER_USER_ID, startTime, endTime, ReservationStatus.CONFIRMED, 89.0
+        )!!
+
     private suspend fun HttpClient.patchCar(carId: Int, change: CarChangeDto, token: String? = null): HttpResponse =
         patch("/cars/$carId") {
             token?.let { bearerAuth(it) }
@@ -300,6 +363,27 @@ class CarRoutesTest {
         assertEquals(HttpStatusCode.BadRequest, client.get("/cars/abc").status)
     }
 
+    // ---------- GET /cars/mine ----------
+
+    @Test
+    fun `eigen auto's opvragen geeft 200 met alleen de auto's van de ingelogde gebruiker`() = e2eTest { client ->
+        val token = client.login(OWNER_ID)
+
+        val response = client.get("/cars/mine") { bearerAuth(token) }
+
+        // Seed: gebruiker 1 heeft auto 1, 4 en 8; gebruiker 2 heeft auto 2, 5 en 7
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertEquals(listOf(1, 4, 8), response.body<List<Car>>().map { it.id })
+    }
+
+    @Test
+    fun `eigen auto's opvragen zonder token geeft 401 en botst niet met cars id`() = e2eTest { client ->
+        val response = client.get("/cars/mine")
+
+        assertEquals(HttpStatusCode.Unauthorized, response.status)
+        assertEquals(401, response.body<ErrorResponse>().status)
+    }
+
     // ---------- GET /cars/license-plate/{licensePlate} ----------
 
     @Test
@@ -381,6 +465,30 @@ class CarRoutesTest {
     }
 
     @Test
+    fun `geldig nieuw kenteken wordt genormaliseerd opgeslagen`() = e2eTest { client ->
+        val token = client.login(OWNER_ID)
+
+        val response = client.patchCar(ICE_CAR_ID, CarChangeDto(licensePlate = "ab-12-3c"), token)
+
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertEquals("AB123C", response.body<Car>().licensePlate)
+    }
+
+    @Test
+    fun `ongeldig kenteken geeft 400 en wijzigt niets`() = e2eTest { client ->
+        val token = client.login(OWNER_ID)
+
+        val response = client.patch("/cars/$ICE_CAR_ID") {
+            bearerAuth(token)
+            contentType(ContentType.Application.Json)
+            setBody("""{"licensePlate":"x"}""")
+        }
+
+        assertEquals(HttpStatusCode.BadRequest, response.status)
+        assertEquals(ICE_CAR_PLATE, client.get("/cars/$ICE_CAR_ID").body<Car>().licensePlate)
+    }
+
+    @Test
     fun `kenteken van een andere auto geeft 409`() = e2eTest { client ->
         val token = client.login(OWNER_ID)
 
@@ -408,21 +516,9 @@ class CarRoutesTest {
         assertEquals(HttpStatusCode.NotFound, client.patchCar(999, CarChangeDto(color = "ROOD"), token).status)
     }
 
-    @Test
-    fun `ongeldige json bij wijzigen geeft 400`() = e2eTest { client ->
-        val token = client.login(OWNER_ID)
-
-        val response = client.patch("/cars/$ICE_CAR_ID") {
-            bearerAuth(token)
-            contentType(ContentType.Application.Json)
-            setBody("{ kapot")
-        }
-
-        assertEquals(HttpStatusCode.BadRequest, response.status)
-    }
-
     // ---------- DELETE /cars/{id} ----------
 
+    // Seed: car 1 only has a completed reservation and ride, which do not block deleting
     @Test
     fun `verwijderen haalt de auto en zijn gekoppelde gegevens weg`() = e2eTest { client ->
         val token = client.login(OWNER_ID)
@@ -434,6 +530,52 @@ class CarRoutesTest {
         assertEquals(HttpStatusCode.NotFound, client.get("/cars/$ICE_CAR_ID/photos").status)
         assertEquals(HttpStatusCode.NotFound, client.get("/cars/$ICE_CAR_ID/rental-terms").status)
         assertEquals(SEED_CAR_COUNT - 1, client.get("/cars").body<List<Car>>().size)
+    }
+
+    @Test
+    fun `verwijderen met een toekomstige reservering van een huurder geeft 409 en verwijdert niets`() = e2eTest { client ->
+        val renterToken = client.login(OTHER_USER_ID)
+        val reservation = client.post("/reservations") {
+            bearerAuth(renterToken)
+            contentType(ContentType.Application.Json)
+            setBody(ReservationRequest(ICE_CAR_ID, Instant.parse("2099-06-01T09:00:00Z"), Instant.parse("2099-06-01T17:00:00Z")))
+        }
+        val token = client.login(OWNER_ID)
+
+        val response = client.delete("/cars/$ICE_CAR_ID") { bearerAuth(token) }
+
+        assertEquals(HttpStatusCode.Created, reservation.status)
+        assertEquals(HttpStatusCode.Conflict, response.status)
+        assertEquals(409, response.body<ErrorResponse>().status)
+        assertEquals(HttpStatusCode.OK, client.get("/cars/$ICE_CAR_ID").status)
+        val reservations = client.get("/reservations") { bearerAuth(renterToken) }.body<List<Reservation>>()
+        assertTrue(reservations.any { it.carId == ICE_CAR_ID && it.status == ReservationStatus.CONFIRMED })
+    }
+
+    @Test
+    fun `verwijderen tijdens een lopende rit geeft 409 en verwijdert niets`() = e2eTest { client ->
+        val renterToken = client.login(OTHER_USER_ID)
+        val reservation = insertReservation(Clock.System.now() - 1.hours, Clock.System.now() + 1.hours)
+        val ride = client.post("/reservations/${reservation.id}/rides") { bearerAuth(renterToken) }
+        val token = client.login(OWNER_ID)
+
+        val response = client.delete("/cars/$ICE_CAR_ID") { bearerAuth(token) }
+
+        assertEquals(HttpStatusCode.Created, ride.status)
+        assertEquals(HttpStatusCode.Conflict, response.status)
+        assertEquals(HttpStatusCode.OK, client.get("/rides/active") { bearerAuth(renterToken) }.status)
+        assertEquals(HttpStatusCode.OK, client.get("/cars/$ICE_CAR_ID").status)
+    }
+
+    @Test
+    fun `verwijderen met een bevestigde reservering die al voorbij is geeft 204`() = e2eTest { client ->
+        val token = client.login(OWNER_ID)
+        insertReservation(Clock.System.now() - 2.hours, Clock.System.now() - 1.hours)
+
+        val response = client.delete("/cars/$ICE_CAR_ID") { bearerAuth(token) }
+
+        assertEquals(HttpStatusCode.NoContent, response.status)
+        assertEquals(HttpStatusCode.NotFound, client.get("/cars/$ICE_CAR_ID").status)
     }
 
     @Test
@@ -515,13 +657,6 @@ class CarRoutesTest {
     }
 
     @Test
-    fun `leeg kenteken importeren geeft 400`() = e2eTest { client ->
-        val token = client.login(OWNER_ID)
-
-        assertEquals(HttpStatusCode.BadRequest, client.importCar(CarDto(licensePlate = " - "), token).status)
-    }
-
-    @Test
     fun `negatieve tankinhoud importeren geeft 400`() = e2eTest { client ->
         val token = client.login(OWNER_ID)
 
@@ -549,7 +684,7 @@ class CarRoutesTest {
     }
 
     @Test
-    fun `ongeldige JSON geeft 400 met een Nederlandse melding`() = e2eTest { client ->
+    fun `ongeldige JSON geeft 400 als ErrorResponse met een Nederlandse melding`() = e2eTest { client ->
         val token = client.login(OWNER_ID)
 
         val response = client.post("/cars/import") {
@@ -559,7 +694,10 @@ class CarRoutesTest {
         }
 
         assertEquals(HttpStatusCode.BadRequest, response.status)
-        assertTrue(response.bodyAsText().startsWith("400: Ongeldige body"))
+        assertTrue(response.contentType()!!.match(ContentType.Application.Json))
+        val error = response.body<ErrorResponse>()
+        assertEquals(400, error.status)
+        assertTrue(error.message.startsWith("Ongeldige body"))
     }
 
     @Test

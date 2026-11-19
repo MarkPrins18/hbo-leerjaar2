@@ -6,7 +6,7 @@ import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.*
 import io.ktor.server.util.getOrFail
-import dto.RideFinishRequest
+import shared.requests.RideFinishRequest
 import requireAuthentication
 import services.RideService
 
@@ -18,13 +18,25 @@ fun Route.rideRoutes(rideService: RideService) {
             val ride = rideService.startRide(reservationId, userId)
             call.respond(HttpStatusCode.Created, ride)
         }
+        get("/rides") {
+            val userId = call.authenticatedUserId()
+            call.respond(HttpStatusCode.OK, rideService.getRides(userId))
+        }
+        get("/rides/active") {
+            val userId = call.authenticatedUserId()
+            val ride = rideService.getActiveRide(userId)
+            if (ride == null) {
+                call.respond(HttpStatusCode.NoContent)
+            } else {
+                call.respond(HttpStatusCode.OK, ride)
+            }
+        }
         patch("/rides/{id}/finish") {
             val rideId = call.parameters.getOrFail<Int>("id")
             val userId = call.authenticatedUserId()
             val request = call.receive<RideFinishRequest>()
             val ride = rideService.finishRide(rideId, userId, request)
             call.respond(HttpStatusCode.OK, ride)
-
         }
     }
 }

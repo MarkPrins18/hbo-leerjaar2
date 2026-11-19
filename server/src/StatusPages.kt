@@ -11,6 +11,7 @@ import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
 import org.jetbrains.exposed.v1.exceptions.ExposedSQLException
 import services.ApiException
+import shared.responses.ErrorResponse
 
 fun Application.configureStatusPages() {
     install(StatusPages) {
@@ -63,9 +64,17 @@ fun Application.configureStatusPages() {
             call.application.log.error("Unhandled exception", cause)
             call.respondError(HttpStatusCode.InternalServerError, "Er ging iets mis op de server")
         }
+        // Routing answers an unknown route or wrong method without a body. Only fires when no
+        // exception handler above has responded, so a ResourceNotFoundException keeps its message.
+        status(HttpStatusCode.NotFound) { call, status ->
+            call.respondError(status, "Deze route bestaat niet")
+        }
+        status(HttpStatusCode.MethodNotAllowed) { call, status ->
+            call.respondError(status, "Deze methode is niet toegestaan op deze route")
+        }
     }
 }
 
 private suspend fun ApplicationCall.respondError(status: HttpStatusCode, message: String?) {
-    respondText(text = "${status.value}: ${message ?: status.description}", status = status)
+    respond(status, ErrorResponse(status.value, message ?: status.description))
 }

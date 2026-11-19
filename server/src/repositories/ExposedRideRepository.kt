@@ -1,26 +1,44 @@
 package repositories
 
 import mappers.toRide
-import models.Ride
-import models.RideStatus
+import shared.models.Ride
+import shared.models.ReservationStatus
+import shared.models.RideStatus
+import shared.requests.RideFinishRequest
+import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.innerJoin
+import org.jetbrains.exposed.v1.core.sum
 import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.update
+import tables.CarTable
+import tables.ReservationTable
 import tables.RideTable
 import kotlin.time.Instant
 
 class ExposedRideRepository : RideRepository {
 
-    override suspend fun hasRideInProgress(reservationId: Int): Boolean = suspendTransaction {
-        !RideTable.selectAll().where {
-            (RideTable.reservationId eq reservationId) and (RideTable.status eq RideStatus.IN_PROGRESS)
-        }.empty()
-    }
+    override suspend fun startRideIfNoneInProgress(reservationId: Int, startTime: Instant): Ride? = suspendTransaction {
+        val carId = ReservationTable.select(ReservationTable.carId)
+            .where { ReservationTable.id eq reservationId }
+            .singleOrNull()?.get(ReservationTable.carId)
+            ?: return@suspendTransaction null
+        // Car first, then reservation: the same lock order as createReservationIfAvailable
+        CarTable.selectAll().where { CarTable.id eq carId }.forUpdate().toList()
+        val reservation = ReservationTable.selectAll().where { ReservationTable.id eq reservationId }.forUpdate().single()
+        // Checked again under the lock: a finish in between may have completed the reservation
+        if (reservation[ReservationTable.status] != ReservationStatus.CONFIRMED) return@suspendTransaction null
 
-    override suspend fun startRide(reservationId: Int, startTime: Instant): Ride = suspendTransaction {
+        val carHasRideInProgress = !RideTable.innerJoin(ReservationTable, { RideTable.reservationId }, { ReservationTable.id })
+            .selectAll()
+            .where { (ReservationTable.carId eq carId) and (RideTable.status eq RideStatus.IN_PROGRESS) }
+            .empty()
+        if (carHasRideInProgress) return@suspendTransaction null
+
         val inserted = RideTable.insert {
             it[RideTable.reservationId] = reservationId
             it[RideTable.startTime] = startTime
@@ -34,18 +52,52 @@ class ExposedRideRepository : RideRepository {
         RideTable.selectAll().where { RideTable.id eq rideId }.singleOrNull()?.toRide()
     }
 
+    override suspend fun getRideInProgressByUserId(userId: Int): Ride? = suspendTransaction {
+        RideTable.innerJoin(ReservationTable, { RideTable.reservationId }, { ReservationTable.id })
+            .selectAll()
+            .where { (ReservationTable.userId eq userId) and (RideTable.status eq RideStatus.IN_PROGRESS) }
+            .orderBy(RideTable.startTime, SortOrder.DESC)
+            .firstOrNull()
+            ?.toRide()
+    }
+
+    override suspend fun getRidesByUserId(userId: Int): List<Ride> = suspendTransaction {
+        RideTable.innerJoin(ReservationTable, { RideTable.reservationId }, { ReservationTable.id })
+            .selectAll()
+            .where { ReservationTable.userId eq userId }
+            .orderBy(RideTable.startTime to SortOrder.DESC, RideTable.id to SortOrder.DESC)
+            .map { it.toRide() }
+    }
+
+    override suspend fun getTotalBonusPointsByUserId(userId: Int): Int = suspendTransaction {
+        val total = RideTable.bonusPoints.sum()
+        RideTable.innerJoin(ReservationTable, { RideTable.reservationId }, { ReservationTable.id })
+            .select(total)
+            .where { (ReservationTable.userId eq userId) and (RideTable.status eq RideStatus.COMPLETED) }
+            .single()[total] ?: 0
+    }
+
     override suspend fun finishRide(
-        id: Int, endTime: Instant, distanceM: Double, avgAcceleration: Double, avgDeceleration: Double,
-        bonusPoints: Int
+        id: Int, endTime: Instant, request: RideFinishRequest, bonusPoints: Int
     ): Ride? = suspendTransaction {
-        RideTable.update({ RideTable.id eq id }) {
+        val updated = RideTable.update({ (RideTable.id eq id) and (RideTable.status eq RideStatus.IN_PROGRESS) }) {
             it[RideTable.endTime] = endTime
             it[RideTable.status] = RideStatus.COMPLETED
-            it[RideTable.distanceM] = distanceM
-            it[RideTable.avgAcceleration] = avgAcceleration
-            it[RideTable.avgDeceleration] = avgDeceleration
+            it[RideTable.distanceM] = request.distanceM
+            it[RideTable.avgAcceleration] = request.avgAcceleration
+            it[RideTable.avgDeceleration] = request.avgDeceleration
             it[RideTable.bonusPoints] = bonusPoints
         }
-        RideTable.selectAll().where { RideTable.id eq id }.singleOrNull()?.toRide()
+        if (updated == 0) return@suspendTransaction null
+        val ride = RideTable.selectAll().where { RideTable.id eq id }.single().toRide()
+
+        val carId = ReservationTable.select(ReservationTable.carId)
+            .where { ReservationTable.id eq ride.reservationId }
+            .single()[ReservationTable.carId]
+        ReservationTable.update({ ReservationTable.id eq ride.reservationId }) {
+            it[ReservationTable.status] = ReservationStatus.COMPLETED
+        }
+        insertParkedLocation(carId, request.latitude, request.longitude, endTime)
+        ride
     }
 }

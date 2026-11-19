@@ -1,13 +1,14 @@
 package routes
 
+import authenticatedUserId
 import io.ktor.http.HttpStatusCode
+import requireAuthentication
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.*
-import requests.LoginRequest
-import requests.RegisterRequest
-import responses.LoginResponse
-import responses.toResponse
+import shared.requests.LoginRequest
+import shared.requests.RegisterRequest
+import shared.responses.LoginResponse
 import services.AuthService
 import services.UserService
 
@@ -15,18 +16,22 @@ fun Route.userRoutes(userService: UserService, authService: AuthService) {
     route("/users") {
         // TODO: temporary endpoint for testing, remove before release
         get {
-            val users = userService.getAllUsers().map { it.toResponse() }
-            call.respond(HttpStatusCode.OK, users)
+            call.respond(HttpStatusCode.OK, userService.getAllUserResponses())
         }
         post("/register") {
             val request = call.receive<RegisterRequest>()
-            val user = userService.register(request)
-            call.respond(HttpStatusCode.Created, user.toResponse())
+            call.respond(HttpStatusCode.Created, userService.register(request))
         }
         post("/login") {
             val request = call.receive<LoginRequest>()
             val token = authService.login(request)
             call.respond(HttpStatusCode.OK, LoginResponse(token))
+        }
+        requireAuthentication {
+            get("/me") {
+                val userId = call.authenticatedUserId()
+                call.respond(HttpStatusCode.OK, userService.getUserResponse(userId))
+            }
         }
     }
 }

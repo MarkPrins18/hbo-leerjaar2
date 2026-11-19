@@ -10,6 +10,7 @@ Schoolproject: Kotlin/Ktor Web API voor een autodeelplatform, gebouwd door een t
 - De eisen van school staan kort samengevat in `.claude/informatie/requirements-kort.md`. Lees dit bij vragen over wat er opgeleverd moet worden en voordat je een nieuwe feature voorstelt. Voor details of de letterlijke Brightspace-teksten (leeruitkomsten, minimum-eisen, portfolio, assessment, casus): `.claude/informatie/requirements.md`; bij tegenspraak is dat bestand leidend.
 - Weinig commentaar. `//check`, `//remove` en `//rename` zijn notities: laten staan.
 - Na een wijziging: `./kotlin build` (Windows: `.\kotlin.bat build`). Geen Gradle.
+- Gebruik de skills in `.claude/skills/` (start met `using-superpowers`). `/brainstorming` start alleen de gebruiker.
 
 ## Regels
 - Alleen Kotlin stdlib, geen `java.*`. Geen DI-library; dependencies via constructors vanuit `Routing.kt`.
@@ -19,6 +20,11 @@ Schoolproject: Kotlin/Ktor Web API voor een autodeelplatform, gebouwd door een t
 - Repository-functies zijn `suspend` met `suspendTransaction`; ids zijn `Int`.
 - Auth: beveilig routes met `requireAuthentication { }` en haal de gebruiker op met `call.authenticatedUserId()` (beide uit `Authentication.kt`). Neem nooit een user-id uit de request over.
 - Eigendomscontrole hoort in de service: geef `userId` door en gooi `ForbiddenException` als het niet klopt.
+
+## Modules
+- `shared`: alleen `@Serializable` contractklassen (packages `shared.models`, `shared.requests`, `shared.responses`), geen logica, geen server-only velden.
+- `server`: alle bestaande regels.
+- `composeApp` / `androidApp`: regels volgen zodra er schermen komen.
 
 ## Database
 - H2-bestand (`MODE=MySQL`) via Exposed. Bij elke start wordt het schema gereset en opnieuw geseed.

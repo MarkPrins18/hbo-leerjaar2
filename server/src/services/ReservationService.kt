@@ -1,36 +1,43 @@
 package services
 
 import models.ACTIVE_RESERVATION_STATUSES
-import models.Reservation
-import models.ReservationStatus
+import repositories.CarRepository
+import repositories.RentalTermsRepository
 import repositories.ReservationRepository
-import requests.ReservationRequest
+import repositories.UserRepository
+import shared.models.Reservation
+import shared.models.ReservationStatus
+import shared.requests.ReservationRequest
 import kotlin.time.Clock
 
 class ReservationService(
-    private val reservationRepository: ReservationRepository
+    private val reservationRepository: ReservationRepository,
+    private val carRepository: CarRepository,
+    private val userRepository: UserRepository,
+    private val rentalTermsRepository: RentalTermsRepository
 ) {
     suspend fun createReservation(userId: Int, request: ReservationRequest): Reservation {
-        if (request.startTime <= Clock.System.now()) {
-            throw ValidationException("Starttijd ligt in het verleden")
+        request.validate(Clock.System.now())
+        val car = carRepository.getCarById(request.carId)
+            ?: throw carNotFound(request.carId)
+
+        if (car.userId == userId) {
+            throw ForbiddenException("Je kunt je eigen auto niet reserveren")
         }
-        if (request.endTime <= request.startTime) {
-            throw ValidationException("Eindtijd moet na de starttijd liggen")
-        }
-        if (!reservationRepository.carExists(request.carId)) {
-            throw ResourceNotFoundException("Auto", request.carId)
-        }
-        if (!reservationRepository.userExists(userId)) {
+        if (!userRepository.userExists(userId)) {
             throw ResourceNotFoundException("Gebruiker", userId)
         }
-        if (reservationRepository.hasActiveOverlap(request.carId, request.startTime, request.endTime)) {
-            throw ConflictException("Auto ${request.carId} is in dit tijdsblok al gereserveerd")
-        }
-        return reservationRepository.createReservation(
-            request.carId, userId, request.startTime, request.endTime, ReservationStatus.CONFIRMED
-        )
+        val rentalTerms = rentalTermsRepository.getRentalTermsByCarId(request.carId)
+            ?: throw UnprocessableException("Auto ${request.carId} heeft nog geen huurvoorwaarden")
+        val totalPrice = calculateTotalPrice(rentalTerms.pricePerDay, request.startTime, request.endTime)
+
+        return reservationRepository.createReservationIfAvailable(
+            request.carId, userId, request.startTime, request.endTime, ReservationStatus.CONFIRMED, totalPrice
+        ) ?: throw ConflictException("Auto ${request.carId} is in dit tijdsblok al gereserveerd")
     }
 
+    suspend fun getReservationsForUser(userId: Int): List<Reservation> =
+        reservationRepository.getReservationsByUserId(userId).sortedBy { it.startTime }
 
     suspend fun cancelReservation(id: Int, userId: Int): Reservation {
         val reservation = reservationRepository.getReservationById(id)

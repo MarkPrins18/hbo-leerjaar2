@@ -1,8 +1,8 @@
 package repositories
 
-import dto.RentalTermsRequest
+import shared.requests.RentalTermsRequest
 import mappers.toRentalTerms
-import models.RentalTerms
+import shared.models.RentalTerms
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.statements.UpdateBuilder
 import org.jetbrains.exposed.v1.jdbc.insert
@@ -20,6 +20,10 @@ class ExposedRentalTermsRepository : RentalTermsRepository {
 
     override suspend fun getRentalTermsByCarId(carId: Int): RentalTerms? = suspendTransaction {
         RentalTermsTable.selectAll().where { RentalTermsTable.carId eq carId }.singleOrNull()?.toRentalTerms()
+    }
+
+    override suspend fun getAllRentalTerms(): List<RentalTerms> = suspendTransaction {
+        RentalTermsTable.selectAll().map { it.toRentalTerms() }
     }
 
     override suspend fun saveRentalTerms(carId: Int, request: RentalTermsRequest): RentalTerms = suspendTransaction {

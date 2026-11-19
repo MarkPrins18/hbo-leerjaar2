@@ -6,13 +6,17 @@ import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.*
 import io.ktor.server.util.getOrFail
-import requests.ReservationRequest
+import shared.requests.ReservationRequest
 import requireAuthentication
 import services.ReservationService
 
 fun Route.reservationRoutes(reservationService: ReservationService) {
     requireAuthentication {
         route("/reservations") {
+            get {
+                val userId = call.authenticatedUserId()
+                call.respond(HttpStatusCode.OK, reservationService.getReservationsForUser(userId))
+            }
             post {
                 val userId = call.authenticatedUserId()
                 val request = call.receive<ReservationRequest>()

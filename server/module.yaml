@@ -1,6 +1,7 @@
 product: jvm/app
 
 dependencies:
+  - ../shared
   - $ktor.serialization.kotlinx.json
   - $ktor.server.config.yaml
   - $ktor.server.contentNegotiation

@@ -1,6 +1,6 @@
 package mappers
 
-import models.RentalTerms
+import shared.models.RentalTerms
 import org.jetbrains.exposed.v1.core.ResultRow
 import tables.RentalTermsTable
 

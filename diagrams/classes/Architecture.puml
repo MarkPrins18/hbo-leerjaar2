@@ -1,4 +1,4 @@
- @startuml ClassDiagramNarrow
+@startuml ClassDiagramNarrow
 
 
 left to right direction
@@ -24,6 +24,40 @@ skinparam classStereotypeFontColor #5B6573
 skinparam legendBackgroundColor #FFFFFF
 skinparam legendBorderColor #8A94A6
 
+package "shared" #E8E0F5 {
+    class SharedModels <<file>> {
+        shared.models
+        --
+        Car (ICE / BEV / FCEV), Photo
+        RentalTerms, Reservation, Ride
+    }
+    class SharedRequests <<file>> {
+        shared.requests
+        --
+        CarDto, CarChangeDto
+        RentalTermsRequest, RideFinishRequest
+        LoginRequest, RegisterRequest
+        ReservationRequest, LocationRequest
+    }
+    class SharedResponses <<file>> {
+        shared.responses
+        --
+        LoginResponse, UserResponse
+        FuelCostResponse, TcoResponse
+        CarMapResponse, ErrorResponse, LocationResponse
+    }
+}
+
+package "composeApp" #E8E0F5 {
+    class App <<file>> {
+        +App()
+    }
+}
+
+package "androidApp" #E8E0F5 {
+    class MainActivity <<file>>
+}
+
 package "routes" #DCEBFA {
     class CarRouting <<file>> {
         +carRoutes(carService, carImportService, carCostService)
@@ -31,6 +65,8 @@ package "routes" #DCEBFA {
         GET /cars
         GET /cars/{id}
         GET /cars/license-plate/{licensePlate}
+        <&lock-locked> GET /cars/mine
+        <&lock-locked> GET /cars/map
         <&lock-locked> POST /cars/import
         <&lock-locked> PATCH /cars/{id}
         <&lock-locked> DELETE /cars/{id}
@@ -55,10 +91,12 @@ package "routes" #DCEBFA {
         +mapRoutes(locationService)
         --
         <&lock-locked> GET /cars/{carId}/maps
+        <&lock-locked> PUT /cars/{id}/location
     }
     class ReservationRouting <<file>> {
         +reservationRoutes(reservationService)
         --
+        <&lock-locked> GET /reservations
         <&lock-locked> POST /reservations
         <&lock-locked> PATCH /reservations/{id}/cancel
     }
@@ -66,6 +104,8 @@ package "routes" #DCEBFA {
         +rideRoutes(rideService)
         --
         <&lock-locked> POST /reservations/{id}/rides
+        <&lock-locked> GET /rides
+        <&lock-locked> GET /rides/active
         <&lock-locked> PATCH /rides/{id}/finish
     }
     class UserRouting <<file>> {
@@ -74,6 +114,7 @@ package "routes" #DCEBFA {
         GET /users
         POST /users/register
         POST /users/login
+        <&lock-locked> GET /users/me
     }
 }
 
@@ -85,7 +126,9 @@ package "services" #DDF2DD {
     }
     class CarService <<service>> {
         +getCars(filter): List<Car>
+        +getCarMap(filter): List<CarMapResponse>
         +getCarById(carId): Car
+        +getCarsByOwner(userId): List<Car>
         +getCarByLicensePlate(licensePlate): Car
         +updateCar(carId, userId, change): Car
         +deleteCar(carId, userId)
@@ -103,19 +146,24 @@ package "services" #DDF2DD {
         +setRentalTerms(carId, userId, request): RentalTerms
     }
     class LocationService <<service>> {
-        +getMapsUrl(carId, userId): String
+        +getMapsUrl(carId): String
+        +setLocation(carId, userId, request): LocationResponse
     }
     class ReservationService <<service>> {
         +createReservation(userId, request): Reservation
+        +getReservationsForUser(userId): List<Reservation>
         +cancelReservation(id, userId): Reservation
     }
     class RideService <<service>> {
         +startRide(reservationId, userId): Ride
+        +getActiveRide(userId): Ride?
+        +getRides(userId): List<Ride>
         +finishRide(rideId, userId, request): Ride
     }
     class UserService <<service>> {
-        +register(request): User
-        +getAllUsers(): List<User>
+        +register(request): UserResponse
+        +getUserResponse(userId): UserResponse
+        +getAllUserResponses(): List<UserResponse>
     }
     together {
         class AuthService <<service>> {
@@ -126,11 +174,11 @@ package "services" #DDF2DD {
         }
     }
     class Helpers <<file>> {
-        CarValidation / UserValidation
+        CarValidation
         CarLookup (getOwnedCar, callExternal)
-        CarFilterMatching / Distance
+        CarFilter / CarFilterMatching / Distance
         FuelCost / TotalCostOfOwnership
-        BonusPoints
+        BonusPoints / ReservationPrice
     }
 }
 
@@ -166,6 +214,7 @@ package "repositories" #FFF1D6 {
         +getAllCars(): List<Car>
         +getCarById(carId): Car?
         +getCarByLicensePlate(licensePlate): Car?
+        +getCarsByUserId(userId): List<Car>
         +createCar(car): Car
         +updateCar(carId, change): Car?
         +deleteCar(carId): Boolean
@@ -179,39 +228,33 @@ package "repositories" #FFF1D6 {
     interface RentalTermsRepository {
         +carExists(carId): Boolean
         +getRentalTermsByCarId(carId): RentalTerms?
+        +getAllRentalTerms(): List<RentalTerms>
         +saveRentalTerms(carId, request): RentalTerms
     }
     interface LocationRepository {
         +getLatestLocationByCarId(carId): Location?
-    }
-    interface PhotoRepository {
-        +createPhoto(carId, fileName)
-        +getPhotosByCarId(carId)
-        +getFileName(photoId)
-        +getFileNamesByCarId(carId)
-    }
-    interface RentalTermsRepository {
-        +carExists(carId)
-        +getRentalTermsByCarId(carId)
-        +saveRentalTerms(carId, request)
+        +getLatestLocationsByCarId(): Map<Int, Location>
+        +addLocation(carId, latitude, longitude, timestamp): Location
     }
     interface ReservationRepository {
-        +carExists(carId): Boolean
-        +userExists(userId): Boolean
-        +hasActiveOverlap(carId, startTime, endTime): Boolean
-        +createReservation(carId, userId, startTime, endTime, status): Reservation
+        +createReservationIfAvailable(carId, userId, startTime, endTime, status, totalPrice): Reservation?
+        +getReservedCarIds(startTime, endTime): Set<Int>
         +getReservationById(id): Reservation?
-        +getReservationsByCarAndUser(carId, userId): List<Reservation>
+        +getReservationsByUserId(userId): List<Reservation>
         +updateStatus(id, status): Reservation?
     }
     interface RideRepository {
-        +hasRideInProgress(reservationId): Boolean
-        +startRide(reservationId, startTime): Ride
+        +startRideIfNoneInProgress(reservationId, startTime): Ride?
         +getRideById(rideId): Ride?
-        +finishRide(id, endTime, distanceM, ...): Ride?
+        +getRideInProgressByUserId(userId): Ride?
+        +getRidesByUserId(userId): List<Ride>
+        +getTotalBonusPointsByUserId(userId): Int
+
+        +finishRide(id, endTime, request, bonusPoints): Ride?
     }
     interface UserRepository {
         +findByEmail(email): User?
+        +findById(userId): User?
         +findAll(): List<User>
         +userExists(userId): Boolean
         +create(email, passwordHash): User
@@ -236,6 +279,7 @@ CarService --> LocationRepository
 CarService --> PhotoRepository
 CarService --> RentalTermsRepository
 CarService --> PhotoStorage
+CarService --> ReservationRepository
 CarImportService --> CarRepository
 CarImportService --> UserRepository
 CarImportService --> VehicleRegistry
@@ -248,14 +292,48 @@ RentalTermsService --> RentalTermsRepository
 RentalTermsService --> CarRepository
 LocationService --> CarRepository
 LocationService --> LocationRepository
-LocationService --> ReservationRepository
 ReservationService --> ReservationRepository
+ReservationService --> CarRepository
+ReservationService --> UserRepository
+ReservationService --> RentalTermsRepository
 RideService --> RideRepository
 RideService --> ReservationRepository
 UserService --> UserRepository
+UserService --> RideRepository
+
 AuthService --> UserRepository
 AuthService -> TokenService
 
+CarRouting ..> SharedRequests
+RentalTermsRouting ..> SharedRequests
+RideRouting ..> SharedRequests
+ReservationRouting ..> SharedRequests
+UserRouting ..> SharedRequests
+UserRouting ..> SharedResponses
+CarService ..> SharedModels
+CarService ..> SharedRequests
+CarImportService ..> SharedModels
+CarImportService ..> SharedRequests
+CarCostService ..> SharedModels
+CarCostService ..> SharedRequests
+CarCostService ..> SharedResponses
+CarService ..> SharedResponses
+PhotoService ..> SharedModels
+RentalTermsService ..> SharedModels
+RentalTermsService ..> SharedRequests
+LocationService ..> SharedModels
+LocationService ..> SharedRequests
+LocationService ..> SharedResponses
+MapRouting ..> SharedRequests
+
+ReservationService ..> SharedModels
+ReservationService ..> SharedRequests
+RideService ..> SharedModels
+RideService ..> SharedRequests
+AuthService ..> SharedRequests
+UserService ..> SharedRequests
+
+MainActivity ..> App
 
 VehicleRegistry <|. RdwClient
 CostEstimator <|. GeminiClient

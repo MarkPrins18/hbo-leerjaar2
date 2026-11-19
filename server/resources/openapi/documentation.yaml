@@ -1,4 +1,6 @@
 openapi: 3.0.3
+servers:
+  - url: /
 info:
   title: Car Sharing API
   version: "1.0.0"
@@ -8,51 +10,24 @@ paths:
     get:
       summary: Haal alle auto's op
       operationId: getAllCars
+      security: []
       tags:
         - Cars
       description: |
         Geeft alle auto's terug. Filters zijn optioneel en kunnen gecombineerd
         worden, bijvoorbeeld:
         `/cars?maxPrice=50&maxDistanceKm=10&latitude=51.5853&longitude=4.7946`
+
+        Met `startTime` en `endTime` komen alleen auto's terug die in dat tijdvak
+        vrij zijn, bijvoorbeeld:
+        `/cars?startTime=2099-01-15T10:00:00Z&endTime=2099-01-15T17:00:00Z`
       parameters:
-        - name: maxPrice
-          in: query
-          required: false
-          description: Maximale prijs per dag. Auto's zonder verhuurvoorwaarden vallen dan af.
-          schema:
-            type: number
-            format: double
-            minimum: 0
-          example: 50.0
-        - name: maxDistanceKm
-          in: query
-          required: false
-          description: Maximale afstand vanaf de opgegeven coördinaten in kilometer. Alleen samen met latitude en longitude.
-          schema:
-            type: number
-            format: double
-            minimum: 0
-          example: 10.0
-        - name: latitude
-          in: query
-          required: false
-          description: Breedtegraad van het vertrekpunt. Alleen samen met maxDistanceKm en longitude.
-          schema:
-            type: number
-            format: double
-            minimum: -90
-            maximum: 90
-          example: 51.5853
-        - name: longitude
-          in: query
-          required: false
-          description: Lengtegraad van het vertrekpunt. Alleen samen met maxDistanceKm en latitude.
-          schema:
-            type: number
-            format: double
-            minimum: -180
-            maximum: 180
-          example: 4.7946
+        - $ref: "#/components/parameters/MaxPrice"
+        - $ref: "#/components/parameters/MaxDistanceKm"
+        - $ref: "#/components/parameters/Latitude"
+        - $ref: "#/components/parameters/Longitude"
+        - $ref: "#/components/parameters/AvailableFrom"
+        - $ref: "#/components/parameters/AvailableUntil"
       responses:
         "200":
           description: Lijst van alle auto's
@@ -63,11 +38,16 @@ paths:
                 items:
                   $ref: "#/components/schemas/Car"
         "400":
-          description: Ongeldige filterwaarde (geen getal of buiten bereik), of maxDistanceKm, latitude en longitude niet alle drie opgegeven
+          description: Ongeldige filterwaarde (geen getal, geen ISO-8601-tijdstip of buiten bereik), maxDistanceKm, latitude en longitude niet alle drie opgegeven, alleen startTime of endTime opgegeven, of endTime niet na startTime
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /cars/license-plate/{licensePlate}:
     get:
       summary: Haal een auto op via het kenteken
       operationId: getCarByLicensePlate
+      security: []
       tags:
         - Cars
       parameters:
@@ -86,23 +66,75 @@ paths:
               schema:
                 $ref: "#/components/schemas/Car"
         "404":
-          description: Auto niet gevonden
+          $ref: "#/components/responses/CarNotFound"
+
+  /cars/mine:
+    get:
+      summary: Haal de auto's van de ingelogde gebruiker op
+      operationId: getMyCars
+      tags:
+        - Cars
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Auto's waarvan de ingelogde gebruiker eigenaar is
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Car"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /cars/map:
+    get:
+      summary: Haal de auto's op voor de kaart
+      description: |
+        Geeft per auto de laatste bekende positie en de prijs per dag terug.
+        Ondersteunt dezelfde filters als `GET /cars`. Een auto zonder locatie of
+        huurvoorwaarden komt mee met `null` als positie of prijs, tenzij een
+        afstands- of prijsfilter hem uitsluit.
+      operationId: getCarMap
+      tags:
+        - Cars
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/MaxPrice"
+        - $ref: "#/components/parameters/MaxDistanceKm"
+        - $ref: "#/components/parameters/Latitude"
+        - $ref: "#/components/parameters/Longitude"
+        - $ref: "#/components/parameters/AvailableFrom"
+        - $ref: "#/components/parameters/AvailableUntil"
+      responses:
+        "200":
+          description: Auto's met positie en prijs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CarMapResponse"
+        "400":
+          description: Ongeldige filterwaarde, zie GET /cars
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
   /cars/{id}:
     get:
       summary: Haal een auto op via het id
       operationId: getCarById
+      security: []
       tags:
         - Cars
       parameters:
-        - name: id
-          in: path
-          required: true
-          description: Het id van de auto
-          schema:
-            type: integer
-            format: int32
-          example: 1
+        - $ref: "#/components/parameters/CarId"
       responses:
         "200":
           description: Auto gevonden
@@ -111,9 +143,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Car"
         "400":
-          description: Ongeldig auto-id
+          $ref: "#/components/responses/InvalidCarId"
         "404":
-          description: Auto niet gevonden
+          $ref: "#/components/responses/CarNotFound"
     patch:
       summary: Werk een auto bij via het id
       operationId: updateCar
@@ -122,14 +154,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: id
-          in: path
-          required: true
-          description: Het id van de auto
-          schema:
-            type: integer
-            format: int32
-          example: 1
+        - $ref: "#/components/parameters/CarId"
       requestBody:
         required: true
         content:
@@ -144,40 +169,58 @@ paths:
               schema:
                 $ref: "#/components/schemas/Car"
         "400":
-          description: Ongeldige waarde of veld hoort niet bij het type auto
+          description: >
+            Ongeldig auto-id, ongeldige request body, ongeldige waarde (bijvoorbeeld een licensePlate
+            die na normaliseren geen Nederlands kenteken van 6 letters en cijfers is) of een veld
+            dat niet bij het type auto hoort
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
-          description: Niet ingelogd
+          $ref: "#/components/responses/Unauthorized"
         "403":
-          description: Ingelogde gebruiker is niet de eigenaar van de auto
+          $ref: "#/components/responses/NotCarOwner"
         "404":
-          description: Auto niet gevonden
+          $ref: "#/components/responses/CarNotFound"
         "409":
           description: Kenteken bestaat al
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "415":
+          $ref: "#/components/responses/UnsupportedMediaType"
     delete:
       summary: Verwijder een auto via het id
+      description: >
+        Alleen de ingelogde eigenaar van de auto mag dit. Een auto met een PENDING of CONFIRMED
+        reservering die nog niet voorbij is, of met een lopende rit, kan niet worden verwijderd.
+        Afgeronde, geannuleerde en verlopen reserveringen en ritten worden mee verwijderd.
       operationId: deleteCar
       tags:
         - Cars
       security:
         - bearerAuth: []
       parameters:
-        - name: id
-          in: path
-          required: true
-          description: Het id van de auto
-          schema:
-            type: integer
-            format: int32
-          example: 1
+        - $ref: "#/components/parameters/CarId"
       responses:
         "204":
           description: Auto succesvol verwijderd
+        "400":
+          $ref: "#/components/responses/InvalidCarId"
         "401":
-          description: Niet ingelogd
+          $ref: "#/components/responses/Unauthorized"
         "403":
-          description: Ingelogde gebruiker is niet de eigenaar van de auto
+          $ref: "#/components/responses/NotCarOwner"
         "404":
-          description: Auto niet gevonden
+          $ref: "#/components/responses/CarNotFound"
+        "409":
+          description: Auto heeft nog een actieve reservering of lopende rit en kan niet worden verwijderd
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /cars/{id}/cost-data:
     post:
       summary: "Testroute: vul ontbrekende MRB en verbruik aan via Gemini"
@@ -207,14 +250,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Car"
+        "400":
+          $ref: "#/components/responses/InvalidCarId"
         "401":
-          description: Niet ingelogd
+          $ref: "#/components/responses/Unauthorized"
         "403":
-          description: Ingelogde gebruiker is niet de eigenaar van de auto
+          $ref: "#/components/responses/NotCarOwner"
         "404":
-          description: Auto niet gevonden
+          $ref: "#/components/responses/CarNotFound"
         "502":
-          description: De Gemini API is niet bereikbaar of gaf een ongeldig antwoord
+          $ref: "#/components/responses/GeminiUnavailable"
   /cars/{id}/fuel-cost:
     get:
       summary: Bereken de geschatte verbruikskosten voor een afstand
@@ -228,14 +273,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: id
-          in: path
-          required: true
-          description: Het id van de auto
-          schema:
-            type: integer
-            format: int32
-          example: 1
+        - $ref: "#/components/parameters/CarId"
         - name: distanceKm
           in: query
           required: true
@@ -252,17 +290,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/FuelCost"
         "400":
-          description: distanceKm ontbreekt, is geen getal of is negatief
+          description: Ongeldig auto-id, of distanceKm ontbreekt, is geen getal of ligt buiten het bereik
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
-          description: Niet ingelogd
+          $ref: "#/components/responses/Unauthorized"
         "403":
-          description: De ingelogde gebruiker is geen eigenaar van deze auto
+          $ref: "#/components/responses/NotCarOwner"
         "404":
-          description: Auto niet gevonden
+          $ref: "#/components/responses/CarNotFound"
         "422":
           description: Het verbruik van de auto is onbekend, ook na aanvullen via Gemini
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "502":
-          description: De Gemini API is niet bereikbaar of gaf een ongeldig antwoord
+          $ref: "#/components/responses/GeminiUnavailable"
   /cars/{id}/tco:
     get:
       summary: Bereken de Total Cost of Ownership per jaar en per maand
@@ -276,14 +322,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: id
-          in: path
-          required: true
-          description: Het id van de auto
-          schema:
-            type: integer
-            format: int32
-          example: 1
+        - $ref: "#/components/parameters/CarId"
         - name: annualKm
           in: query
           required: false
@@ -301,17 +340,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/Tco"
         "400":
-          description: annualKm is geen getal, is negatief of is te groot
+          description: Ongeldig auto-id, of annualKm is geen getal, is negatief of is te groot
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
-          description: Niet ingelogd
+          $ref: "#/components/responses/Unauthorized"
         "403":
-          description: De ingelogde gebruiker is geen eigenaar van deze auto
+          $ref: "#/components/responses/NotCarOwner"
         "404":
-          description: Auto niet gevonden
+          $ref: "#/components/responses/CarNotFound"
         "422":
           description: Het verbruik of de wegenbelasting van de auto is onbekend, ook na aanvullen via Gemini
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "502":
-          description: De Gemini API is niet bereikbaar of gaf een ongeldig antwoord
+          $ref: "#/components/responses/GeminiUnavailable"
   /cars/import:
     post:
       summary: Importeer een auto via het kenteken
@@ -335,15 +382,38 @@ paths:
               schema:
                 $ref: "#/components/schemas/Car"
         "400":
-          description: Ongeldige waarde in de request
+          description: >
+            Ongeldige request body of ongeldige waarde, bijvoorbeeld een licensePlate die na
+            normaliseren geen Nederlands kenteken van 6 letters en cijfers is
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
-          description: Niet ingelogd
+          $ref: "#/components/responses/Unauthorized"
         "409":
           description: Kenteken bestaat al
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "415":
+          $ref: "#/components/responses/UnsupportedMediaType"
         "422":
-          description: Kenteken onbekend bij de RDW, of RDW-gegevens niet te verwerken
+          description: >
+            Kenteken onbekend bij de RDW, RDW-gegevens niet te verwerken, of een veld ontbreekt
+            dat voor de brandstof van de auto verplicht is: ICE (benzine, diesel, LPG, ook hybride)
+            tankCapacityL en automaticTransmission, BEV batteryCapacityKWh, FCEV tankCapacityKgH2
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "502":
           description: De RDW API is niet bereikbaar of gaf een ongeldig antwoord
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /cars/{id}/photos:
     post:
       summary: Upload een foto van een auto
@@ -354,14 +424,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: id
-          in: path
-          required: true
-          description: Het id van de auto
-          schema:
-            type: integer
-            format: int32
-          example: 1
+        - $ref: "#/components/parameters/CarId"
       requestBody:
         required: true
         content:
@@ -382,31 +445,37 @@ paths:
               schema:
                 $ref: "#/components/schemas/Photo"
         "400":
-          description: Geen foto meegestuurd of het bestand is leeg
+          description: Ongeldig auto-id, geen foto meegestuurd of het bestand is leeg
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
-          description: Niet ingelogd
+          $ref: "#/components/responses/Unauthorized"
         "403":
-          description: De ingelogde gebruiker is geen eigenaar van deze auto
+          $ref: "#/components/responses/NotCarOwner"
         "404":
-          description: Auto niet gevonden
+          $ref: "#/components/responses/CarNotFound"
         "413":
           description: Foto is groter dan 5 MB
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "415":
           description: Foto is geen JPEG
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     get:
       summary: Haal de foto's van een auto op
       operationId: getCarPhotos
+      security: []
       tags:
         - Photos
       parameters:
-        - name: id
-          in: path
-          required: true
-          description: Het id van de auto
-          schema:
-            type: integer
-            format: int32
-          example: 1
+        - $ref: "#/components/parameters/CarId"
       responses:
         "200":
           description: Lijst met foto's van de auto
@@ -416,12 +485,15 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Photo"
+        "400":
+          $ref: "#/components/responses/InvalidCarId"
         "404":
-          description: Auto niet gevonden
+          $ref: "#/components/responses/CarNotFound"
   /photos/{id}:
     get:
       summary: Haal een foto op
       operationId: getPhoto
+      security: []
       tags:
         - Photos
       parameters:
@@ -441,12 +513,24 @@ paths:
               schema:
                 type: string
                 format: binary
+        "400":
+          description: Ongeldig foto-id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Foto niet gevonden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /cars/{carId}/maps:
     get:
       summary: Open de locatie van een auto in Google Maps
-      description: Geeft een Google Maps-URL met de laatst bekende locatie van de auto. Alleen voor de eigenaar of een huurder met een bevestigde reservering die nu loopt.
+      description: >
+        Geeft een Google Maps-URL met de laatst bekende locatie van de auto.
+        Elke ingelogde gebruiker mag dit opvragen; GET /cars/map toont de posities van alle auto's al.
       operationId: getCarLocationInMaps
       tags:
         - Maps
@@ -471,28 +555,64 @@ paths:
                 format: uri
               example: https://www.google.com/maps/dir/?api=1&destination=51.6436,4.86044
         "400":
-          description: Ongeldig auto-id
+          $ref: "#/components/responses/InvalidCarId"
         "401":
-          description: Niet ingelogd
-        "403":
-          description: De ingelogde gebruiker is geen eigenaar en heeft geen actieve reservering voor deze auto
+          $ref: "#/components/responses/Unauthorized"
         "404":
           description: Auto niet gevonden of geen locatie bekend voor deze auto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /cars/{id}/location:
+    put:
+      summary: Stel de huidige locatie van een auto in
+      description: |
+        Alleen de ingelogde eigenaar van de auto mag dit. Voegt een nieuwe locatierij toe
+        met de huidige tijd; de nieuwste rij geldt als huidige locatie van de auto.
+      operationId: setCarLocation
+      tags:
+        - Maps
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CarId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LocationRequest"
+      responses:
+        "200":
+          description: Locatie succesvol ingesteld
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Location"
+        "400":
+          description: Ongeldig auto-id, ongeldige request body of latitude/longitude buiten het bereik
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/NotCarOwner"
+        "404":
+          $ref: "#/components/responses/CarNotFound"
+        "415":
+          $ref: "#/components/responses/UnsupportedMediaType"
   /cars/{id}/rental-terms:
     get:
       summary: Haal de verhuurvoorwaarden van een auto op
       operationId: getRentalTerms
+      security: []
       tags:
         - RentalTerms
       parameters:
-        - name: id
-          in: path
-          required: true
-          description: Het id van de auto
-          schema:
-            type: integer
-            format: int32
-          example: 1
+        - $ref: "#/components/parameters/CarId"
       responses:
         "200":
           description: De verhuurvoorwaarden van de auto
@@ -501,9 +621,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/RentalTerms"
         "400":
-          description: Ongeldig auto-id
+          $ref: "#/components/responses/InvalidCarId"
         "404":
           description: Auto niet gevonden of geen verhuurvoorwaarden bekend
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     put:
       summary: Stel de verhuurvoorwaarden van een auto in
       description: Alleen de ingelogde eigenaar van de auto mag dit. Maakt de verhuurvoorwaarden aan, of overschrijft ze als ze al bestaan.
@@ -513,14 +637,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: id
-          in: path
-          required: true
-          description: Het id van de auto
-          schema:
-            type: integer
-            format: int32
-          example: 1
+        - $ref: "#/components/parameters/CarId"
       requestBody:
         required: true
         content:
@@ -535,17 +652,45 @@ paths:
               schema:
                 $ref: "#/components/schemas/RentalTerms"
         "400":
-          description: Ongeldige waarde, bijvoorbeeld een prijs van 0 of lager
+          description: Ongeldig auto-id, ongeldige request body of ongeldige waarde, bijvoorbeeld een prijs van 0 of lager
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
-          description: Niet ingelogd
+          $ref: "#/components/responses/Unauthorized"
         "403":
-          description: Ingelogde gebruiker is niet de eigenaar van de auto
+          $ref: "#/components/responses/NotCarOwner"
         "404":
-          description: Auto niet gevonden
+          $ref: "#/components/responses/CarNotFound"
+        "415":
+          $ref: "#/components/responses/UnsupportedMediaType"
   /reservations:
+    get:
+      summary: Haal de reserveringen van de ingelogde gebruiker op
+      description: Gesorteerd op starttijd, de vroegste eerst.
+      operationId: getMyReservations
+      tags:
+        - Reservations
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Reserveringen van de ingelogde gebruiker
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Reservation"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
     post:
       summary: Maak een reservering aan
-      description: De reservering komt op naam van de ingelogde gebruiker.
+      description: |
+        De reservering komt op naam van de ingelogde gebruiker.
+        De totaalprijs is de prijs per dag uit de huurvoorwaarden maal het aantal
+        begonnen dagen (elke begonnen 24 uur telt als een dag, minimaal 1).
       operationId: createReservation
       tags:
         - Reservations
@@ -565,13 +710,41 @@ paths:
               schema:
                 $ref: "#/components/schemas/Reservation"
         "400":
-          description: Ongeldige request, starttijd ligt in het verleden of eindtijd ligt niet na de starttijd
+          description: >
+            Ongeldige request body, starttijd ligt in het verleden, eindtijd ligt niet na de starttijd,
+            of de reservering duurt langer dan 30 dagen ("Een reservering mag maximaal 30 dagen duren")
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
-          description: Niet ingelogd
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: Je kunt je eigen auto niet reserveren
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Auto of gebruiker niet gevonden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "409":
           description: Auto is in dit tijdsblok al gereserveerd
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "415":
+          $ref: "#/components/responses/UnsupportedMediaType"
+        "422":
+          description: Auto heeft nog geen huurvoorwaarden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /reservations/{id}/cancel:
     patch:
       summary: Annuleer een reservering via het id
@@ -582,14 +755,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: id
-          in: path
-          required: true
-          description: Het id van de reservering
-          schema:
-            type: integer
-            format: int32
-          example: 1
+        - $ref: "#/components/parameters/ReservationId"
       responses:
         "200":
           description: Reservering succesvol geannuleerd
@@ -599,14 +765,30 @@ paths:
                 $ref: "#/components/schemas/Reservation"
         "400":
           description: Ongeldig reservering-id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
-          description: Niet ingelogd
+          $ref: "#/components/responses/Unauthorized"
         "403":
           description: De reservering is van een andere gebruiker
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Reservering niet gevonden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "409":
           description: Reservering is al geannuleerd of de starttijd is al verstreken
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /reservations/{id}/rides:
     post:
       summary: Start een rit voor een reservering
@@ -617,14 +799,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - name: id
-          in: path
-          required: true
-          description: Het id van de reservering
-          schema:
-            type: integer
-            format: int32
-          example: 1
+        - $ref: "#/components/parameters/ReservationId"
       responses:
         "201":
           description: Rit succesvol gestart
@@ -634,21 +809,48 @@ paths:
                 $ref: "#/components/schemas/Ride"
         "400":
           description: Ongeldig reservering-id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
-          description: Niet ingelogd
+          $ref: "#/components/responses/Unauthorized"
         "403":
           description: De reservering is van een andere gebruiker
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Reservering niet gevonden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "409":
-          description: Reservering is niet bevestigd, is nu niet actief, of er loopt al een rit
+          description: >
+            Reservering is niet bevestigd of is nu niet actief, of er loopt al een rit met dezelfde
+            auto of op deze reservering ("Er loopt al een rit met auto {carId} of reservering {id}
+            is niet meer bevestigd")
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /rides/{id}/finish:
     patch:
       summary: Rond een rit af met de gegevens van het telematica-kastje
       description: |
         Slaat de ritgegevens op, zet de status op COMPLETED en kent bonuspunten
         toe voor rustig rijgedrag (zie het veld bonusPoints in het schema Ride).
+        De meegestuurde latitude en longitude worden in dezelfde transactie opgeslagen
+        als nieuwe, huidige locatie van de auto, en de bijbehorende reservering krijgt
+        de status COMPLETED. Daarna kan op die reservering geen nieuwe rit meer starten.
         Alleen de huurder van de bijbehorende reservering mag de rit afronden.
+
+        Een body die geen geldige JSON is of een verplicht veld mist, geeft direct 400.
+        Daarna wordt gecontroleerd in de volgorde 404 (rit bestaat niet), 403 (niet de huurder),
+        400 (ongeldige waarden) en 409 (rit al afgerond). Een niet-huurder met ongeldige
+        waarden krijgt dus 403.
       operationId: finishRide
       tags:
         - Rides
@@ -677,20 +879,78 @@ paths:
               schema:
                 $ref: "#/components/schemas/Ride"
         "400":
-          description: Ongeldig rit-id, ongeldige request body of negatieve waarde
+          description: Ongeldig rit-id, ongeldige request body, negatieve waarde, afstand groter dan 6000 km of ongeldige latitude/longitude
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
-          description: Niet ingelogd
+          $ref: "#/components/responses/Unauthorized"
         "403":
           description: De rit hoort bij een reservering van een andere gebruiker
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "404":
           description: Rit niet gevonden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "409":
           description: Rit is al afgerond
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "415":
+          $ref: "#/components/responses/UnsupportedMediaType"
+  /rides/active:
+    get:
+      summary: Haal de lopende rit van de ingelogde gebruiker op
+      operationId: getActiveRide
+      tags:
+        - Rides
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: De rit met status IN_PROGRESS
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ride"
+        "204":
+          description: De ingelogde gebruiker heeft geen lopende rit (geen body)
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /rides:
+    get:
+      summary: Haal alle ritten van de ingelogde gebruiker op
+      description: Alle ritten op reserveringen van de ingelogde gebruiker, lopend en afgerond, de nieuwste eerst.
+      operationId: getRides
+      tags:
+        - Rides
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Lijst van ritten, gesorteerd op starttijd aflopend (leeg = [])
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Ride"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
   /users:
     get:
       summary: Haal alle gebruikers op (tijdelijk, voor testen)
       operationId: getAllUsers
+      security: []
       tags:
         - Users
       responses:
@@ -707,8 +967,10 @@ paths:
       summary: Maak een nieuw account aan
       description: |
         Het wachtwoord moet minimaal 8 tekens lang zijn en een hoofdletter,
-        een kleine letter, een cijfer en een speciaal teken bevatten.
+        een kleine letter, een cijfer en een speciaal teken bevatten, en mag maximaal
+        72 bytes (UTF-8) lang zijn, omdat BCrypt alles daarna negeert.
       operationId: register
+      security: []
       tags:
         - Users
       requestBody:
@@ -725,9 +987,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/User"
         "400":
-          description: Ongeldig e-mailadres of te zwak wachtwoord, de foutmelding noemt het veld
+          description: Ongeldige request body, ongeldig e-mailadres, of te zwak of te lang wachtwoord; de foutmelding noemt het veld
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "409":
           description: Er bestaat al een account met dit e-mailadres
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "415":
+          $ref: "#/components/responses/UnsupportedMediaType"
   /users/login:
     post:
       summary: Log in met e-mail en wachtwoord
@@ -735,6 +1007,7 @@ paths:
         Geeft een JWT-token terug. Gebruik deze token via de knop "Authorize"
         om beveiligde endpoints aan te roepen.
       operationId: login
+      security: []
       tags:
         - Users
       requestBody:
@@ -752,8 +1025,41 @@ paths:
                 $ref: "#/components/schemas/LoginResponse"
         "400":
           description: Ongeldige request body
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: Onjuist e-mailadres of wachtwoord
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "415":
+          $ref: "#/components/responses/UnsupportedMediaType"
+  /users/me:
+    get:
+      summary: Haal de ingelogde gebruiker op
+      operationId: getMe
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: De ingelogde gebruiker met zijn saldo bonuspunten, zonder wachtwoord
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: Gebruiker bestaat niet meer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
 components:
   securitySchemes:
@@ -761,7 +1067,140 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+  responses:
+    Unauthorized:
+      description: Niet ingelogd
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    InvalidCarId:
+      description: Ongeldig auto-id
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotCarOwner:
+      description: De ingelogde gebruiker is niet de eigenaar van de auto
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    CarNotFound:
+      description: Auto niet gevonden
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    GeminiUnavailable:
+      description: De Gemini API is niet bereikbaar of gaf een ongeldig antwoord
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    UnsupportedMediaType:
+      description: De body heeft een ander Content-Type dan application/json
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+  parameters:
+    CarId:
+      name: id
+      in: path
+      required: true
+      description: Het id van de auto
+      schema:
+        type: integer
+        format: int32
+      example: 1
+    ReservationId:
+      name: id
+      in: path
+      required: true
+      description: Het id van de reservering
+      schema:
+        type: integer
+        format: int32
+      example: 1
+    MaxPrice:
+      name: maxPrice
+      in: query
+      required: false
+      description: Maximale prijs per dag. Auto's zonder verhuurvoorwaarden vallen dan af.
+      schema:
+        type: number
+        format: double
+        minimum: 0
+      example: 50.0
+    MaxDistanceKm:
+      name: maxDistanceKm
+      in: query
+      required: false
+      description: Maximale afstand vanaf de opgegeven coördinaten in kilometer. Alleen samen met latitude en longitude.
+      schema:
+        type: number
+        format: double
+        minimum: 0
+      example: 10.0
+    Latitude:
+      name: latitude
+      in: query
+      required: false
+      description: Breedtegraad van het vertrekpunt. Alleen samen met maxDistanceKm en longitude.
+      schema:
+        type: number
+        format: double
+        minimum: -90
+        maximum: 90
+      example: 51.5853
+    Longitude:
+      name: longitude
+      in: query
+      required: false
+      description: Lengtegraad van het vertrekpunt. Alleen samen met maxDistanceKm en latitude.
+      schema:
+        type: number
+        format: double
+        minimum: -180
+        maximum: 180
+      example: 4.7946
+    AvailableFrom:
+      name: startTime
+      in: query
+      required: false
+      description: Begin van het tijdvak (ISO-8601). Alleen samen met endTime. Auto's met een actieve reservering (PENDING of CONFIRMED) die het tijdvak overlapt, vallen af.
+      schema:
+        type: string
+        format: date-time
+      example: "2099-01-15T10:00:00Z"
+    AvailableUntil:
+      name: endTime
+      in: query
+      required: false
+      description: Eind van het tijdvak (ISO-8601), na startTime. Alleen samen met startTime.
+      schema:
+        type: string
+        format: date-time
+      example: "2099-01-15T17:00:00Z"
   schemas:
+    ErrorResponse:
+      type: object
+      description: |
+        Foutresponse van de API, met de HTTP-statuscode en een Nederlandse melding.
+        Elke fout heeft deze body, ook een onbekende route (404) en een niet-toegestane
+        methode op een bestaande route (405).
+      required:
+        - status
+        - message
+      properties:
+        status:
+          type: integer
+          format: int32
+          example: 404
+        message:
+          type: string
+          example: Auto 1 niet gevonden
     Car:
       oneOf:
         - $ref: "#/components/schemas/ICECar"
@@ -784,11 +1223,8 @@ components:
         - model
         - productionYear
         - color
-        - seats
         - vehicleType
         - readyToDriveWeightKg
-        - consumptionCombined
-        - co2EmissionCombined
       properties:
         id:
           type: integer
@@ -809,6 +1245,7 @@ components:
           type: string
         seats:
           type: integer
+          nullable: true
         doors:
           type: integer
           nullable: true
@@ -822,9 +1259,11 @@ components:
         consumptionCombined:
           type: number
           format: double
+          nullable: true
         co2EmissionCombined:
           type: number
           format: double
+          nullable: true
         roadTaxPerQuarter:
           type: number
           format: double
@@ -884,10 +1323,15 @@ components:
               format: double
     CarRequest:
       type: object
+      description: >
+        Welke velden verplicht zijn, hangt af van de brandstof die de RDW teruggeeft:
+        ICE (benzine, diesel, LPG, ook hybride) tankCapacityL en automaticTransmission,
+        BEV batteryCapacityKWh, FCEV tankCapacityKgH2. Ontbreekt zo'n veld, dan volgt 422.
+        Velden voor een andere brandstof worden genegeerd.
       example:
         licensePlate: "R-816-LF"
         trim: null
-        tankCapacityL: null
+        tankCapacityL: 50.0
         automaticTransmission: true
         batteryCapacityKWh: null
         tankCapacityKgH2: null
@@ -898,6 +1342,7 @@ components:
       properties:
         licensePlate:
           type: string
+          description: Nederlands kenteken, 6 letters en cijfers na normaliseren (streepjes en spaties tellen niet mee)
         trim:
           type: string
           nullable: true
@@ -908,8 +1353,7 @@ components:
         automaticTransmission:
           type: boolean
           nullable: true
-          default: true
-          description: "Alleen voor ICE-auto's. Niet opgegeven = automaat."
+          description: "Verplicht voor ICE-auto's, anders 422"
         batteryCapacityKWh:
           type: number
           format: double
@@ -954,6 +1398,7 @@ components:
         - startTime
         - endTime
         - status
+        - totalPrice
       properties:
         id:
           type: integer
@@ -970,12 +1415,20 @@ components:
         status:
           type: string
           enum: [PENDING, CONFIRMED, CANCELLED, COMPLETED]
+          description: COMPLETED zodra een rit op de reservering is afgerond
+        totalPrice:
+          type: number
+          format: double
+          description: Prijs per dag maal het aantal begonnen dagen (minimaal 1)
+          example: 178.0
+
     CarChangeRequest:
       type: object
       properties:
         licensePlate:
           type: string
           nullable: true
+          description: Nederlands kenteken, 6 letters en cijfers na normaliseren (streepjes en spaties tellen niet mee), anders 400
         brand:
           type: string
           nullable: true
@@ -1048,11 +1501,14 @@ components:
         - distanceM
         - avgAcceleration
         - avgDeceleration
+        - latitude
+        - longitude
       properties:
         distanceM:
           type: number
           format: double
           minimum: 0
+          maximum: 6000000
           description: Gereden afstand in meter
           example: 12500.0
         avgAcceleration:
@@ -1067,6 +1523,21 @@ components:
           minimum: 0
           description: Gemiddelde deceleratie in m/s²
           example: 2.1
+        latitude:
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+          description: Breedtegraad waar de auto na de rit geparkeerd staat
+          example: 51.5853
+        longitude:
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+          description: Lengtegraad waar de auto na de rit geparkeerd staat
+          example: 4.7946
+
     Ride:
       type: object
       required:
@@ -1110,6 +1581,44 @@ components:
               Rustig = avgAcceleration < 2,78 m/s² en avgDeceleration < 3,43 m/s².
               Een rustige rit levert 1 punt per volle kilometer op, anders 0.
               Leeg (null) zolang de rit loopt.
+    LocationRequest:
+      type: object
+      required:
+        - latitude
+        - longitude
+      properties:
+        latitude:
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+          example: 51.5853
+        longitude:
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+          example: 4.7946
+    Location:
+      type: object
+      required:
+        - carId
+        - latitude
+        - longitude
+        - timestamp
+      properties:
+        carId:
+          type: integer
+          format: int32
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        timestamp:
+          type: string
+          format: date-time
     LoginRequest:
       type: object
       required:
@@ -1146,6 +1655,7 @@ components:
           type: string
           format: password
           minLength: 8
+          description: Minimaal 8 tekens met een hoofdletter, een kleine letter, een cijfer en een speciaal teken; maximaal 72 bytes (UTF-8)
           example: Geheim123!
     Photo:
       type: object
@@ -1249,6 +1759,7 @@ components:
       required:
         - id
         - email
+        - bonusPoints
       properties:
         id:
           type: integer
@@ -1256,6 +1767,11 @@ components:
         email:
           type: string
           format: email
+        bonusPoints:
+          type: integer
+          format: int32
+          description: Saldo bonuspunten, de som van bonusPoints van alle afgeronde ritten. 0 zonder ritten.
+          example: 48
     RentalTermsRequest:
       type: object
       required:
@@ -1291,6 +1807,34 @@ components:
           type: string
           example: "20:00"
           nullable: true
+    CarMapResponse:
+      type: object
+      required:
+        - car
+        - latitude
+        - longitude
+        - pricePerDay
+      properties:
+        car:
+          $ref: "#/components/schemas/Car"
+        latitude:
+          type: number
+          format: double
+          nullable: true
+          description: Laatste bekende breedtegraad, null als er geen locatie is
+          example: 51.64361
+        longitude:
+          type: number
+          format: double
+          nullable: true
+          description: Laatste bekende lengtegraad, null als er geen locatie is
+          example: 4.86044
+        pricePerDay:
+          type: number
+          format: double
+          nullable: true
+          description: Prijs per dag uit de huurvoorwaarden, null als die er niet zijn
+          example: 89.0
     RentalTerms:
       type: object
       required:

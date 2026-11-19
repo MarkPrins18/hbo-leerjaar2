@@ -1,5 +1,5 @@
 import clients.CostEstimator
-import dto.CarChangeDto
+import shared.requests.CarChangeDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
@@ -7,10 +7,10 @@ import io.ktor.client.request.get
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.runBlocking
-import models.*
+import shared.models.*
 import models.gemini.CarCostEstimate
 import repositories.*
-import responses.FuelCostResponse
+import shared.responses.FuelCostResponse
 import services.*
 import kotlin.math.round
 import kotlin.test.Test
@@ -90,6 +90,7 @@ private class FakeFuelCostCarRepository(vararg cars: Car) : CarRepository {
     val cars = cars.associateBy { it.id }.toMutableMap()
 
     override suspend fun getCarById(carId: Int): Car? = cars[carId]
+    override suspend fun getCarsByUserId(userId: Int): List<Car> = TODO()
 
     override suspend fun updateCar(carId: Int, change: CarChangeDto): Car? {
         val car = cars[carId] as? BEVCar ?: return null

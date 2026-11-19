@@ -1,5 +1,5 @@
-import dto.CarChangeDto
-import dto.RentalTermsRequest
+import shared.requests.CarChangeDto
+import shared.requests.RentalTermsRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
@@ -12,7 +12,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalTime
-import models.*
+import shared.models.*
 import repositories.CarRepository
 import repositories.RentalTermsRepository
 import services.ForbiddenException
@@ -69,6 +69,7 @@ private class FakeRentalTermsCarRepository(vararg cars: Car) : CarRepository {
     private val cars = cars.associateBy { it.id }
 
     override suspend fun getCarById(carId: Int): Car? = cars[carId]
+    override suspend fun getCarsByUserId(userId: Int): List<Car> = TODO()
 
     override suspend fun getAllCars(): List<Car> = TODO()
     override suspend fun getCarByLicensePlate(licensePlate: String): Car? = TODO()
@@ -86,6 +87,7 @@ private class FakeRentalTermsRepository : RentalTermsRepository {
 
     override suspend fun carExists(carId: Int): Boolean = TODO()
     override suspend fun getRentalTermsByCarId(carId: Int): RentalTerms? = TODO()
+    override suspend fun getAllRentalTerms(): List<RentalTerms> = TODO()
 }
 
 private class FakeStoredRentalTermsRepository(
@@ -98,6 +100,7 @@ private class FakeStoredRentalTermsRepository(
     override suspend fun getRentalTermsByCarId(carId: Int): RentalTerms? = rentalTerms[carId]
 
     override suspend fun saveRentalTerms(carId: Int, request: RentalTermsRequest): RentalTerms = TODO()
+    override suspend fun getAllRentalTerms(): List<RentalTerms> = TODO()
 }
 
 // ==================== 2. Service: RentalTermsService ====================

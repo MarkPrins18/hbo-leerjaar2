@@ -1,7 +1,7 @@
 package repositories
 
-import models.Car
-import dto.CarChangeDto
+import shared.models.Car
+import shared.requests.CarChangeDto
 
 interface CarRepository {
     suspend fun getAllCars(): List<Car>
@@ -9,6 +9,8 @@ interface CarRepository {
     suspend fun getCarByLicensePlate(licensePlate: String): Car?
 
     suspend fun getCarById(carId: Int): Car?
+
+    suspend fun getCarsByUserId(userId: Int): List<Car>
 
     /**
      * Saves a new car. The `id` field of [car] is ignored; the repository
@@ -19,5 +21,10 @@ interface CarRepository {
     /** Returns the updated car, or null if no car exists with id [carId]. */
     suspend fun updateCar(carId: Int, change: CarChangeDto): Car?
 
+    /**
+     * Deletes the car with everything that references it, unless it is still in use: a PENDING or
+     * CONFIRMED reservation that has not ended yet, or a ride IN_PROGRESS.
+     * Returns false if the car does not exist or is still in use; nothing is deleted then.
+     */
     suspend fun deleteCar(carId: Int): Boolean
 }

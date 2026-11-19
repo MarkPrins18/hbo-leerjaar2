@@ -1,5 +1,5 @@
 import config.PhotoStorage
-import dto.CarChangeDto
+import shared.requests.CarChangeDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
@@ -19,10 +19,10 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.files.SystemTemporaryDirectory
-import models.BEVCar
-import models.Car
-import models.Photo
-import models.VehicleType
+import shared.models.BEVCar
+import shared.models.Car
+import shared.models.Photo
+import shared.models.VehicleType
 import repositories.CarRepository
 import repositories.PhotoRepository
 import services.FileTooLargeException
@@ -77,6 +77,7 @@ private class FakeCarRepository(vararg cars: Car) : CarRepository {
     private val cars = cars.associateBy { it.id }
 
     override suspend fun getCarById(carId: Int): Car? = cars[carId]
+    override suspend fun getCarsByUserId(userId: Int): List<Car> = TODO()
 
     override suspend fun getAllCars(): List<Car> = TODO()
     override suspend fun getCarByLicensePlate(licensePlate: String): Car? = TODO()

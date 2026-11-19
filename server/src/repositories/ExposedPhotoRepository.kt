@@ -1,7 +1,7 @@
 package repositories
 
 import mappers.toPhoto
-import models.Photo
+import shared.models.Photo
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.select

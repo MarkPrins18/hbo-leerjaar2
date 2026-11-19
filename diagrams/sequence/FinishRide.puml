@@ -1,5 +1,5 @@
 @startuml FinishRide
-title Sequentiediagram #11: rit afronden (PATCH /rides/{id}/finish)
+title Sequentiediagram #12: rit afronden (PATCH /rides/{id}/finish)
 
 actor Huurder as g
 participant "Android-app" as app
@@ -10,21 +10,13 @@ participant "ReservationRepository" as resrepo
 database "H2-database" as db
 
 g -> app : rit beëindigen()
-app -> rt : PATCH /rides/{id}/finish {distanceM, avgAcceleration, avgDeceleration}\nAuthorization: Bearer <token>
+app -> rt : PATCH /rides/{id}/finish {distanceM, avgAcceleration, avgDeceleration,\nlatitude, longitude}\nAuthorization: Bearer <token>
 note right of rt
   requireAuthentication { }: zonder geldig token
   stopt de request hier met 401 (preconditie: #2)
 end note
 rt -> rt : call.authenticatedUserId()
 rt -> svc : finishRide(rideId, userId, request)
-svc -> svc : distanceM, avgAcceleration en\navgDeceleration niet negatief?
-
-group flow 7a [negatieve waarde]
-    svc --> rt : throw ValidationException
-    rt --> app : 400 Bad Request (StatusPages)
-    app --> g : foutmelding (stap 6)
-end
-
 svc -> riderepo : getRideById(rideId)
 riderepo -> db : SELECT FROM ride WHERE id
 db --> riderepo : 0 of 1 rij
@@ -47,6 +39,14 @@ group flow 8b [rit hoort bij een reservering van een andere gebruiker]
     app --> g : foutmelding (einde)
 end
 
+svc -> svc : request.validate() (CarValidation.kt):\ndistanceM, avgAcceleration en avgDeceleration\nniet negatief, distanceM <= 6000 km,\nlatitude -90..90 en longitude -180..180?
+
+group flow 7a [negatieve waarde, afstand boven 6000 km of ongeldige coördinaten]
+    svc --> rt : throw ValidationException
+    rt --> app : 400 Bad Request (StatusPages)
+    app --> g : foutmelding (stap 6)
+end
+
 group flow 8c [rit is al afgerond]
     svc --> rt : throw ConflictException
     rt --> app : 409 Conflict (StatusPages)
@@ -54,12 +54,40 @@ group flow 8c [rit is al afgerond]
 end
 
 svc -> svc : calculateBonusPoints(distanceM,\navgAcceleration, avgDeceleration)
-svc -> riderepo : finishRide(rideId, nu, distanceM, ..., bonusPoints)
-riderepo -> db : UPDATE ride (COMPLETED)
-db --> riderepo : daarna SELECT van de rij
+svc -> riderepo : finishRide(rideId, nu, request, bonusPoints)
+note right of riderepo
+  Alles hieronder in één suspendTransaction:
+  lukt een stap niet, dan wordt niets opgeslagen.
+end note
+riderepo -> db : UPDATE ride (COMPLETED)\nWHERE id AND status = IN_PROGRESS
+db --> riderepo : aantal bijgewerkte rijen
+
+group flow 9a [rit is intussen al afgerond (0 rijen bijgewerkt)]
+    riderepo --> svc : null
+    svc --> rt : throw ConflictException
+    rt --> app : 409 Conflict (StatusPages)
+    app --> g : foutmelding (einde)
+end
+
+riderepo -> db : SELECT van de rij
+db --> riderepo : 1 rij
+riderepo -> db : SELECT car_id FROM reservation WHERE id
+db --> riderepo : car_id
+riderepo -> db : UPDATE reservation SET status = COMPLETED\nWHERE id = ride.reservationId
+note right of db
+  Op een COMPLETED reservering start geen
+  nieuwe rit meer (409) en annuleren geeft 409.
+end note
+
+riderepo -> db : INSERT INTO location\n(car_id, latitude, longitude, speed = 0, nu)
+note right of db
+  De nieuwste rij geldt als huidige locatie
+  (getLatestLocationByCarId).
+end note
 riderepo --> svc : Ride
+
 svc --> rt : Ride
 rt --> app : 200 OK + Ride
-app --> g : toont bonuspunten
+app --> g : toont bonuspunten, reservering is afgerond
 
 @enduml

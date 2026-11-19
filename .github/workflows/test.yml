@@ -23,7 +23,10 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: ~/.cache/JetBrains
-          key: kotlin-${{ runner.os }}-${{ hashFiles('kotlin', 'libs.versions.toml', 'server/module.yaml') }}
+          key: kotlin-${{ runner.os }}-${{ hashFiles('kotlin', 'libs.versions.toml', '**/module.yaml') }}
+
+      - name: Build
+        run: bash ./kotlin build
 
       - name: Run tests
         run: bash ./kotlin test

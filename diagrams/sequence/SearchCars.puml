@@ -1,5 +1,5 @@
 @startuml SearchCars
-title Sequentiediagram #8: auto's zoeken en filteren (GET /cars)
+title Sequentiediagram #8: auto's zoeken en filteren (GET /cars en GET /cars/map)
 
 actor Huurder as g
 participant "Android-app" as app
@@ -8,15 +8,21 @@ participant "CarService" as svc
 participant "CarRepository" as car
 participant "LocationRepository" as loc
 participant "RentalTermsRepository" as terms
+participant "ReservationRepository" as res
 database "H2-database" as db
 
 g -> app : zoek auto's()
-app -> rt : GET /cars?maxPrice&maxDistanceKm&latitude&longitude
+app -> rt : GET /cars of /cars/map\n?maxPrice&maxDistanceKm&latitude&longitude&startTime&endTime
+note right of rt
+  /cars/map staat in requireAuthentication { }:
+  zonder geldig token 401. De vaste route /map
+  gaat in Ktor voor /cars/{id}, net als /mine.
+end note
 rt -> rt : toCarFilter()
-rt -> svc : getCars(filter)
+rt -> svc : getCars(filter) of getCarMap(filter)
 svc -> svc : filter.validate()
 
-group flow 3a [ongeldige filterwaarde]
+group flow 3a [ongeldige filterwaarde, of startTime/endTime niet samen of eind niet na begin]
     svc --> rt : throw ValidationException
     rt --> app : 400 Bad Request (StatusPages)
     app --> g : foutmelding (stap 2)
@@ -27,17 +33,34 @@ car -> db : SELECT car + subtabellen
 db --> car : rijen
 car --> svc : List<Car>
 
-loop voor elke auto
-    svc -> loc : getLatestLocationByCarId(car.id)
-    loc -> db : SELECT location (nieuwste)
-    db --> loc : 0 of 1 rij
-    loc --> svc : Location?
-    svc -> terms : getRentalTermsByCarId(car.id)
-    terms -> db : SELECT rental_terms
-    db --> terms : 0 of 1 rij
-    terms --> svc : RentalTerms?
-    svc -> svc : filter.matches(location, rentalTerms)
+opt startTime en endTime opgegeven
+    svc -> res : getReservedCarIds(startTime, endTime)
+    res -> db : SELECT car_id FROM reservation\n(PENDING/CONFIRMED + overlap)
+    db --> res : rijen
+    res --> svc : Set<Int>
+    svc -> svc : auto's met een overlappende reservering weglaten
 end
+
+svc -> loc : getLatestLocationsByCarId()
+loc -> db : SELECT location WHERE NOT EXISTS
+(nieuwere rij van dezelfde auto)
+db --> loc : nieuwste rij per auto
+loc --> svc : Map<Int, Location>
+
+svc -> terms : getAllRentalTerms()
+terms -> db : SELECT rental_terms
+db --> terms : rijen
+terms --> svc : List<RentalTerms>
+
+loop voor elke auto
+    svc -> svc : filter.matches(locations[car.id], rentalTerms)
+end
+note right of svc
+  getCars slaat locaties en huurvoorwaarden over
+  als er geen prijs- of afstandsfilter is.
+  getCarMap maakt per auto een CarMapResponse
+  (car, latitude, longitude, pricePerDay).
+end note
 
 group flow 4a [geen auto voldoet aan de filters]
     svc --> rt : lege List<Car>
@@ -45,8 +68,8 @@ group flow 4a [geen auto voldoet aan de filters]
     app --> g : geen auto's (stap 2)
 end
 
-svc --> rt : gefilterde List<Car>
-rt --> app : 200 OK + List<Car>
+svc --> rt : gefilterde List<Car> of List<CarMapResponse>
+rt --> app : 200 OK + List<Car> of List<CarMapResponse>
 app --> g : lijst of kaart
 
 @enduml

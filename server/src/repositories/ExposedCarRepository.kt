@@ -2,12 +2,18 @@ package repositories
 
 import mappers.normalizeLicensePlate
 import mappers.toCar
-import models.BEVCar
-import models.Car
-import models.FCEVCar
-import models.ICECar
+import models.ACTIVE_RESERVATION_STATUSES
+import shared.models.BEVCar
+import shared.models.Car
+import shared.models.FCEVCar
+import shared.models.ICECar
+import shared.models.RideStatus
+import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.greater
+import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.core.inSubQuery
+import org.jetbrains.exposed.v1.core.innerJoin
 import org.jetbrains.exposed.v1.core.leftJoin
 import org.jetbrains.exposed.v1.jdbc.JdbcTransaction
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
@@ -16,7 +22,7 @@ import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.update
-import dto.CarChangeDto
+import shared.requests.CarChangeDto
 import tables.BevCarTable
 import tables.CarTable
 import tables.FcevCarTable
@@ -26,6 +32,7 @@ import tables.PhotoTable
 import tables.RentalTermsTable
 import tables.ReservationTable
 import tables.RideTable
+import kotlin.time.Clock
 
 class ExposedCarRepository : CarRepository {
 
@@ -50,6 +57,14 @@ class ExposedCarRepository : CarRepository {
 
     override suspend fun getCarById(carId: Int): Car? = suspendTransaction {
         findCarById(carId)
+    }
+
+    override suspend fun getCarsByUserId(userId: Int): List<Car> = suspendTransaction {
+        carWithSubtypes
+            .selectAll()
+            .where { CarTable.userId eq userId }
+            .orderBy(CarTable.id)
+            .map { row -> row.toCar() }
     }
 
     override suspend fun getCarByLicensePlate(licensePlate: String): Car? = suspendTransaction {
@@ -153,17 +168,17 @@ class ExposedCarRepository : CarRepository {
             }
 
             is BEVCar -> {
-                if (change.batteryCapacityKWh != null) {
+                change.batteryCapacityKWh?.let { value ->
                     BevCarTable.update({ BevCarTable.carId eq carId }) {
-                        it[batteryCapacityKwh] = change.batteryCapacityKWh.toBigDecimal()
+                        it[batteryCapacityKwh] = value.toBigDecimal()
                     }
                 }
             }
 
             is FCEVCar -> {
-                if (change.tankCapacityKgH2 != null) {
+                change.tankCapacityKgH2?.let { value ->
                     FcevCarTable.update({ FcevCarTable.carId eq carId }) {
-                        it[tankCapacityKgH2] = change.tankCapacityKgH2.toBigDecimal()
+                        it[tankCapacityKgH2] = value.toBigDecimal()
                     }
                 }
             }
@@ -173,6 +188,12 @@ class ExposedCarRepository : CarRepository {
     }
 
     override suspend fun deleteCar(carId: Int): Boolean = suspendTransaction {
+        // Same locks as reserving (car row) and starting a ride (reservation rows), so check and delete are atomic
+        val carExists = CarTable.selectAll().where { CarTable.id eq carId }.forUpdate().toList().isNotEmpty()
+        if (!carExists) return@suspendTransaction false
+        ReservationTable.selectAll().where { ReservationTable.carId eq carId }.forUpdate().toList()
+        if (isCarInUse(carId)) return@suspendTransaction false
+
         // Important! Delete subtype and references first, they reference car.
         RideTable.deleteWhere {
             RideTable.reservationId inSubQuery ReservationTable.select(ReservationTable.id).where { ReservationTable.carId eq carId }
@@ -186,6 +207,21 @@ class ExposedCarRepository : CarRepository {
         FcevCarTable.deleteWhere { FcevCarTable.carId eq carId }
 
         CarTable.deleteWhere { CarTable.id eq carId } > 0
+    }
+
+    private fun JdbcTransaction.isCarInUse(carId: Int): Boolean {
+        val hasActiveReservation = !ReservationTable.selectAll().where {
+            (ReservationTable.carId eq carId) and
+                    (ReservationTable.status inList ACTIVE_RESERVATION_STATUSES) and
+                    (ReservationTable.endTime greater Clock.System.now())
+        }.empty()
+
+        val hasRideInProgress = !RideTable.innerJoin(ReservationTable, { RideTable.reservationId }, { ReservationTable.id })
+            .selectAll()
+            .where { (ReservationTable.carId eq carId) and (RideTable.status eq RideStatus.IN_PROGRESS) }
+            .empty()
+
+        return hasActiveReservation || hasRideInProgress
     }
 
 }

@@ -1,0 +1,12 @@
+product: android/app
+
+dependencies:
+  - ../composeApp
+  - $libs.androidx.activity.compose
+
+settings:
+  compose: enabled
+  android:
+    applicationId: nl.carsharing.app
+    namespace: nl.carsharing.app
+    minSdk: 26

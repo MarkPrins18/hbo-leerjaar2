@@ -1,11 +1,11 @@
 package services
 
-import models.ReservationStatus
-import models.Ride
-import models.RideStatus
+import shared.models.ReservationStatus
+import shared.models.Ride
+import shared.models.RideStatus
 import repositories.ReservationRepository
 import repositories.RideRepository
-import dto.RideFinishRequest
+import shared.requests.RideFinishRequest
 import kotlin.time.Clock
 
 class RideService(
@@ -26,16 +26,17 @@ class RideService(
         if (now < reservation.startTime || now >= reservation.endTime) {
             throw ConflictException("Reservering $reservationId is nu niet actief")
         }
-        if (rideRepository.hasRideInProgress(reservationId)) {
-            throw ConflictException("Er loopt al een rit voor reservering $reservationId")
-        }
-        return rideRepository.startRide(reservationId, now)
+        return rideRepository.startRideIfNoneInProgress(reservationId, now)
+            ?: throw ConflictException("Er loopt al een rit met auto ${reservation.carId} of reservering $reservationId is niet meer bevestigd")
     }
 
+    suspend fun getActiveRide(userId: Int): Ride? =
+        rideRepository.getRideInProgressByUserId(userId)
+
+    suspend fun getRides(userId: Int): List<Ride> =
+        rideRepository.getRidesByUserId(userId)
+
     suspend fun finishRide(rideId: Int, userId: Int, request: RideFinishRequest): Ride {
-        if (request.distanceM < 0 || request.avgAcceleration < 0 || request.avgDeceleration < 0) {
-            throw ValidationException("Afstand en acceleraties mogen niet negatief zijn")
-        }
         val ride = rideRepository.getRideById(rideId)
             ?: throw ResourceNotFoundException("Rit", rideId)
         val reservation = reservationRepository.getReservationById(ride.reservationId)
@@ -44,13 +45,15 @@ class RideService(
         if (reservation.userId != userId) {
             throw ForbiddenException()
         }
+        request.validate()
 
         if (ride.status != RideStatus.IN_PROGRESS) {
-            throw ConflictException("Rit $rideId is al afgerond")
+            throw rideAlreadyFinished(rideId)
         }
         val bonusPoints = calculateBonusPoints(request.distanceM, request.avgAcceleration, request.avgDeceleration)
-        return rideRepository.finishRide(
-            rideId, Clock.System.now(), request.distanceM, request.avgAcceleration, request.avgDeceleration, bonusPoints
-        ) ?: throw ResourceNotFoundException("Rit", rideId)
+        return rideRepository.finishRide(rideId, Clock.System.now(), request, bonusPoints)
+            ?: throw rideAlreadyFinished(rideId)
     }
+
+    private fun rideAlreadyFinished(rideId: Int) = ConflictException("Rit $rideId is al afgerond")
 }

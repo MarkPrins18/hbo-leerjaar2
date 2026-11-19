@@ -1,6 +1,6 @@
 package mappers
 
-import models.Ride
+import shared.models.Ride
 import org.jetbrains.exposed.v1.core.ResultRow
 import tables.RideTable
 
