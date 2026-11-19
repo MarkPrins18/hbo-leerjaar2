@@ -3,25 +3,43 @@
 title S12 – Wireframe: huurvoorwaarden (RentalTermsScreen)
 {+
 $phone_top("Huurvoorwaarden", %true())
-  <b>Toyota Yaris (AB-123-C)
-  ..
+  $card_photo_begin()
+    <b>Toyota Yaris</b>
+    $muted_text("AB-123-C")
+    $chip_dark("Te huur")
+  $card_photo_end()
+  $section("Prijs")
+  $card_begin("")
   {
-    Prijs per dag (€)$hs(59) | "45,00                  "
-    Ophaallocatie            | "Hoofdstraat 1, Breda   "
-    Ophalen vanaf            | "08:00                  "
-    Ophalen tot              | "20:00                  "
-    Inleverlocatie           | "Hoofdstraat 1, Breda   "
-    Inleveren vanaf          | "08:00                  "
-    Inleveren tot            | "22:00                  "
+    <&euro> $hs(4)Prijs per dag$hs(50) | "45,00                  "
   }
-  <i>prijs en ophaallocatie verplicht, de rest optioneel
+  $card_end()
+  $section("Ophalen")
+  $card_begin("")
+  {
+    <&map-marker> $hs(4)Locatie$hs(73) | "Hoofdstraat 1, Breda   "
+    <&clock> $hs(4)Vanaf      | "08:00                  "
+    $hs(16)Tot                | "20:00                  "
+  }
+  $card_end()
+  { $section("Inleveren") | $chip("optioneel") }
+  $card_begin("")
+  {
+    <&map-marker> $hs(4)Locatie$hs(73) | "Hoofdstraat 1, Breda   "
+    <&clock> $hs(4)Vanaf      | "08:00                  "
+    $hs(16)Tot                | "22:00                  "
+  }
+  $card_end()
+  $note("prijs en ophaallocatie verplicht, de rest optioneel")
   .
   [                 Opslaan                 ]
+  $note("na opslaan: terug naar S10")
 $phone_bottom("Account")
 }
 legend bottom
   Backendfuncties:
-  * rentalTermsService.getRentalTerms — GET /cars/{id}/rental-terms (#5)
-  * rentalTermsService.setRentalTerms — PUT /cars/{id}/rental-terms (#5)
+  * rentalTermsService.getRentalTerms — GET /cars/{id}/rental-terms (#5) — bestaande voorwaarden invullen (404 = nog geen)
+  * rentalTermsService.setRentalTerms — PUT /cars/{id}/rental-terms (#5) — RentalTermsRequest, maakt aan of overschrijft
+  tijden zijn LocalTime (uu:mm); auto staat al vast via S10a [Voorwaarden] (geen extra call)
 endlegend
 @endsalt

@@ -1,26 +1,48 @@
 @startsalt S03_ReservationScreen
 !include _phone.iuml
-title S03 – Wireframe: reserveren (ReservationScreen)
-{+
+title S03 – Wireframe: reserveren (ReservationScreen) met S03a bevestiging
+{
+$phones_begin2("S03 – ReservationScreen", "S03a – bevestiging (dialog)")
 $phone_top("Reserveren", %true())
-  {+
-    <b>Toyota Yaris$hs(258)
-    AB-123-C
-    € 45,00 per dag
-  }
-  ..
+  $card_photo_begin()
+    <b>Toyota Yaris</b>
+    $muted_text("AB-123-C")
+    <b>€ 45,00</b> per dag
+  $card_photo_end()
+  .
+  $section("Periode")
   Starttijd
   "dd-mm-jjjj uu:mm                         "
   Eindtijd
   "dd-mm-jjjj uu:mm                         "
   .
   [         Reservering bevestigen          ]
-  ..
-  <i>na bevestigen: status en totaalprijs van de reservering
+  $note("na bevestigen: S03a")
 $phone_bottom("Zoeken")
+$phones_next()
+$phone_top("Reserveren", %true())
+  $scrim(170, "overlay op S03")
+  $dialog_begin("Reservering bevestigd")
+    ..
+    {
+      Auto$hs(60)  | Toyota Yaris (AB-123-C)
+      Van          | 20-11-2026 10:00
+      Tot          | 21-11-2026 10:00
+      Status       | $chip_dark("Bevestigd")
+      Totaalprijs  | <size:16><b>€ 45,00</b></size>
+    }
+    .
+    { [     Sluiten      ] | [  Naar mijn ritten  ] }
+  $dialog_end()
+  $scrim(158, "")
+$phone_bottom("Zoeken")
+$phones_end()
 }
 legend bottom
   Backendfuncties:
   * reservationService.createReservation — POST /reservations (#9)
+    geeft de Reservation terug met status en totalPrice (getoond in S03a)
+  auto en prijs per dag: al geladen in S02 (geen extra call)
+  S03a [Naar mijn ritten]: S06 MyReservationsScreen, [Sluiten]: dialoog dicht, terug naar S02
 endlegend
 @endsalt

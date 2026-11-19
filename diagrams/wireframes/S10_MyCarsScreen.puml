@@ -1,27 +1,69 @@
 @startsalt S10_MyCarsScreen
 !include _phone.iuml
-title S10 – Wireframe: mijn auto's (MyCarsScreen)
-{+
+title S10 – Wireframe: mijn auto's (MyCarsScreen) met S10a autodetails
+
+' Car card: cover photo left, name bold, license plate muted, price per day + rental status chip.
+!procedure $my_car_card($car, $plate, $price, $status)
+$card_photo_begin()
+  <b>$car</b>
+  $muted_text($plate)
+!if $price == ""
+  $muted_text("nog geen prijs")
+!else
+  <b>$price</b> per dag
+!endif
+  $status
+$card_photo_end()
+!endprocedure
+
+{
+$phones_begin2("S10 – MyCarsScreen", "S10a – autodetails (bottom sheet)")
 $phone_top("Mijn auto's", %true())
-  {+
-    <b>Toyota Yaris$hs(258)
-    AB-123-C
-    { [      Bewerken      ] | [    Voorwaarden    ] }
-    { [       Kosten       ] | [    Verwijderen    ] }
-  }
-  {+
-    <b>Tesla Model 3$hs(251)
-    XY-456-Z
-    { [      Bewerken      ] | [    Voorwaarden    ] }
-    { [       Kosten       ] | [    Verwijderen    ] }
-  }
-  ..
+  $section("Jouw auto's (3)")
+  $my_car_card("Toyota Yaris", "AB-123-C", "€ 45,00", $chip_dark("Te huur"))
+  $my_car_card("Tesla Model 3", "XY-456-Z", "€ 79,00", $chip_dark("Te huur"))
+  $my_car_card("Hyundai Nexo", "GH-789-K", "", $chip("Geen voorwaarden"))
+  $note("tik op een auto: S10a")
+  .
   [            + Auto toevoegen             ]
+  $note("+ Auto toevoegen: S11 variant A")
 $phone_bottom("Account")
+$phones_next()
+$phone_top("Mijn auto's", %true())
+  $scrim(63, "overlay op S10")
+  $sheet_begin("Toyota Yaris")
+    { $muted_text("AB-123-C")$hs(176) | $chip_dark("Te huur") }
+    $carousel(1, 3)
+    { $chip("2021") | $chip("Benzine") | $chip("Automaat") | $chip("5 stoelen") | $chip("Wit") }
+    $card_begin("")
+    {
+      $section("Auto")$hs(110) | .
+      Uitvoering   | 1.5 Hybrid
+      Verbruik     | 3,8 l/100 km
+      Tankinhoud   | 36 l
+      ..           | ..
+      $section("Verhuur") | .
+      Prijs per dag | <b>€ 45,00</b>
+      Ophalen      | Hoofdstraat 1, Breda
+      .            | $muted_text("08:00 - 20:00")
+    }
+    $card_end()
+    {
+      [    <&pencil> Bewerken     ] | [  <&document> Voorwaarden   ]
+      [     <&euro> Kosten     ] | [  <&trash> Verwijderen  ]
+    }
+  $sheet_end()
+$phone_bottom("Account")
+$phones_end()
 }
 legend bottom
   Backendfuncties:
   * carService.getCarsByOwner — GET /cars/mine (#13)
-  * carService.deleteCar — DELETE /cars/{id} (#3)
+  * photoService.getPhotos — GET /cars/{id}/photos (#4) — eerste foto = cover, alle foto's in de carrousel van S10a
+  * photoService.getPhotoData — GET /photos/{id} (#4)
+  * rentalTermsService.getRentalTerms — GET /cars/{id}/rental-terms (#5) — prijs per dag en ophaallocatie, per auto
+  * carService.deleteCar — DELETE /cars/{id} (#3) — na bevestiging; geweigerd (409) bij een actieve reservering of lopende rit
+  chip "Te huur": huurvoorwaarden bestaan, "Geen voorwaarden": getRentalTerms geeft 404 (auto niet te huur)
+  S10a: [Bewerken] S11 variant B, [Voorwaarden] S12, [Kosten] S13, [Verwijderen] blijft op S10 (sheet dicht)
 endlegend
 @endsalt

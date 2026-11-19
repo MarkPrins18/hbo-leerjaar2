@@ -1,36 +1,51 @@
 @startsalt S06_MyReservationsScreen
 !include _phone.iuml
 title S06 – Wireframe: mijn reserveringen (MyReservationsScreen)
+
+' Reservation card: square photo left, car + status, period on two short lines, price; actions below.
+' $buttons: "all" = Route, Start rit, Annuleren; "future" = Route, Annuleren; "" = none
+!procedure $reservation_card($car, $status, $start, $end, $price, $buttons)
+{+
+  { $photo_thumb() | $hs(2) | {
+    { <b>$car</b> | $status }
+    <&calendar> $hs(4)$start
+    <&arrow-right> $hs(4)$end
+    <b>$price</b> $muted_text("totaal")
+  } }
+!if $buttons == "all"
+  { [   Route    ] | [  Start rit ] | [ Annuleren  ] }
+!elseif $buttons == "future"
+  { [   Route    ] | $hs(104) | [ Annuleren  ] }
+!endif
+  $hs($card_width)
+}
+!endprocedure
+
 {+
 $phone_top("Ritten", %false())
-  {+
-    <b>Lopende rit$hs(265)
-    { Gestart om 14:05$hs(130) | [  Bekijken  ] }
-  }
-  <i>alleen als er een lopende rit is, Bekijken: S07 ActiveRideScreen
+  $section("Lopende rit")
+  $card_begin("")
+    { <&media-play> $hs(4)<b>Toyota Yaris</b> | $chip_dark("Bezig") }
+    { $muted_text("Gestart om 14:05")$hs(92) | [  Bekijken  ] }
+  $card_end()
+  $note("alleen als er een lopende rit is; Bekijken: S07")
   ..
-  <b>Mijn reserveringen
-  {+
-    <b>Toyota Yaris$hs(258)
-    20-11-2026 10:00 - 21-11-2026 10:00
-    { Bevestigd$hs(187) | € 45,00 }
-    { [    Route    ] | [ Start rit  ] | [  Annuleren  ] }
-  }
-  {+
-    <b>Tesla Model 3$hs(251)
-    02-12-2026 09:00 - 04-12-2026 18:00
-    { In afwachting$hs(169) | € 158,00 }
-    { [    Route    ] | [ Start rit  ] | [  Annuleren  ] }
-  }
-  <i>Route: opent Google Maps
+  $section("Mijn reserveringen (3)")
+  $reservation_card("Toyota Yaris", $chip_dark("Bevestigd"), "vr 20 nov  10:00", "za 21 nov  10:00", "€ 45,00", "all")
+  $reservation_card("Tesla Model 3", $chip_dark("Bevestigd"), "wo 2 dec  09:00", "vr 4 dec  18:00", "€ 158,00", "future")
+  $reservation_card("Hyundai Nexo", $chip("Geannuleerd"), "ma 9 nov  08:00", "ma 9 nov  17:00", "€ 65,00", "")
+  $note("Start rit (binnen de periode): S07 · Route: Google Maps")
 $phone_bottom("Ritten")
 }
 legend bottom
   Backendfuncties:
   * reservationService.getReservationsForUser — GET /reservations (#13)
   * rideService.getActiveRide — GET /rides/active (#13)
+  * carService.getCarById — GET /cars/{id} (#4) — merk en model per reservering (Reservation heeft alleen carId)
+  * photoService.getPhotos — GET /cars/{id}/photos (#4) — eerste foto als thumbnail
   * locationService.getMapsUrl — GET /cars/{carId}/maps (#10)
-  * reservationService.cancelReservation — PATCH /reservations/{id}/cancel (#9)
-  * rideService.startRide — POST /reservations/{id}/rides (#11)
+  * reservationService.cancelReservation — PATCH /reservations/{id}/cancel (#9) — alleen vóór de starttijd
+  * rideService.startRide — POST /reservations/{id}/rides (#11) — alleen bij CONFIRMED en binnen de periode, daarna S07
+  status-chip: ReservationStatus (PENDING, CONFIRMED, CANCELLED, COMPLETED)
 endlegend
 @endsalt

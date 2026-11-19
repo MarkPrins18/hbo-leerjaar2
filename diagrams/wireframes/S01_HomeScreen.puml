@@ -3,7 +3,7 @@
 title S01 – Wireframe: auto's zoeken (HomeScreen)
 {+
 $phone_top("Rent my car", %false())
-  <b>Filters
+  $section("Filters")
   {
     Max prijs per dag (€)$hs(34) | "                       "
     Max afstand (km)             | "                       "
@@ -11,26 +11,34 @@ $phone_top("Rent my car", %false())
     Periode eind                 | "dd-mm-jjjj uu:mm       "
   }
   [                 Zoeken                  ]
+  { <&action-undo> $link("Laatste zoekopdracht") | $muted_text("max € 50, 10 km, 20-11 10:00") }
   ..
-  <b>Beschikbare auto's
-  {+
-    <b>Toyota Yaris$hs(258)
-    { € 45,00 per dag$hs(156) | 2,4 km }
-  }
-  {+
-    <b>Tesla Model 3$hs(251)
-    { € 79,00 per dag$hs(156) | 5,1 km }
-  }
-  {+
-    <b>Hyundai Nexo$hs(250)
-    { € 65,00 per dag$hs(156) | 8,7 km }
-  }
-  <i>tik op een auto: S02 CarDetailScreen
+  $section("Beschikbare auto's (3)")
+  $card_photo_begin()
+    <b>Toyota Yaris</b>
+    <b>€ 45,00</b> per dag
+    $muted_text("<&map-marker> 2,4 km")
+  $card_photo_end()
+  $card_photo_begin()
+    <b>Tesla Model 3</b>
+    <b>€ 79,00</b> per dag
+    $muted_text("<&map-marker> 5,1 km")
+  $card_photo_end()
+  $card_photo_begin()
+    <b>Hyundai Nexo</b>
+    <b>€ 65,00</b> per dag
+    $muted_text("<&map-marker> 8,7 km")
+  $card_photo_end()
+  $note("tik op een auto: S02 CarDetailScreen")
 $phone_bottom("Zoeken")
 }
 legend bottom
   Backendfuncties:
   * carService.getCarMap — GET /cars/map?maxPrice&maxDistanceKm&latitude&longitude&startTime&endTime (#8)
+  * photoService.getPhotos — GET /cars/{id}/photos (#4) — eerste foto als thumbnail
+  * photoService.getPhotoData — GET /photos/{id} (#4)
   let op: endpoint vereist nu nog login, moet openbaar worden
+  afstand: berekend in de app uit latitude/longitude van CarMapResponse en de eigen locatie
+  Laatste zoekopdracht: alleen in de app (vorige filters lokaal bewaard en opnieuw ingevuld)
 endlegend
 @endsalt

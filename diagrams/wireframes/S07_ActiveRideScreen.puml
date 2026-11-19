@@ -1,39 +1,77 @@
 @startsalt S07_ActiveRideScreen
 !include _phone.iuml
-title S07 – Wireframe: lopende rit (ActiveRideScreen)
-{+
+title S07 – Wireframe: lopende rit (ActiveRideScreen) met S07a rit afronden en S07b resultaat
+{
+$phones_begin3("S07 – ActiveRideScreen", "S07a – rit afronden (dialog)", "S07b – rit afgerond (dialog)")
 $phone_top("Lopende rit", %true())
-  {
-    Reservering$hs(79) | 12
-    Gestart            | 20-11-2026 14:05
-    Status             | Bezig
-  }
+  $card_begin("")
+    { $hs(140)<color:$grey_icon><&dashboard*4></color> }
+    { $hs(104)<size:56><b>48</b></size> | {
+      <size:24><U+200B></size>
+      <size:16>km/u</size>
+    } }
+    { $hs(46)<size:20>▮▮▮▮▮▯▯▯▯▯▯▯</size> }
+    { $hs(46)$muted_text("0") | $hs(196) | $muted_text("130") }
+  $card_end()
+  $stat_row("Rijtijd", "0:52", "Totale tijd", "1:15")
+  $stat_row("Afstand", "42,3 km", "Gem. snelheid", "34 km/u")
+  .
+  $section("Rit afronden")
+  $card_begin("")
+    { <b>Toyota Yaris</b> | $muted_text("AB-123-C") }
+    $muted_text("Gestart om 14:05 · reservering tot 21 nov 10:00")
+    $muted_text("Parkeer de auto en rond daarna de rit af.")
+  $card_end()
   [                  Route                  ]
-  ..
-  <b>Rit afronden
-  <i>gemeten via GPS/sensoren (alleen-lezen)
-  {
-    Afstand$hs(103)       | 42.300 m
-    Gem. acceleratie      | 1,4 m/s²
-    Gem. vertraging       | 1,9 m/s²
-    Parkeerplek (breedte) | 51.5890
-    Parkeerplek (lengte)  | 4.7760
-  }
-  <i>sensoren nog uit te werken
   [              Rit afronden               ]
-  ..
-  <b>Resultaat
-  {
-    Beëindigd$hs(91) | 20-11-2026 15:20
-    Afstand          | 42.300 m
-    Bonuspunten      | +12
-  }
+  $note("Rit afronden: S07a")
 $phone_bottom("Ritten")
+$phones_next()
+$phone_top("Lopende rit", %true())
+  $scrim(159, "overlay op S07")
+  $dialog_begin("Rit afronden")
+    $muted_text("gemeten via GPS/sensoren (alleen-lezen)")
+    ..
+    {
+      Afstand$hs(103)  | 42.300 m
+      Gem. acceleratie | 1,4 m/s²
+      Gem. vertraging  | 1,9 m/s²
+      Parkeerplek      | 51.5890, 4.7760
+    }
+    $note("sensoren nog uit te werken")
+    .
+    { [   Annuleren   ] | [ Rit afronden bevestigen ] }
+  $dialog_end()
+  $scrim(159, "")
+$phone_bottom("Ritten")
+$phones_next()
+$phone_top("Lopende rit", %true())
+  $scrim(170, "overlay op S07")
+  $dialog_begin("Rit afgerond")
+    ..
+    {
+      Auto$hs(84)  | Toyota Yaris
+      Beëindigd    | 20-11-2026 15:20
+      Status       | $chip_dark("Afgerond")
+      Afstand      | 42,3 km
+      Bonuspunten  | <size:16><b>+12</b></size>
+    }
+    .
+    { $hs(180) | [     Sluiten      ] }
+  $dialog_end()
+  $scrim(158, "")
+$phone_bottom("Ritten")
+$phones_end()
 }
 legend bottom
   Backendfuncties:
   * rideService.getActiveRide — GET /rides/active (#13)
   * locationService.getMapsUrl — GET /cars/{carId}/maps (#10)
   * rideService.finishRide — PATCH /rides/{id}/finish (#11, #12)
+    S07a stuurt RideFinishRequest (distanceM, avgAcceleration, avgDeceleration, latitude, longitude);
+    S07b toont de teruggegeven Ride (endTime, status, distanceM, bonusPoints)
+  snelheidsmeter, Rijtijd, Totale tijd, Afstand en Gem. snelheid: berekend in de app uit GPS/sensoren
+  auto en eindtijd reservering: Ride heeft alleen reservationId, dus via de reservering (al geladen in S06)
+  S07b [Sluiten]: terug naar S06 MyReservationsScreen
 endlegend
 @endsalt

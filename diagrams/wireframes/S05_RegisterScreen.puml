@@ -4,18 +4,33 @@ title S05 – Wireframe: registreren (RegisterScreen)
 {+
 $phone_top("Registreren", %true())
   E-mailadres
-  "                                         "
+  "jan@voorbeeld.nl                         "
   Wachtwoord
-  "••••••••••                               "
+  $password_field(%true(), "Geheim123")
+  Herhaal wachtwoord
+  $password_field(%false())
+  .
+  $card_begin("Wachtwoord")
+    { Sterkte$hs(40) | $strength(3, "Gemiddeld") }
+    ..
+    $check(%true(), "Minimaal 8 tekens")
+    $check(%true(), "Een hoofdletter")
+    $check(%true(), "Een kleine letter")
+    $check(%true(), "Een cijfer")
+    $check(%false(), "Een speciaal teken (bijv. ! of #)")
+    $check(%true(), "Wachtwoorden zijn gelijk")
+  $card_end()
   .
   [               Registreren               ]
-  .
-  <i>na registreren logt de app automatisch in
+  $note("knop pas actief als alles ✓ is; daarna logt de app automatisch in")
 $phone_bottom("")
 }
 legend bottom
   Backendfuncties:
   * userService.register — POST /users/register (#1)
   * authService.login — POST /users/login (#2)
+  wachtwoordeisen = validatie in de server (RegisterRequest.validate): minimaal 8 tekens, hoofdletter,
+  kleine letter, cijfer, speciaal teken, maximaal 72 bytes (BCrypt); e-mailadres moet geldig zijn
+  sterktebalk, "Herhaal wachtwoord" en oogje: alleen in de app (server kent geen sterkte en geen herhaling)
 endlegend
 @endsalt

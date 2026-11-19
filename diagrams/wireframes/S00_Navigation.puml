@@ -1,6 +1,7 @@
 @startuml S00_Navigation
 title S00 – Navigatie tussen de schermen (Rent my car)
 hide empty description
+hide stereotype
 left to right direction
 skinparam shadowing false
 skinparam state {
@@ -9,6 +10,11 @@ skinparam state {
   ArrowColor #444444
   FontSize 12
 }
+skinparam state<<popup>> {
+  BackgroundColor #F2F2F2
+  BorderColor #888888
+  FontStyle italic
+}
 
 state "Bottom navigation\n(op elk scherm behalve S04/S05)" as Nav #EEEEEE
 
@@ -16,10 +22,11 @@ state "Zoeken (openbaar)" as Zoeken {
   state "S01 HomeScreen\nauto's zoeken" as S01
   state "S02 CarDetailScreen\nautodetails" as S02
   state "S03 ReservationScreen\nreserveren" as S03
+  state "S03a bevestiging\n(dialog)" as S03a <<popup>>
 }
 
 state "Login / Registratie" as Auth {
-  state "S04 LoginScreen\ninloggen" as S04
+  state "S04 LoginScreen\ninloggen\n(Wachtwoord vergeten?:\nnog geen scherm)" as S04
   state "S05 RegisterScreen\nregistreren" as S05
   state "ingelogd" as Ingelogd <<choice>>
 }
@@ -27,13 +34,23 @@ state "Login / Registratie" as Auth {
 state "Ritten (ingelogd)" as Ritten {
   state "S06 MyReservationsScreen\nmijn reserveringen" as S06
   state "S07 ActiveRideScreen\nlopende rit" as S07
+  state "S07a rit afronden\n(dialog)" as S07a <<popup>>
+  state "S07b rit afgerond\n(dialog)" as S07b <<popup>>
 }
 
 state "Account (ingelogd)" as Account {
   state "S08 AccountScreen\naccount" as S08
+  state "S08a account\n(dialog met opties)" as S08a <<popup>>
+  state "S08a1 e-mailadres wijzigen\n(dialog)" as S08a1 <<popup>>
+  state "S08a2 wachtwoord wijzigen\n(dialog)" as S08a2 <<popup>>
+  state "S08a3 account verwijderen\n(dialog)" as S08a3 <<popup>>
+  state "S08b probleem melden\n(dialog)" as S08b <<popup>>
   state "S09 RideHistoryScreen\nrittenhistorie" as S09
+  state "S09a ritdetails\n(dialog)" as S09a <<popup>>
   state "S10 MyCarsScreen\nmijn auto's" as S10
-  state "S11 CarFormScreen\nauto toevoegen/bewerken" as S11
+  state "S10a autodetails\n(bottom sheet)" as S10a <<popup>>
+  state "S11 CarFormScreen\nvariant A: auto toevoegen" as S11A
+  state "S11 CarFormScreen\nvariant B: gegevens" as S11B
   state "S12 RentalTermsScreen\nhuurvoorwaarden" as S12
   state "S13 CarCostScreen\nkosten" as S13
 }
@@ -44,6 +61,9 @@ S01 --> S02 : tik op auto
 S02 -[dashed]-> S01 : terug
 S02 --> S03 : [Huren]
 S03 -[dashed]-> S02 : terug
+S03 --> S03a : [Reservering\nbevestigen]
+S03a --> S02 : [Sluiten]
+S03a --> S06 : [Naar mijn ritten]
 S02 --> S04 : [Huren]\n(niet ingelogd)
 
 S04 --> S05 : Registreren
@@ -54,22 +74,49 @@ Ingelogd --> S03 : kwam van [Huren]
 Ingelogd --> S06 : kwam van tab Ritten
 Ingelogd --> S08 : kwam van tab Account
 
-S06 --> S07 : [Start rit] /\nbanner "Lopende rit"
-S07 -[dashed]-> S06 : terug\n(na [Rit afronden])
+S06 --> S07 : [Start rit] /\nbanner [Bekijken]
+S07 -[dashed]-> S06 : terug
+S07 --> S07a : [Rit afronden]
+S07a -[dashed]-> S07 : [Annuleren]
+S07a --> S07b : [Rit afronden\nbevestigen]
+S07b --> S06 : [Sluiten]
 
+S08 --> S08a : Gegevens wijzigen
+S08a -[dashed]-> S08 : [Sluiten]
+S08a --> S08a1 : E-mailadres\nwijzigen
+S08a1 -[dashed]-> S08a : [Annuleren]
+S08a1 --> S08a : [Opslaan]
+S08a --> S08a2 : Wachtwoord\nwijzigen
+S08a2 -[dashed]-> S08a : [Annuleren]
+S08a2 --> S08a : [Opslaan]
+S08a --> S08a3 : Account\nverwijderen
+S08a3 -[dashed]-> S08a : [Annuleren]
+S08a3 --> S01 : [Verwijderen]\n(uitgelogd)
+S08 --> S08b : Probleem melden
+S08b -[dashed]-> S08 : [Annuleren]
+S08b --> S08 : [Versturen]
 S08 --> S09 : Rittenhistorie
 S09 -[dashed]-> S08 : terug
-S08 --> S10 : Mijn auto's
+S09 --> S09a : tik op rit
+S09a -[dashed]-> S09 : sluiten
+S08 --> S10 : Jouw auto's
 S10 -[dashed]-> S08 : terug
-S10 --> S11 : [Bewerken] /\n[+ Auto toevoegen]
-S11 -[dashed]-> S10 : terug
-S11 --> S10 : [Opslaan]
-S10 --> S12 : [Voorwaarden]
+S08 --> S01 : [Uitloggen]
+
+S10 --> S10a : tik op auto
+S10a -[dashed]-> S10 : sluiten
+S10a --> S10 : [Verwijderen]
+S10 --> S11A : [+ Auto toevoegen]
+S11A -[dashed]-> S10 : terug
+S11A --> S11B : kenteken\ngoedgekeurd
+S10a --> S11B : [Bewerken]
+S11B -[dashed]-> S10 : terug
+S11B --> S10 : [Opslaan]
+S10a --> S12 : [Voorwaarden]
 S12 -[dashed]-> S10 : terug
 S12 --> S10 : [Opslaan]
-S10 --> S13 : [Kosten]
+S10a --> S13 : [Kosten]
 S13 -[dashed]-> S10 : terug
-S08 --> S01 : [Uitloggen]
 
 Nav --> S01 : tab Zoeken
 Nav --> S06 : tab Ritten
@@ -77,6 +124,7 @@ Nav --> S08 : tab Account
 Nav --> S04 : tab Ritten/Account\n(niet ingelogd)
 
 legend bottom
-  doorgetrokken pijl: knop of actie, gestippeld: terug (←)
+  doorgetrokken pijl: knop of actie, gestippeld: terug (←) of popup sluiten
+  grijs vak met grijze rand en cursieve tekst: popup/overlay (dialog of bottom sheet) boven het scherm ervoor
 endlegend
 @enduml

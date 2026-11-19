@@ -3,34 +3,35 @@
 title S13 – Wireframe: kosten van de auto (CarCostScreen)
 {+
 $phone_top("Kosten", %true())
-  <b>Toyota Yaris (AB-123-C)
+  $card_photo_begin()
+    <b>Toyota Yaris</b>
+    $muted_text("AB-123-C")
+    { $chip("Benzine") | $chip("3,8 l/100 km") }
+  $card_photo_end()
+  $section("Totale kosten (TCO)")
+  $card_begin("")
+  {
+    <&calendar> $hs(4)Jaarkilometers$hs(20) | "15000     " | [ Berekenen ]
+  }
+  $card_end()
+  $stat_row("Totaal per jaar", "€ 1.190", "Per km", "€ 0,08")
+  $stat_row("Brandstof per jaar", "€ 798", "Wegenbelasting per jaar", "€ 392")
+  { $muted_text("Totaal per maand")$hs(54) | <b>€ 99,17</b> }
   ..
-  <b>Totale kosten (TCO)
+  $section("Verbruikskosten")
+  $card_begin("")
   {
-    Jaarkilometers$hs(66) | "15000     " | [ Berekenen  ]
+    <&resize-width> $hs(4)Afstand (km)$hs(40) | "100       " | [ Berekenen ]
   }
-  {
-    Brandstof per jaar$hs(49) | € 798,00
-    Wegenbelasting per jaar   | € 392,00
-    Totaal per jaar           | <b>€ 1.190,00
-    Totaal per maand          | € 99,17
-  }
-  ..
-  <b>Verbruikskosten
-  {
-    Afstand (km)$hs(76) | "100       " | [ Berekenen  ]
-  }
-  {
-    Categorie$hs(92)    | benzine
-    Verbruik per 100 km | 3,8 l
-    Prijs per eenheid   | € 2,10 per l
-    Geschatte kosten    | <b>€ 7,98
-  }
+  $card_end()
+  $stat_row("Geschatte kosten", "€ 7,98", "Prijs per liter", "€ 2,10")
 $phone_bottom("Account")
 }
 legend bottom
   Backendfuncties:
-  * carCostService.getTco — GET /cars/{id}/tco?annualKm (#6)
-  * carCostService.getFuelCost — GET /cars/{id}/fuel-cost?distanceKm (#7)
+  * carCostService.getTco — GET /cars/{id}/tco?annualKm (#6) — zonder annualKm rekent de server met een standaardwaarde
+  * carCostService.getFuelCost — GET /cars/{id}/fuel-cost?distanceKm (#7) — estimatedCost, pricePerUnit + unit (l, kWh of kg)
+  ontbrekend verbruik of wegenbelasting vult de server zelf aan via Gemini (fillMissingCostData)
+  "Per km": alleen in de app (annualTotal / annualKm); auto, brandstof en verbruik: al geladen in S10 (geen extra call)
 endlegend
 @endsalt

@@ -1,18 +1,59 @@
 @startsalt S09_RideHistoryScreen
 !include _phone.iuml
-title S09 – Wireframe: rittenhistorie (RideHistoryScreen)
-{+
+title S09 – Wireframe: rittenhistorie (RideHistoryScreen) met S09a ritdetails
+
+' Ride card: car photo left; car + bonus points chip, date and times, distance and duration.
+!procedure $ride_card($car, $points, $date, $times, $distance, $duration)
+$card_photo_begin()
+  { <b>$car</b> | $chip_dark($points + " punten") }
+  <&calendar> $hs(4)$date
+  <&clock> $hs(4)$times
+  $muted_text("<&map-marker> " + $distance + "  ·  " + $duration)
+$card_photo_end()
+!endprocedure
+
+{
+$phones_begin2("S09 – RideHistoryScreen", "S09a – ritdetails (dialog)")
 $phone_top("Rittenhistorie", %true())
-  {#
-    Start$hs(79) | Einde$hs(73) | Afstand$hs(25) | Punten$hs(6)
-    18-11-2026 09:10 | 18-11-2026 10:02 | 31.400 m | 9
-    12-11-2026 13:30 | 12-11-2026 16:45 | 88.000 m | 20
-    05-11-2026 08:15 | 05-11-2026 08:50 | 12.700 m | 4
-  }
+  $stat_row("Ritten", "12", "Totale afstand", "412 km")
+  .
+  $section("Afgeronde ritten")
+  $ride_card("Toyota Yaris", "+9", "wo 18 nov 2026", "09:10 – 10:02", "31,4 km", "52 min")
+  $ride_card("Tesla Model 3", "+20", "do 12 nov 2026", "13:30 – 16:45", "88,0 km", "3 u 15 min")
+  $ride_card("Hyundai Nexo", "+4", "do 5 nov 2026", "08:15 – 08:50", "12,7 km", "35 min")
+  $ride_card("Toyota Yaris", "+7", "ma 2 nov 2026", "17:05 – 17:48", "24,9 km", "43 min")
+  $note("tik op een rit: S09a · scrollt verder")
 $phone_bottom("Account")
+$phones_next()
+$phone_top("Rittenhistorie", %true())
+  $scrim(130, "overlay op S09")
+  $dialog_begin("Ritdetails")
+    { <b>Toyota Yaris</b> | $muted_text("AB-123-C") | $chip_dark("Afgerond") }
+    ..
+    {
+      Datum$hs(82)       | wo 18 nov 2026
+      Start – einde      | 09:10 – 10:02
+      Duur               | 52 min
+      Afstand            | 31,4 km
+      Gem. snelheid      | 36 km/u
+      Gem. acceleratie   | 1,2 m/s²
+      Gem. vertraging    | 1,6 m/s²
+      <b>Bonuspunten</b>   | <size:16><b>+9</b></size>
+    }
+    .
+    { $hs(180) | [     Sluiten      ] }
+  $dialog_end()
+  $scrim(140, "")
+$phone_bottom("Account")
+$phones_end()
 }
 legend bottom
   Backendfuncties:
-  * rideService.getRides — GET /rides (#13)
+  * rideService.getRides — GET /rides (#13) — Ride: startTime, endTime, status, distanceM,
+    avgAcceleration, avgDeceleration, bonusPoints (S09a gebruikt dezelfde Ride, geen extra call)
+  * reservationService.getReservationsForUser — GET /reservations (#13) — Ride heeft alleen reservationId, via de reservering naar carId
+  * carService.getCarById — GET /cars/{id} (#4) — merk, model en kenteken
+  * photoService.getPhotos — GET /cars/{id}/photos (#4) — eerste foto als thumbnail
+  Ritten, Totale afstand, Duur en Gem. snelheid: berekend in de app (uit startTime/endTime en distanceM)
 endlegend
 @endsalt

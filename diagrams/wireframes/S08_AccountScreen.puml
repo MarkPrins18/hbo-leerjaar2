@@ -1,25 +1,153 @@
 @startsalt S08_AccountScreen
 !include _phone.iuml
-title S08 – Wireframe: account (AccountScreen)
-{+
+title S08 – Wireframe: account (AccountScreen) met S08a account, S08a1–S08a3 wijzigen en S08b probleem melden
+
+' Empty row between two rows of phones.
+!procedure $phones_row_gap()
+<size:24><U+200B></size> | . | . | . | .
+!endprocedure
+
+{
+$phones_begin3("S08 – AccountScreen", "S08a – account (dialog)", "S08b – probleem melden (dialog)")
 $phone_top("Account", %false())
-  {+
-    <b>jan@voorbeeld.nl$hs(230)
-    Bonuspunten: 128
-  }
+  $card_begin("")
+    { <color:$grey_icon><&person*4></color> | $hs(4) | {
+      <b>jan@voorbeeld.nl</b>
+      $muted_text("Gegevens wijzigen")
+    } | $hs(168)<size:16>></size> }
+  $card_end()
+  $note("tik op de kaart: S08a")
   .
-  { <&clock> $hs(6)Rittenhistorie$hs(229) | <size:16>> }
-  ..
-  { <&key> $hs(6)Mijn auto's (verhuurder)$hs(172) | <size:16>> }
-  ..
+  $section("Uiterlijk")
+  $toggle_row("Donkere modus", %false())
+  $section("Jouw auto's")
+  $menu_row("key", "Mijn auto's (2)")
+  $section("Ritten")
+  $menu_row("clock", "Rittenhistorie (12)")
+  $section("Bonuspunten")
+  $stat_row("Saldo", "128", "Afgeronde ritten", "12")
   .
   [                Uitloggen                ]
-  <i>Uitloggen: de app verwijdert het token
+  ..
+  $menu_row("bug", "Probleem melden")
+  $note("Mijn auto's: S10 · Rittenhistorie: S09 · Probleem melden: S08b")
 $phone_bottom("Account")
+$phones_next()
+$phone_top("Account", %false())
+  $scrim(147, "overlay op S08")
+  $dialog_begin("Account")
+    $muted_text("jan@voorbeeld.nl")
+    ..
+    $list_begin()
+    $menu_item("envelope-closed", "E-mailadres wijzigen")
+    ..
+    $menu_item("lock-locked", "Wachtwoord wijzigen")
+    ..
+    $menu_item("trash", "Account verwijderen")
+    $list_end()
+    $note("opties: S08a1, S08a2 en S08a3")
+    .
+    { $hs(180) | [     Sluiten      ] }
+  $dialog_end()
+  $scrim(147, "")
+$phone_bottom("Account")
+$phones_next()
+$phone_top("Account", %false())
+  $scrim(113, "overlay op S08")
+  $dialog_begin("Probleem melden")
+    $muted_text("Voor de ontwikkelaars: fouten en ideeën over de app")
+    ..
+    Soort probleem
+    { $chip_dark("Bug") | $chip("Crash") | $chip("Suggestie") | $chip("Anders") }
+    Korte omschrijving
+    "Kaart laadt niet bij Route              "
+    Wat gebeurde er? (stappen)
+    {+
+      1. Rit gestart  2. Tik op Route
+      3. Scherm blijft wit
+      <size:40><U+200B></size>
+      $hs(320)
+    }
+    $note("app-versie en toestel worden automatisch meegestuurd")
+    .
+    { [     Annuleren    ] | [     Versturen      ] }
+  $dialog_end()
+  $scrim(113, "")
+$phone_bottom("Account")
+$phones_end()
+$phones_row_gap()
+$phones_begin3("S08a1 – e-mailadres wijzigen (dialog)", "S08a2 – wachtwoord wijzigen (dialog)", "S08a3 – account verwijderen (dialog)")
+$phone_top("Account", %false())
+  $scrim(155, "overlay op S08 (vanuit S08a)")
+  $dialog_begin("E-mailadres wijzigen")
+    $muted_text("Huidig: jan@voorbeeld.nl")
+    ..
+    Nieuw e-mailadres
+    "jan.jansen@voorbeeld.nl                 "
+    Wachtwoord (ter bevestiging)
+    $password_field(%false())
+    $note("moet een geldig en nog niet gebruikt e-mailadres zijn")
+    .
+    { [     Annuleren    ] | [      Opslaan       ] }
+  $dialog_end()
+  $scrim(156, "")
+$phone_bottom("Account")
+$phones_next()
+$phone_top("Account", %false())
+  $scrim(92, "overlay op S08 (vanuit S08a)")
+  $dialog_begin("Wachtwoord wijzigen")
+    ..
+    Huidig wachtwoord
+    $password_field(%false())
+    Nieuw wachtwoord
+    $password_field(%true(), "Geheim123")
+    Herhaal nieuw wachtwoord
+    $password_field(%false())
+    .
+    { Sterkte$hs(40) | $strength(3, "Gemiddeld") }
+    $check(%true(), "Minimaal 8 tekens")
+    $check(%true(), "Een hoofdletter")
+    $check(%true(), "Een kleine letter")
+    $check(%true(), "Een cijfer")
+    $check(%false(), "Een speciaal teken (bijv. ! of #)")
+    $check(%true(), "Wachtwoorden zijn gelijk")
+    .
+    { [     Annuleren    ] | [      Opslaan       ] }
+  $dialog_end()
+  $scrim(92, "")
+$phone_bottom("Account")
+$phones_next()
+$phone_top("Account", %false())
+  $scrim(156, "overlay op S08 (vanuit S08a)")
+  $dialog_begin("Account verwijderen")
+    ..
+    Je account wordt definitief verwijderd.
+    Dit kan niet ongedaan worden gemaakt.
+    $muted_text("Niet mogelijk tijdens een reservering of rit.")
+    .
+    Wachtwoord (ter bevestiging)
+    $password_field(%false())
+    .
+    { [     Annuleren    ] | [    Verwijderen     ] }
+  $dialog_end()
+  $scrim(156, "")
+$phone_bottom("Account")
+$phones_end()
 }
 legend bottom
   Backendfuncties:
-  * userService.getUserResponse — GET /users/me (#13)
-  uitloggen: alleen in de app (token weg)
+  * userService.getUserResponse — GET /users/me (#13) — e-mailadres en bonuspunten (saldo)
+  * carService.getCarsByOwner — GET /cars/mine — aantal bij "Mijn auto's"
+  * rideService.getRides — GET /rides (#13) — aantal ritten en afgeronde ritten
+  S08a account: User heeft alleen id, email en passwordHash; bonuspunten = som van afgeronde ritten (niet te wijzigen)
+  S08a1 e-mailadres wijzigen: geen endpoint (nog uit te werken); zelfde e-mailcheck als registreren, bestaat al = 409,
+    het token bevat de e-mail (claim) dus daarna opnieuw inloggen
+  S08a2 wachtwoord wijzigen: geen endpoint (nog uit te werken); eisen = RegisterRequest.validate (minimaal 8 tekens,
+    hoofdletter, kleine letter, cijfer, speciaal teken, maximaal 72 bytes); sterkte en herhaling alleen in de app
+  S08a3 account verwijderen: geen endpoint (nog uit te werken); car, reservation en location verwijzen naar users
+  S08b probleem melden: geen endpoint (nog uit te werken); bugs, crashes en suggesties voor de ontwikkelaars
+  S08a [Sluiten] en S08b [Annuleren]/[Versturen]: terug naar S08; S08a1–S08a3 [Annuleren]/[Opslaan]: terug naar S08a,
+    S08a3 [Verwijderen]: uitgelogd, naar S01
+  Donkere modus en uitloggen (token weg): alleen in de app
 endlegend
 @endsalt

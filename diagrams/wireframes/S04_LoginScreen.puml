@@ -3,20 +3,25 @@
 title S04 – Wireframe: inloggen (LoginScreen)
 {+
 $phone_top("Rent my car", %false())
-  <b>Inloggen
+  .
+  <size:20><b>Inloggen</b></size>
+  $muted_text("Log in om een auto te huren of te verhuren")
   .
   E-mailadres
   "                                         "
   Wachtwoord
-  "••••••••••                               "
+  $password_field(%false())
+  { $hs(196) | $link("Wachtwoord vergeten?") }
   .
   [                Inloggen                 ]
   .
-  Nog geen account? <u>Registreren</u>
+  Nog geen account? $link("Registreren")
 $phone_bottom("")
 }
 legend bottom
   Backendfuncties:
   * authService.login — POST /users/login (#2)
+  oogje (wachtwoord tonen/verbergen): alleen in de app
+  Wachtwoord vergeten?: geen endpoint (nog uit te werken)
 endlegend
 @endsalt
