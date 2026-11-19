@@ -7,7 +7,7 @@ Schoolproject: Kotlin/Ktor Web API voor een autodeelplatform, gebouwd door een t
 - Bij grotere wijzigingen: eerst voorstel, pas aanpassen na akkoord. Bij twijfel: vragen.
 - Pragmatisch en simpel. Pas je aan de bestaande stijl en mappenstructuur aan.
 - Zoek je hoe je iets in Kotlin, Ktor of Compose codeert? Kijk dan eerst in `.claude/informatie/slides.md` en `.claude/informatie/voorbeelden.md`. Daar staan de voorbeelden uit de lessen. Staat het er niet in, zoek het dan op in de repo's die in `voorbeelden.md` staan en zet het voorbeeld erbij. Volg die aanpak, tenzij de bestaande code het anders doet.
-- De eisen van school (leeruitkomsten, minimum-eisen, portfolio, assessment, casus) staan in `.claude/informatie/requirements.md`. Lees dit bij vragen over wat er opgeleverd moet worden en voordat je een nieuwe feature voorstelt.
+- De eisen van school staan kort samengevat in `.claude/informatie/requirements-kort.md`. Lees dit bij vragen over wat er opgeleverd moet worden en voordat je een nieuwe feature voorstelt. Voor details of de letterlijke Brightspace-teksten (leeruitkomsten, minimum-eisen, portfolio, assessment, casus): `.claude/informatie/requirements.md`; bij tegenspraak is dat bestand leidend.
 - Weinig commentaar. `//check`, `//remove` en `//rename` zijn notities: laten staan.
 - Na een wijziging: `./kotlin build` (Windows: `.\kotlin.bat build`). Geen Gradle.
 
