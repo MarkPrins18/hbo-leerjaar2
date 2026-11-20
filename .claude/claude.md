@@ -24,7 +24,7 @@ Schoolproject: Kotlin/Ktor Web API voor een autodeelplatform, gebouwd door een t
 ## Modules
 - `contracts`: alleen `@Serializable` contractklassen (packages `contracts.models`, `contracts.requests`, `contracts.responses`), geen logica, geen server-only velden.
 - `server`: alle bestaande regels.
-- `shared`: de Compose-UI (Android + iOS), opgezet zoals de demo's van de docent. Regels volgen zodra er schermen komen.
+- `shared`: de Compose-UI (Android + iOS), opgezet zoals de demo's van de docent. Schermen in `shared/src/ui/screens/`, één bestand per scherm (`<Naam>Screen.kt`) met een `@Preview`. Theme in `ui/theme/`, HTTP-client in `api/`. Teksten nooit hard in een scherm: zet ze in `shared/composeResources/values/strings.xml` (Nederlands, standaard) én `values-en/strings.xml` (Engels), en gebruik `stringResource(Res.string.x)`.
 - `androidApp` / `iosApp`: alleen het startpunt dat `App()` toont. `iosApp` bouwt alleen op macOS; op Windows slaat `./kotlin build` iOS over.
 
 ## Database

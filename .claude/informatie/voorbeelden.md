@@ -42,7 +42,18 @@ Platform-specifieke code staat in `src@<platform>`-mappen (Kotlin Toolchain-conv
 
 ## Voorbeelden
 
-*(Nog leeg. Hier komen de voorbeelden die we gebruiken, per onderwerp.)*
+### Compose resources (meertaligheid)
+Bron: `incident-list-demo-kmp/shared/module.yaml` @ 19a957d (de demo zet het aan, maar gebruikt nog geen `Res.*`)
+```yaml
+dependencies:
+  - $compose.components.resources
+settings:
+  compose:
+    enabled: true
+    resources:
+      packageName: nl.carsharing.app.resources
+```
+Teksten in `shared/composeResources/values/strings.xml`, vertalingen in `values-<taal>/strings.xml`. Gebruik: `stringResource(Res.string.x)` met imports `<packageName>.Res`, `<packageName>.x` en `org.jetbrains.compose.resources.stringResource`.
 
 <!-- Format:
 ### <onderwerp>
