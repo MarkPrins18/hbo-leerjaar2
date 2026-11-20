@@ -1,0 +1,148 @@
+@startuml ClassDiagram
+title Klassendiagram Rent my car (models, main a342e9b)
+
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+hide empty methods
+
+package models {
+
+    class User <<data>> {
+        +id: Int
+        +email: String
+        +passwordHash: String
+    }
+
+    abstract class Car <<sealed>> {
+        +id: Int
+        +userId: Int
+        +licensePlate: String
+        +brand: String
+        +model: String
+        +productionYear: Int
+        +trim: String?
+        +color: String
+        +seats: Int?
+        +doors: Int?
+        +vehicleType: VehicleType
+        +readyToDriveWeightKg: Int
+        +consumptionCombined: Double?
+        +co2EmissionCombined: Double?
+        +roadTaxPerQuarter: Double?
+    }
+
+    class ICECar <<data>> {
+        +fuelType: FuelType
+        +tankCapacityL: Double
+        +automaticTransmission: Boolean
+    }
+
+    class BEVCar <<data>> {
+        +batteryCapacityKWh: Double
+    }
+
+    class FCEVCar <<data>> {
+        +tankCapacityKgH2: Double
+    }
+
+    class RentalTerms <<data>> {
+        +id: Int
+        +carId: Int
+        +pricePerDay: Double
+        +pickupLocation: String
+        +pickupTimeStart: LocalTime?
+        +pickupTimeEnd: LocalTime?
+        +returnLocation: String?
+        +returnTimeStart: LocalTime?
+        +returnTimeEnd: LocalTime?
+    }
+
+    class Photo <<data>> {
+        +id: Int
+        +carId: Int
+        +url: String
+        +uploadedAt: Instant
+    }
+
+    class Location <<data>> {
+        +id: Int
+        +carId: Int
+        +userId: Int?
+        +rideId: Int?
+        +latitude: Double
+        +longitude: Double
+        +speed: Double?
+        +timestamp: Instant
+    }
+
+    class Reservation <<data>> {
+        +id: Int
+        +carId: Int
+        +userId: Int
+        +startTime: Instant
+        +endTime: Instant
+        +status: ReservationStatus
+    }
+
+    class Ride <<data>> {
+        +id: Int
+        +reservationId: Int
+        +startTime: Instant
+        +endTime: Instant?
+        +status: RideStatus
+        +distanceM: Double?
+        +avgAcceleration: Double?
+        +avgDeceleration: Double?
+        +bonusPoints: Int?
+    }
+
+    enum FuelType {
+        PETROL
+        DIESEL
+        LPG
+    }
+
+    enum VehicleType {
+        PASSENGER_CAR
+        LIGHT_COMMERCIAL_VEHICLE
+    }
+
+    enum ReservationStatus {
+        PENDING
+        CONFIRMED
+        CANCELLED
+        COMPLETED
+    }
+
+    enum RideStatus {
+        IN_PROGRESS
+        COMPLETED
+    }
+
+    Car <|-- ICECar
+    Car <|-- BEVCar
+    Car <|-- FCEVCar
+
+    Car --> VehicleType
+    ICECar --> FuelType
+    Reservation --> ReservationStatus
+    Ride --> RideStatus
+
+    Car "*" --> "1" User : userId
+    RentalTerms "0..1" --> "1" Car : carId
+    Photo "*" --> "1" Car : carId
+    Location "*" --> "1" Car : carId
+    Location "*" --> "0..1" User : userId
+    Location "*" ..> "0..1" Ride : rideId\n(geen foreign key)
+    Reservation "*" --> "1" Car : carId
+    Reservation "*" --> "1" User : userId
+    Ride "*" --> "1" Reservation : reservationId
+}
+
+note bottom of Car
+  sealed: precies drie subtypes.
+  ICECar, BEVCar en FCEVCar herhalen
+  alle velden van Car met override val.
+end note
+
+@enduml
