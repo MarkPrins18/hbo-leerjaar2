@@ -18,9 +18,9 @@ Bewuste keuzes. Alleen wijzigen op basis van instructies.
 **Keuze:** `deleteCar` in de repository vergrendelt eerst de car-rij en de reserveringen van die auto met `forUpdate()` en controleert in dezelfde transactie of er een PENDING/CONFIRMED reservering is die nog niet voorbij is, of een rit IN_PROGRESS. Zo ja, dan geeft hij `false` en wist hij niets; de service maakt daar een 409 van. Afgeronde, geannuleerde en verlopen reserveringen en ritten worden wel mee verwijderd.
 **Waarom:** Dezelfde locks als reserveren (car-rij) en rit starten (reserveringsrij), dus er kan tussen controle en verwijderen geen reservering of rit bijkomen. Anders zou de eigenaar data van huurders wissen.
 
-## Locatie van een auto is zichtbaar voor elke ingelogde gebruiker
-**Keuze:** `GET /cars/{carId}/maps` controleert niet op eigenaar of reservering; alleen inloggen is nodig.
-**Waarom:** Teambesluit: `GET /cars/map` toont de posities van alle auto's al, dus een extra controle hier beschermt niets.
+## Auto's en posities openbaar, routelink alleen na inloggen
+**Keuze:** `GET /cars`, `GET /cars/{id}` en `GET /cars/map` (alle auto's met positie en prijs) werken zonder inloggen. `GET /cars/{carId}/maps` (Google Maps-routelink naar de auto) vereist inloggen, maar controleert niet op eigenaar of reservering.
+**Waarom:** Teambesluit: een bezoeker moet zonder account kunnen zien welke auto's er zijn en waar ze staan. De routelink is pas nodig als je gaat huren, dus daarvoor log je in. Een eigenaar- of reserveringscheck op de routelink beschermt niets, want de positie is via `GET /cars/map` toch al openbaar.
 
 ## API-contract in een aparte `contracts`-module
 **Keuze:** Vijf modules: `contracts` (KMP-lib, alleen `@Serializable` contractklassen), `server`, `shared` (KMP-lib met de Compose-UI, Android + iOS, zoals in de demo's van de docent), `androidApp` en `iosApp` (alleen de startpunten). Tot 2026-11-19 heette de contractmodule `shared` en de UI-module `composeApp`; de packages zijn op 2026-11-19 samen met de module hernoemd van `shared.*` naar `contracts.*`. Het contract staat in `contracts.models`, `contracts.requests` en `contracts.responses`; `models.User` (met `passwordHash`), `User.toResponse()` en `ACTIVE_RESERVATION_STATUSES` blijven op de server.

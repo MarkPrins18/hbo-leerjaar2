@@ -11,7 +11,7 @@ class LocationService(
     private val carRepository: CarRepository,
     private val locationRepository: LocationRepository
 ) {
-    /** Every logged-in user may see where a car is, just like on GET /cars/map. */
+    /** Any logged-in user may get the route link; the position itself is public via GET /cars/map. */
     suspend fun getMapsUrl(carId: Int): String {
         carRepository.getCarById(carId)
             ?: throw ResourceNotFoundException("Auto", carId)

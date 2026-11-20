@@ -38,7 +38,6 @@ import contracts.models.VehicleType
 import contracts.requests.CarChangeDto
 import contracts.requests.RentalTermsRequest
 import contracts.responses.CarMapResponse
-import contracts.responses.ErrorResponse
 import io.ktor.client.request.bearerAuth
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -399,11 +398,11 @@ class CarSearchRoutesTest {
     }
 
     @Test
-    fun `kaart zonder token geeft 401 en botst niet met cars id`() = e2eTest { client ->
+    fun `kaart werkt zonder token en botst niet met cars id`() = e2eTest { client ->
         val response = client.get("/cars/map")
 
-        assertEquals(HttpStatusCode.Unauthorized, response.status)
-        assertEquals(401, response.body<ErrorResponse>().status)
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertEquals((1..seedCarCount).toList(), response.body<List<CarMapResponse>>().map { it.car.id }.sorted())
     }
 
     @Test

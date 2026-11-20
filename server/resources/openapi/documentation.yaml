@@ -99,8 +99,7 @@ paths:
       operationId: getCarMap
       tags:
         - Cars
-      security:
-        - bearerAuth: []
+      security: []
       parameters:
         - $ref: "#/components/parameters/MaxPrice"
         - $ref: "#/components/parameters/MaxDistanceKm"
@@ -123,8 +122,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
 
   /cars/{id}:
     get:
