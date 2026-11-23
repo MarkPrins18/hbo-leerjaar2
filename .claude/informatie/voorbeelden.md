@@ -55,6 +55,20 @@ settings:
 ```
 Teksten in `shared/composeResources/values/strings.xml`, vertalingen in `values-<taal>/strings.xml`. Gebruik: `stringResource(Res.string.x)` met imports `<packageName>.Res`, `<packageName>.x` en `org.jetbrains.compose.resources.stringResource`.
 
+### Datum formatteren zonder java.time
+Bron: `incident-details-demo-kmp/shared/src/App.kt` @ 25e6412. Gebruikt in `shared/src/ui/components/DateTimeField.kt`.
+```kotlin
+val DeadlineDateFormat = LocalDateTime.Format {
+    day()
+    char('-')
+    monthNumber()
+    char('-')
+    year()
+}
+DeadlineDateFormat.format(dateTime)
+```
+DatePicker/TimePicker en NavigationBar komen niet voor in de demo's; daarvoor is de standaard Material 3-API gebruikt.
+
 <!-- Format:
 ### <onderwerp>
 Bron: `<repo>/<pad>` @ <commit>
