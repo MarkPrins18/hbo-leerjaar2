@@ -1,3 +1,8 @@
+/*
+ * Design exploration: coloured palettes from Palettes.kt, each shown on all screens in light and dark mode.
+ * Kept as example material for the assessment; not used by the app.
+ * Chosen for production: Teal A, refined in TealStylingPreview.kt into CarSharingPalette (Theme.kt).
+ */
 package nl.carsharing.app.ui.theme
 
 import androidx.compose.foundation.border
@@ -55,7 +60,7 @@ internal fun PaletteRows(palette: Palette) {
 }
 
 /**
- * The given phones in [palette]: a light row on top and a dark row below; also used by the color_ screen previews.
+ * The given phones in [palette]: a light row on top and a dark row below.
  * Size: n phones x 360 + (n - 1) gaps x 24 + 2 x 12 padding wide; 2 rows x (800 + 2 x 12) = 1648 high.
  */
 @Composable

@@ -9,66 +9,46 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 
-// Light grey scheme that reproduces the wireframes; DarkColorScheme below is its dark variant.
-private val ColorScheme = lightColorScheme(
-    primary = DarkGrey,
-    onPrimary = White,
-    primaryContainer = LightGrey,
-    onPrimaryContainer = Black,
-    inversePrimary = LightGrey,
-    secondary = DarkGrey,
-    onSecondary = White,
-    secondaryContainer = LightGrey,
-    onSecondaryContainer = Black,
-    tertiary = DarkGrey,
-    onTertiary = White,
-    tertiaryContainer = LightGrey,
-    onTertiaryContainer = Black,
-    background = White,
-    onBackground = Black,
-    surface = White,
-    onSurface = Black,
-    surfaceVariant = LightGrey,
-    onSurfaceVariant = MutedText,
-    surfaceTint = White,
-    surfaceContainerLowest = White,
-    surfaceContainerLow = SubtleGrey,
-    surfaceContainer = White,
-    surfaceContainerHigh = White,
-    surfaceContainerHighest = LightGrey,
-    outline = IconGrey,
-    outlineVariant = LineGrey
+// Production light scheme: teal accents on a pale mint background (Teal A from Palettes.kt).
+private val LightColorScheme = lightColorScheme(
+    primary = Color(0xFF00796B), onPrimary = White,
+    primaryContainer = Color(0xFFB8E6DF), onPrimaryContainer = Color(0xFF00382F),
+    inversePrimary = Color(0xFF7FD3C6),
+    secondary = Color(0xFF3E6A85), onSecondary = White,
+    secondaryContainer = Color(0xFFC9DDEC), onSecondaryContainer = Color(0xFF0F3047),
+    tertiary = Color(0xFFB26A00), onTertiary = White,
+    tertiaryContainer = Color(0xFFFFE2B8), onTertiaryContainer = Color(0xFF4A2C00),
+    error = Color(0xFFC62828), onError = White,
+    errorContainer = Color(0xFFFDE3E3), onErrorContainer = Color(0xFF7A1010),
+    background = Color(0xFFF4FAF9), onBackground = Color(0xFF16201F),
+    surface = Color(0xFFFAFDFC), onSurface = Color(0xFF16201F),
+    surfaceVariant = Color(0xFFE1EEEC), onSurfaceVariant = Color(0xFF4D5E5B),
+    surfaceTint = Color(0xFFFAFDFC),
+    surfaceContainerLowest = Color(0xFFFCFEFE), surfaceContainerLow = Color(0xFFEEF6F5),
+    surfaceContainer = Color(0xFFE8F2F0), surfaceContainerHigh = Color(0xFFE2EEEC),
+    surfaceContainerHighest = Color(0xFFDCE9E7),
+    outline = Color(0xFF8FA8A4), outlineVariant = Color(0xFFD3E3E0)
 )
 
-// Experiment: dark grey variant; the wireframes only define the light version.
+// Production dark scheme "deep ink": cool blue-grey ink with muted teal and amber accents.
 private val DarkColorScheme = darkColorScheme(
-    primary = LightGrey,
-    onPrimary = Black,
-    primaryContainer = Color(0xFF3A3A3A),
-    onPrimaryContainer = White,
-    inversePrimary = DarkGrey,
-    secondary = LightGrey,
-    onSecondary = Black,
-    secondaryContainer = Color(0xFF3A3A3A),
-    onSecondaryContainer = White,
-    tertiary = LightGrey,
-    onTertiary = Black,
-    tertiaryContainer = Color(0xFF3A3A3A),
-    onTertiaryContainer = White,
-    background = Color(0xFF121212),
-    onBackground = Color(0xFFEEEEEE),
-    surface = Color(0xFF121212),
-    onSurface = Color(0xFFEEEEEE),
-    surfaceVariant = Color(0xFF3A3A3A),
-    onSurfaceVariant = Color(0xFFAAAAAA),
-    surfaceTint = Color(0xFF121212),
-    surfaceContainerLowest = Color(0xFF121212),
-    surfaceContainerLow = Color(0xFF1C1C1C),
-    surfaceContainer = Color(0xFF121212),
-    surfaceContainerHigh = Color(0xFF121212),
-    surfaceContainerHighest = Color(0xFF3A3A3A),
-    outline = Color(0xFF6E6E6E),
-    outlineVariant = Color(0xFF333333)
+    primary = Color(0xFF8DC4BA), onPrimary = Color(0xFF0E2420),
+    primaryContainer = Color(0xFF26403C), onPrimaryContainer = Color(0xFFCFE8E3),
+    inversePrimary = Color(0xFF00796B),
+    secondary = Color(0xFFA3B4C4), onSecondary = Color(0xFF17222C),
+    secondaryContainer = Color(0xFF2A3540), onSecondaryContainer = Color(0xFFD6E0EA),
+    tertiary = Color(0xFFE0B26A), onTertiary = Color(0xFF2B1D05),
+    tertiaryContainer = Color(0xFF3F3524), onTertiaryContainer = Color(0xFFF2DFBF),
+    error = Color(0xFFE79C94), onError = Color(0xFF3B0E0A),
+    errorContainer = Color(0xFF552826), onErrorContainer = Color(0xFFF6D7D3),
+    background = Color(0xFF15181B), onBackground = Color(0xFFDCE1E4),
+    surface = Color(0xFF1B1F22), onSurface = Color(0xFFDCE1E4),
+    surfaceVariant = Color(0xFF2A2F33), onSurfaceVariant = Color(0xFF9AA3AA),
+    surfaceTint = Color(0xFF1B1F22),
+    surfaceContainerLowest = Color(0xFF111316), surfaceContainerLow = Color(0xFF1B1F22),
+    surfaceContainer = Color(0xFF202428), surfaceContainerHigh = Color(0xFF262A2E),
+    surfaceContainerHighest = Color(0xFF2C3135),
+    outline = Color(0xFF5F676E), outlineVariant = Color(0xFF2C3136)
 )
 
 /** A light and a dark colour set; [CarSharingTheme] picks one of the two. */
@@ -80,13 +60,13 @@ data class Palette(
     val darkApp: AppColors
 )
 
-/** Production palette: light reproduces the wireframes. */
-val GreyPalette = Palette("Grey", ColorScheme, DarkColorScheme, GreyAppColors, GreyDarkAppColors)
+/** Production palette "Teal Deep Ink": filled blocks without borders, deep ink dark mode. */
+val CarSharingPalette = Palette("Teal Deep Ink", LightColorScheme, DarkColorScheme, CarSharingAppColors, CarSharingDarkAppColors)
 
-// Deviation: palette is selectable and the app now follows the system dark mode (was always light grey).
+// Deviation: palette is selectable and the app follows the system dark mode (the wireframes are light grey only).
 @Composable
 fun CarSharingTheme(
-    palette: Palette = GreyPalette,
+    palette: Palette = CarSharingPalette,
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
@@ -98,7 +78,3 @@ fun CarSharingTheme(
         )
     }
 }
-
-/** Coloured theme for the color_ screens; same layout, [TealPalette] from Palettes.kt. */
-@Composable
-fun CarSharingColorTheme(content: @Composable () -> Unit) = CarSharingTheme(palette = TealPalette, content = content)

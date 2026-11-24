@@ -4,13 +4,12 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 
-// Experiment only: coloured palettes to compare in PalettePreview.kt; production uses GreyPalette.
+// Experiment only: coloured palettes to compare in PalettePreview.kt; production uses CarSharingPalette (Theme.kt).
 // Every role gets its own colour on purpose: light, subtly tinted backgrounds, a header that differs from
 // the navigation bar and separate colours for chips, tiles, cards, photo placeholders and buttons.
 
 // --- Teal A – calm: teal header, pale mint navigation, slate-blue chips and a warm amber call-to-action. ---
 
-/** Coloured palette of the color_ screens. */
 val TealPalette = Palette(
     name = "Teal A – calm",
     light = lightColorScheme(

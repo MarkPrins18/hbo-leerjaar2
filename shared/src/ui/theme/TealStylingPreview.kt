@@ -1,3 +1,8 @@
+/*
+ * Design exploration: styling variants of Teal A (borders vs. filled blocks, three dark modes).
+ * Kept as example material for the assessment; not used by the app.
+ * Chosen for production: variant 4 "deep ink", now CarSharingPalette in Theme.kt.
+ */
 package nl.carsharing.app.ui.theme
 
 import androidx.compose.material3.darkColorScheme
@@ -14,7 +19,7 @@ private val TealCurrentPalette = TealPalette.copy(name = "Teal A – current")
 // 2. Filled: no frames around blocks; cards and list rows get a fill a shade off the background
 //    (like the navigation bar), fields, secondary buttons and tiles a slightly stronger shade so they
 //    still stand out inside a filled card. Dark: the teal-black of Teal A, with lighter fills.
-internal val TealFilledPalette = TealPalette.copy(
+private val TealFilledPalette = TealPalette.copy(
     name = "Teal A – filled, no borders",
     lightApp = TealPalette.lightApp.copy(
         blockBorders = false,
@@ -34,7 +39,7 @@ internal val TealFilledPalette = TealPalette.copy(
 
 // 3. Warm charcoal: neutral warm greys with a hint of teal only in the header and emphasized card,
 //    elevation by lighter surfaces, muted teal/amber accents and warm off-white text.
-internal val TealWarmCharcoalPalette = TealFilledPalette.copy(
+private val TealWarmCharcoalPalette = TealFilledPalette.copy(
     name = "Teal A – dark: warm charcoal",
     dark = darkColorScheme(
         primary = Color(0xFF8CC2B7), onPrimary = Color(0xFF10241F),
@@ -71,44 +76,10 @@ internal val TealWarmCharcoalPalette = TealFilledPalette.copy(
     )
 )
 
-// 4. Deep ink: cool blue-grey ink with almost no teal; teal only for the selected tab and the
-//    emphasized blocks, amber only for the main button; cool off-white text.
-internal val TealDeepInkPalette = TealFilledPalette.copy(
-    name = "Teal A – dark: deep ink, muted accents",
-    dark = darkColorScheme(
-        primary = Color(0xFF8DC4BA), onPrimary = Color(0xFF0E2420),
-        primaryContainer = Color(0xFF26403C), onPrimaryContainer = Color(0xFFCFE8E3),
-        inversePrimary = Color(0xFF00796B),
-        secondary = Color(0xFFA3B4C4), onSecondary = Color(0xFF17222C),
-        secondaryContainer = Color(0xFF2A3540), onSecondaryContainer = Color(0xFFD6E0EA),
-        tertiary = Color(0xFFE0B26A), onTertiary = Color(0xFF2B1D05),
-        tertiaryContainer = Color(0xFF3F3524), onTertiaryContainer = Color(0xFFF2DFBF),
-        error = Color(0xFFE79C94), onError = Color(0xFF3B0E0A),
-        errorContainer = Color(0xFF552826), onErrorContainer = Color(0xFFF6D7D3),
-        background = Color(0xFF15181B), onBackground = Color(0xFFDCE1E4),
-        surface = Color(0xFF1B1F22), onSurface = Color(0xFFDCE1E4),
-        surfaceVariant = Color(0xFF2A2F33), onSurfaceVariant = Color(0xFF9AA3AA),
-        surfaceTint = Color(0xFF1B1F22),
-        surfaceContainerLowest = Color(0xFF111316), surfaceContainerLow = Color(0xFF1B1F22),
-        surfaceContainer = Color(0xFF202428), surfaceContainerHigh = Color(0xFF262A2E),
-        surfaceContainerHighest = Color(0xFF2C3135),
-        outline = Color(0xFF5F676E), outlineVariant = Color(0xFF2C3136)
-    ),
-    darkApp = AppColors(
-        header = Color(0xFF1A2729), onHeader = Color(0xFFDCE1E4),
-        navigation = Color(0xFF1B1F22), navigationSelected = Color(0xFFCFE8E3),
-        navigationUnselected = Color(0xFF8E979E), navigationIndicator = Color(0xFF3C5A56),
-        success = Color(0xFF82BC8F), onSuccess = Color(0xFF10261A), successText = Color(0xFF94C9A0),
-        warning = Color(0xFF3F3524), onWarning = Color(0xFFF2DCAE), errorText = Color(0xFFE79C94),
-        chip = Color(0xFF283239), onChip = Color(0xFFCAD6DE),
-        tile = Color(0xFF2A2F33), tileEmphasized = Color(0xFF243B38), onTile = Color(0xFFDCE1E4),
-        card = Color(0xFF203230), photoPlaceholder = Color(0xFF282D31),
-        button = Color(0xFFE0B26A), onButton = Color(0xFF2B1D05),
-        blockBorders = false,
-        blockFill = Color(0xFF1F2327),
-        fieldFill = Color(0xFF2A2F33)
-    )
-)
+// 4. Deep ink: light = filled (2), dark = cool blue-grey ink with almost no teal; teal only for the
+//    selected tab and the emphasized blocks, amber only for the main button. Chosen as production palette,
+//    so it is shown from CarSharingPalette in Theme.kt.
+private val TealDeepInkPalette = CarSharingPalette.copy(name = "Teal A – dark: deep ink, muted accents")
 
 // Same size as the PalettePreview.kt previews: 7 phones in a light and a dark row plus the label.
 

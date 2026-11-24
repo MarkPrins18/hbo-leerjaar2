@@ -7,7 +7,6 @@ import androidx.compose.ui.graphics.Color
 /**
  * Colours that have no Material colour-scheme role: header, navigation, status colours and a few
  * elements that each get their own colour in the coloured palettes.
- * The grey values reproduce the wireframes exactly.
  */
 @Immutable
 data class AppColors(
@@ -35,61 +34,44 @@ data class AppColors(
     val photoPlaceholder: Color,
     val button: Color,
     val onButton: Color,
-    // Experiment: block style. The defaults keep the wireframe look (frames, no fill); a "filled"
-    // palette sets blockBorders false and gives blocks (cards, list rows) and fields/secondary
+    // Block style. The defaults keep the wireframe look (frames, no fill); a "filled"
+    // palette (like production) sets blockBorders false and gives blocks (cards, list rows) and fields/secondary
     // buttons their own fill instead of a frame.
     val blockBorders: Boolean = true,
     val blockFill: Color = Color.Transparent,
     val fieldFill: Color = Color.Transparent
 )
 
-val GreyAppColors = AppColors(
-    header = White,
-    onHeader = Black,
-    navigation = White,
-    navigationSelected = Black,
-    navigationUnselected = Black,
-    navigationIndicator = Color.Transparent,
-    success = DarkGrey,
-    onSuccess = White,
-    successText = Black,
-    warning = LightGrey,
-    onWarning = Black,
-    errorText = MutedText,
-    chip = LightGrey,
-    onChip = Black,
-    tile = SubtleGrey,
-    tileEmphasized = LightGrey,
-    onTile = Black,
-    card = SubtleGrey,
-    photoPlaceholder = SubtleGrey,
-    button = LightGrey,
-    onButton = Black
+// Production app colours, light: Teal A filled, no borders; amber call-to-action and selected tab.
+val CarSharingAppColors = AppColors(
+    header = Color(0xFF00695C), onHeader = White,
+    navigation = Color(0xFFE3F1EE), navigationSelected = Color(0xFF3D2600),
+    navigationUnselected = Color(0xFF566B68), navigationIndicator = Color(0xFFFFB74D),
+    success = Color(0xFF2E7D32), onSuccess = White, successText = Color(0xFF2E7D32),
+    warning = Color(0xFFFFF0C2), onWarning = Color(0xFF5A4300), errorText = Color(0xFFC62828),
+    chip = Color(0xFFDCE8F2), onChip = Color(0xFF1F3B52),
+    tile = Color(0xFFD9EAE6), tileEmphasized = Color(0xFFFFE6C2), onTile = Color(0xFF00453C),
+    card = Color(0xFFD3ECE6), photoPlaceholder = Color(0xFFDDE7EE),
+    button = Color(0xFFFFB74D), onButton = Color(0xFF3D2600),
+    blockBorders = false,
+    blockFill = Color(0xFFE6F2EF),
+    fieldFill = Color(0xFFD9EAE6)
 )
 
-// Experiment: dark variant of GreyAppColors.
-val GreyDarkAppColors = AppColors(
-    header = Color(0xFF121212),
-    onHeader = Color(0xFFEEEEEE),
-    navigation = Color(0xFF121212),
-    navigationSelected = Color(0xFFEEEEEE),
-    navigationUnselected = Color(0xFFEEEEEE),
-    navigationIndicator = Color.Transparent,
-    success = LightGrey,
-    onSuccess = Black,
-    successText = Color(0xFFEEEEEE),
-    warning = Color(0xFF3A3A3A),
-    onWarning = Color(0xFFEEEEEE),
-    errorText = Color(0xFFAAAAAA),
-    chip = Color(0xFF3A3A3A),
-    onChip = White,
-    tile = Color(0xFF1C1C1C),
-    tileEmphasized = Color(0xFF3A3A3A),
-    onTile = Color(0xFFEEEEEE),
-    card = Color(0xFF1C1C1C),
-    photoPlaceholder = Color(0xFF1C1C1C),
-    button = Color(0xFF3A3A3A),
-    onButton = White
+// Production app colours, dark (deep ink): teal only for the selected tab and emphasized blocks, amber only for the main button.
+val CarSharingDarkAppColors = AppColors(
+    header = Color(0xFF1A2729), onHeader = Color(0xFFDCE1E4),
+    navigation = Color(0xFF1B1F22), navigationSelected = Color(0xFFCFE8E3),
+    navigationUnselected = Color(0xFF8E979E), navigationIndicator = Color(0xFF3C5A56),
+    success = Color(0xFF82BC8F), onSuccess = Color(0xFF10261A), successText = Color(0xFF94C9A0),
+    warning = Color(0xFF3F3524), onWarning = Color(0xFFF2DCAE), errorText = Color(0xFFE79C94),
+    chip = Color(0xFF283239), onChip = Color(0xFFCAD6DE),
+    tile = Color(0xFF2A2F33), tileEmphasized = Color(0xFF243B38), onTile = Color(0xFFDCE1E4),
+    card = Color(0xFF203230), photoPlaceholder = Color(0xFF282D31),
+    button = Color(0xFFE0B26A), onButton = Color(0xFF2B1D05),
+    blockBorders = false,
+    blockFill = Color(0xFF1F2327),
+    fieldFill = Color(0xFF2A2F33)
 )
 
-val LocalAppColors = staticCompositionLocalOf { GreyAppColors }
+val LocalAppColors = staticCompositionLocalOf { CarSharingAppColors }
