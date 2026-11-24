@@ -9,7 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 
-// Production light scheme: teal accents on a pale mint background (Teal A from Palettes.kt).
+// Light: teal accents on a pale mint background (Teal A from Palettes.kt).
 private val LightColorScheme = lightColorScheme(
     primary = Color(0xFF00796B), onPrimary = White,
     primaryContainer = Color(0xFFB8E6DF), onPrimaryContainer = Color(0xFF00382F),
@@ -30,7 +30,7 @@ private val LightColorScheme = lightColorScheme(
     outline = Color(0xFF8FA8A4), outlineVariant = Color(0xFFD3E3E0)
 )
 
-// Production dark scheme "deep ink": cool blue-grey ink with muted teal and amber accents.
+// Dark "deep ink": cool blue-grey ink with muted teal and amber accents.
 private val DarkColorScheme = darkColorScheme(
     primary = Color(0xFF8DC4BA), onPrimary = Color(0xFF0E2420),
     primaryContainer = Color(0xFF26403C), onPrimaryContainer = Color(0xFFCFE8E3),
@@ -63,7 +63,6 @@ data class Palette(
 /** Production palette "Teal Deep Ink": filled blocks without borders, deep ink dark mode. */
 val CarSharingPalette = Palette("Teal Deep Ink", LightColorScheme, DarkColorScheme, CarSharingAppColors, CarSharingDarkAppColors)
 
-// Deviation: palette is selectable and the app follows the system dark mode (the wireframes are light grey only).
 @Composable
 fun CarSharingTheme(
     palette: Palette = CarSharingPalette,

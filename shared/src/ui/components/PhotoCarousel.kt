@@ -49,14 +49,12 @@ fun PhotoCarousel(
         modifier = modifier
             .fillMaxWidth()
             .then(
-                // Experiment: framed = blockFill plus a frame unless the palette is filled (defaults: frame only).
                 if (framed) Modifier
                     .background(LocalAppColors.current.blockFill, shape)
                     .then(
                         if (LocalAppColors.current.blockBorders) Modifier.border(BorderRegular, MaterialTheme.colorScheme.outline, shape)
                         else Modifier
                     )
-                // Deviation: own placeholder colour (grey: same SubtleGrey as surfaceContainerLow before).
                 else Modifier.background(LocalAppColors.current.photoPlaceholder, shape)
             )
             .padding(horizontal = 8.dp, vertical = 8.dp)

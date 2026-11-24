@@ -5,8 +5,8 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 /**
- * Colours that have no Material colour-scheme role: header, navigation, status colours and a few
- * elements that each get their own colour in the coloured palettes.
+ * Colours that have no Material colour-scheme role: header, navigation, status colours and own
+ * colours for chips, tiles, cards, photo placeholders and buttons.
  */
 @Immutable
 data class AppColors(
@@ -15,7 +15,6 @@ data class AppColors(
     val navigation: Color,
     val navigationSelected: Color,
     val navigationUnselected: Color,
-    // Deviation: highlight behind the selected tab; Transparent keeps the wireframe look.
     val navigationIndicator: Color,
     val success: Color,
     val onSuccess: Color,
@@ -23,8 +22,6 @@ data class AppColors(
     val warning: Color,
     val onWarning: Color,
     val errorText: Color,
-    // Deviation: own roles so chips, tiles, cards, photo placeholders and buttons can differ per palette
-    // (grey maps them to the Material roles they used before).
     val chip: Color,
     val onChip: Color,
     val tile: Color,
@@ -34,15 +31,13 @@ data class AppColors(
     val photoPlaceholder: Color,
     val button: Color,
     val onButton: Color,
-    // Block style. The defaults keep the wireframe look (frames, no fill); a "filled"
-    // palette (like production) sets blockBorders false and gives blocks (cards, list rows) and fields/secondary
-    // buttons their own fill instead of a frame.
+    // Bordered palettes frame blocks and fields; filled palettes (blockBorders false) use blockFill/fieldFill instead.
     val blockBorders: Boolean = true,
     val blockFill: Color = Color.Transparent,
     val fieldFill: Color = Color.Transparent
 )
 
-// Production app colours, light: Teal A filled, no borders; amber call-to-action and selected tab.
+// Light: Teal A filled; amber call-to-action and selected tab.
 val CarSharingAppColors = AppColors(
     header = Color(0xFF00695C), onHeader = White,
     navigation = Color(0xFFE3F1EE), navigationSelected = Color(0xFF3D2600),
@@ -58,7 +53,7 @@ val CarSharingAppColors = AppColors(
     fieldFill = Color(0xFFD9EAE6)
 )
 
-// Production app colours, dark (deep ink): teal only for the selected tab and emphasized blocks, amber only for the main button.
+// Dark (deep ink): teal only for the selected tab and emphasized blocks, amber only for the main button.
 val CarSharingDarkAppColors = AppColors(
     header = Color(0xFF1A2729), onHeader = Color(0xFFDCE1E4),
     navigation = Color(0xFF1B1F22), navigationSelected = Color(0xFFCFE8E3),

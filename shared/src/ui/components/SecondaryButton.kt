@@ -18,9 +18,6 @@ import androidx.compose.ui.unit.dp
 import nl.carsharing.app.ui.theme.BorderField
 import nl.carsharing.app.ui.theme.LocalAppColors
 
-/**
- * Outlined secondary action with an optional leading [icon].
- */
 @Composable
 fun SecondaryButton(
     text: String,
@@ -33,7 +30,6 @@ fun SecondaryButton(
     OutlinedButton(
         onClick = onClick,
         shape = MaterialTheme.shapes.extraSmall,
-        // Experiment: a filled palette drops the frame and uses fieldFill (default Transparent).
         border = if (appColors.blockBorders) BorderStroke(BorderField, MaterialTheme.colorScheme.primary) else null,
         colors = ButtonDefaults.outlinedButtonColors(
             containerColor = appColors.fieldFill,

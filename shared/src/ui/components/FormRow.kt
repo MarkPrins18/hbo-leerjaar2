@@ -8,9 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 
-/**
- * Form line from the wireframes: label in the fixed label column, [field] fills the rest.
- */
 @Composable
 fun FormRow(
     label: String,

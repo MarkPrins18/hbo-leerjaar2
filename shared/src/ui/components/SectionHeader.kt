@@ -7,7 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 
 /**
- * Small grey caps header above a section, like `$section(..)` in the wireframes.
+ * Small caps header above a section, like `$section(..)` in the wireframes.
  */
 @Composable
 fun SectionHeader(text: String, modifier: Modifier = Modifier) {

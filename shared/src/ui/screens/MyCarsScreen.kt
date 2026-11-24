@@ -423,7 +423,6 @@ internal fun MyCarsPreviewSingle(sheetOpen: Boolean) {
     MyCarsPreviewPhone(selectedCar = if (sheetOpen) sampleMyCars.first() else null)
 }
 
-/** S10 and S10a side by side; shared by the grey and the coloured preview. */
 @Composable
 internal fun MyCarsPreviewRow() {
     Row(

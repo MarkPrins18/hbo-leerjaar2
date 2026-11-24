@@ -37,18 +37,12 @@ import nl.carsharing.app.ui.theme.LocalAppColors
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
-/**
- * Tabs shown in the [BottomNavigationBar].
- */
 enum class NavigationTab(val label: StringResource, val icon: ImageVector) {
     Rides(Res.string.tab_rides, AppIcons.List),
     Search(Res.string.tab_search, AppIcons.Search),
     Account(Res.string.tab_account, AppIcons.Person)
 }
 
-/**
- * Bottom navigation from the wireframes, with one item per [NavigationTab].
- */
 @Composable
 fun BottomNavigationBar(
     selectedTab: NavigationTab,
@@ -87,8 +81,7 @@ private fun BottomNavigationItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier.clickable(role = Role.Tab, onClick = onClick)
     ) {
-        // Deviation: rounded indicator behind icon + label of the selected tab, drawn outside the layout so
-        // the bar keeps its size; Transparent in the grey palette, so it looks like the wireframe there.
+        // The indicator is drawn outside the layout, so the bar keeps its size.
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(2.dp),

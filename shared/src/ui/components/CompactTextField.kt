@@ -18,9 +18,6 @@ import androidx.compose.ui.unit.dp
 import nl.carsharing.app.ui.theme.BorderField
 import nl.carsharing.app.ui.theme.LocalAppColors
 
-/**
- * Small single-line text field with a thin border, like the input fields in the wireframes.
- */
 @Composable
 fun CompactTextField(
     value: String,
@@ -49,7 +46,6 @@ fun CompactTextField(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    // Experiment: fieldFill and optional frame (defaults: no fill, frame).
                     .background(appColors.fieldFill, MaterialTheme.shapes.extraSmall)
                     .then(
                         if (appColors.blockBorders) Modifier.border(BorderField, colors.outline, MaterialTheme.shapes.extraSmall)

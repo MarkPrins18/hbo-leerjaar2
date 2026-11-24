@@ -58,7 +58,6 @@ fun BottomSheet(
                 .padding(top = 56.dp)
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.surface, SheetShape)
-                // Experiment: a filled palette drops the sheet frame.
                 .then(
                     if (LocalAppColors.current.blockBorders) Modifier.border(BorderThick, MaterialTheme.colorScheme.primary, SheetShape)
                     else Modifier

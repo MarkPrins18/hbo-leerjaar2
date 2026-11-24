@@ -518,7 +518,6 @@ private fun AddPhotoTile(onClick: () -> Unit, modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
         modifier = modifier
-            // Experiment: styled like a field (fieldFill, frame unless the palette is filled).
             .background(LocalAppColors.current.fieldFill, MaterialTheme.shapes.extraSmall)
             .then(
                 if (LocalAppColors.current.blockBorders) {
@@ -598,7 +597,6 @@ internal fun CarFormPreviewSingle(details: Boolean) {
     }
 }
 
-/** Variant A and B side by side; shared by the grey and the coloured preview. */
 @Composable
 internal fun CarFormPreviewRow() {
     Row(

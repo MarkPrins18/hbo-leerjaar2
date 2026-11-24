@@ -20,7 +20,7 @@ fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifi
         onClick = onClick,
         shape = MaterialTheme.shapes.extraSmall,
         colors = ButtonDefaults.buttonColors(
-            // Deviation: own button colour, so it differs from the date picker selection (grey: same LightGrey).
+            // Own colour, so it differs from the date picker selection.
             containerColor = LocalAppColors.current.button,
             contentColor = LocalAppColors.current.onButton
         ),

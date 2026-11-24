@@ -23,7 +23,6 @@ fun Chip(
     contentColor: Color? = null
 ) {
     val colors = MaterialTheme.colorScheme
-    // Deviation: own chip colour (grey: same LightGrey as secondaryContainer before).
     val appColors = LocalAppColors.current
 
     Text(

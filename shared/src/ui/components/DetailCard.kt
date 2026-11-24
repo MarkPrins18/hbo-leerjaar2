@@ -26,7 +26,7 @@ val LabelColumnWidth = 144.dp
 
 /**
  * Framed card like `$card_begin(..)` in the wireframes; a [title] gets a thin line below it.
- * An [emphasized] card (an important result) gets a darker border and a subtle fill.
+ * An [emphasized] card (an important result) gets its own fill and, in bordered palettes, a thicker border.
  */
 @Composable
 fun DetailCard(
@@ -43,12 +43,9 @@ fun DetailCard(
         modifier = modifier
             .fillMaxWidth()
             .background(
-                // Deviation: own card colour (grey: same SubtleGrey as surfaceContainerLow before);
-                // experiment: blockFill for a normal card (Transparent by default).
                 color = if (emphasized) appColors.card else appColors.blockFill,
                 shape = MaterialTheme.shapes.extraSmall
             )
-            // Experiment: a filled palette drops the frame.
             .then(
                 if (appColors.blockBorders) Modifier.border(
                     width = if (emphasized) BorderThick else BorderRegular,
@@ -66,9 +63,6 @@ fun DetailCard(
     }
 }
 
-/**
- * Label/value row with a fixed label column.
- */
 @Composable
 fun DetailRow(
     label: String,

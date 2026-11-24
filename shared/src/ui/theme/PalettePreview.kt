@@ -26,12 +26,10 @@ import nl.carsharing.app.ui.screens.CarFormPreviewSingle
 import nl.carsharing.app.ui.screens.HomeScreen
 import nl.carsharing.app.ui.screens.MyCarsPreviewSingle
 
-// Experiment only: per palette one preview with a light and a dark row of all screens; not used by the app.
-
 private const val PhoneWidth = 360
 private const val PhoneHeight = 800
 
-// All screens of the app, one phone each; every lambda gets the phone modifier (size + border).
+// One phone per screen; each lambda gets the phone modifier (size + border).
 private val AllPhones: List<@Composable (Modifier) -> Unit> = listOf(
     { HomeScreen(modifier = it) },
     { CarDetailScreen(modifier = it) },

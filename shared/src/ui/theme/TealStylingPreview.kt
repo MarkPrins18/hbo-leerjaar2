@@ -10,10 +10,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 
-// Experiment only: styling variants of Teal A, one preview each with a light and a dark row of all screens.
 // The labels are the palette names: preview-only, so hardcoded instead of string resources.
 
-// 1. Reference: exactly the current Teal A.
+// 1. Reference: Teal A as in Palettes.kt.
 private val TealCurrentPalette = TealPalette.copy(name = "Teal A – current")
 
 // 2. Filled: no frames around blocks; cards and list rows get a fill a shade off the background
@@ -80,8 +79,6 @@ private val TealWarmCharcoalPalette = TealFilledPalette.copy(
 //    selected tab and the emphasized blocks, amber only for the main button. Chosen as production palette,
 //    so it is shown from CarSharingPalette in Theme.kt.
 private val TealDeepInkPalette = CarSharingPalette.copy(name = "Teal A – dark: deep ink, muted accents")
-
-// Same size as the PalettePreview.kt previews: 7 phones in a light and a dark row plus the label.
 
 @Preview(widthDp = 2700, heightDp = 1700)
 @Composable

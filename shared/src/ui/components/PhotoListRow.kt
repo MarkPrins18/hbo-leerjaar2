@@ -42,7 +42,6 @@ fun PhotoListRow(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
-            // Experiment: blockFill and optional frame (defaults: no fill, frame).
             .background(LocalAppColors.current.blockFill, MaterialTheme.shapes.extraSmall)
             .then(
                 if (LocalAppColors.current.blockBorders) {
@@ -57,7 +56,6 @@ fun PhotoListRow(
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .size(66.dp)
-                // Deviation: own placeholder colour (grey: same SubtleGrey as surfaceContainerLow before).
                 .background(LocalAppColors.current.photoPlaceholder, MaterialTheme.shapes.extraSmall)
         ) {
             Icon(
