@@ -1,7 +1,8 @@
 # Slides – AI-powered Software Development (AIP)
 
 Samenvatting van de lesslides, als naslag voor "hoe doe je X in Kotlin/Ktor" en voor het assessment.
-Bron: `OneDrive - Safety Consulting & Technology\school portfolio` (pptx + FSA-portfolio xlsx).
+Bron: Periode 1 – `OneDrive - Safety Consulting & Technology\school portfolio` (pptx + FSA-portfolio xlsx); Periode 2 – `OneDrive - Avans Hogeschool\Code & Conquer leerjaar 2\Periode 2\Slides` (`AIP Les 8/9/10.pptx`, incl. sprekersnotities).
+Codevoorbeelden en demo-repo's: zie `voorbeelden.md`.
 
 - **Periode 1** – leeruitkomst 1: backend Web API in Kotlin met Ktor (OO + FP concepten). Inleveren uiterlijk zo 25 okt 2026.
 - **Periode 2** – leeruitkomst 2: Android app in Kotlin met Jetpack Compose die de API gebruikt. Inleveren uiterlijk zo 17 jan 2027.
@@ -21,6 +22,7 @@ Bron: `OneDrive - Safety Consulting & Technology\school portfolio` (pptx + FSA-p
   - [Planning & werkwijze P2](#planning--werkwijze-p2)
   - [Les 8 – Introductie Compose](#les-8--introductie-compose)
   - [Les 9 – Lijsten, state, ViewModel, coroutines, KMP](#les-9--lijsten-state-viewmodel-coroutines-kmp)
+  - [Les 10 – ViewModel + StateFlow, Navigation 3, KMP-migratie](#les-10--viewmodel--stateflow-navigation-3-kmp-migratie)
 
 ---
 
@@ -291,8 +293,10 @@ Bron: `OneDrive - Avans Hogeschool\Code & Conquer leerjaar 2\Periode 2\Slides`.
 - Les 1–2: Compose UI + state hoisting → losse screen-composables + previews maken.
 - Les 3–4: navigatie, ViewModel, **Koin** (DI, i.p.v. Hilt), **Coil** (images) → navigatie + Ktor API koppelen.
 - Les 5–6: (State)Flow, persistence, GPS/Maps, camera.
-- Aanbevolen: Navigation-3 (type-safe), Koin. Tooling (Android Studio/IntelliJ, Gradle/Kotlin Toolchain, KMP of Android-only) kiest de profgroep zelf.
-- Leerbronnen: *Android Basics with Compose* (course + codelabs), codelab jetpack-compose-basics, Hyperskill track 66 / knowledge-map 2560, MAD skills playlist.
+- Aanbevolen: Navigation-3 (type-safe), Koin (bij ons: Koin in de app `shared`, server zonder DI-library; zie `voorbeelden.md` → *Koin in de app – basis*). Tooling (Android Studio/IntelliJ, Gradle/Kotlin Toolchain, KMP of Android-only) kiest de profgroep zelf.
+- Leerbronnen: *Android Basics with Compose* (course + codelabs), codelab jetpack-compose-basics, Hyperskill track 66 / knowledge-map 2560, MAD skills playlist. Officiële docs regelmatig lezen (meest actueel). Alles voor Android/Compose is 100% toepasbaar op het Android-deel van een KMP-app; Hyperskill bouwt een KMP-track.
+- Tooling: Android Studio is gebaseerd op IntelliJ Community en loopt 1–2 versies achter; goed alternatief is IntelliJ met Android- en KMP-plugin.
+- Leertip docent: neem de tijd voor Composable/State/Recomposition/State hoisting; werk één concreet voorbeeld goed door en switch niet te snel tussen bronnen.
 
 Vooruitblik uit P1: coroutines, Flow, sealed `UiState`, design patterns + SOLID (individueel), unit- en UI-testen, ontwikkeldocument van P1 uitbreiden, filmpje met alle use cases.
 
@@ -315,6 +319,8 @@ fun Greeting(names: List<String>) {
 }
 ```
 
+**Jetpack Compose vs Compose Multiplatform:** Jetpack Compose (Google) = Android; Compose Multiplatform (JetBrains) = iOS, desktop, web + Android (via Jetpack Compose). "Compose" = beide; ze groeien steeds meer naar elkaar toe.
+
 **Layouts:** `Column` (verticaal), `Row` (horizontaal), `Box` (stapelen), `LazyColumn`/`LazyRow`/grids; verder Pager, Flow layouts, ConstraintLayout.
 
 **Slots** – composable lambda als parameter:
@@ -327,7 +333,7 @@ Button(onClick = {}) { Icon(Icons.Default.Home, contentDescription = "Home") }
 
 **Modifiers** – size, layout, gedrag, uiterlijk, accessibility, input, clickable/scrollable:
 - `size(40.dp)`, `height`, `width`, `fillMaxSize()`, `fillMaxWidth()`, `padding(32.dp)`, `background(Color.Magenta)`, `border(1.dp, Color.Red)`, `clip(CircleShape)`, `alpha(0.5f)`, `rotate(90f)`, `weight(1f)` (in Row/Column), `wrapContentSize(Alignment.Center)`.
-- **Volgorde telt:** `.background().padding()` ≠ `.padding().background()`; `.size(32.dp).padding(8.dp)` ≠ `.padding(8.dp).size(32.dp)`.
+- **Volgorde telt:** `.background().padding()` ≠ `.padding().background()`; `.size(32.dp).padding(8.dp)` ≠ `.padding(8.dp).size(32.dp)`. Modifiers passen eerst de constraints aan van links naar rechts en geven daarna de grootte terug van rechts naar links.
 - **Best practice:** elke composable accepteert `modifier: Modifier = Modifier` (eerste optionele parameter); de parent bepaalt hoe het kind gemeten wordt.
 - Herbruikbare stijl via custom modifier:
   ```kotlin
@@ -395,6 +401,8 @@ fun BmiScreen(modifier: Modifier = Modifier) {
 - Parametervolgorde: verplichte params → `modifier` (één) → optionele params → composable trailing lambda.
 - **Icons:** `material-icons-extended` wordt afgeraden; gebruik **Valkyrie plugin** (SVG → ImageVector, bv. `AppIcons.Height`) of Compose Multiplatform resources.
 
+**Huiswerk voor les 9:** Android Basics with Compose t/m **Unit 2**, o.a. codelab *Calculate a custom tip* (Tip Time; code: zie `voorbeelden.md`).
+
 ## Les 9 – Lijsten, state, ViewModel, coroutines, KMP
 
 Workshop: codelab *State in Compose* (WellnessTasks / WaterCounter).
@@ -444,6 +452,7 @@ LazyColumn(state = state, modifier = Modifier.fillMaxSize()) {
 **ViewModel**
 - UI-logica (hoe tonen: navigatie, snackbars) vs business-logica (wat doen: betalen, opslaan) → business-logica nooit in de UI-laag.
 - ViewModel levert UI-state + toegang tot business-logica en **overleeft configuration changes** (langere levensduur dan de Composition).
+- Elke input is een **event** (tap, tekstwijziging, timer); de ViewModel handelt events af en werkt de UI-state bij.
 - Explicit backing fields (stabiel vanaf Kotlin 2.4) voor private mutable / public read-only state:
   ```kotlin
   val tasks: List<WellnessTask>
@@ -469,7 +478,7 @@ AnimatedVisibility(
 - Coroutines houden lang werk (netwerk, opslag, animaties) van de main thread → app bevriest niet.
 - Start nooit een job als side effect van de compositie zelf; daarvoor `LaunchedEffect`. In event-handlers: `rememberCoroutineScope()`.
 
-**Scoping (lambda with receiver):** `Button`'s content is `@Composable RowScope.() -> Unit` → Icon + Text komen naast elkaar en `Modifier.weight` werkt. `FloatingActionButton` is niet RowScope-gescoped.
+**Scoping (lambda with receiver):** `Button`'s content is `@Composable RowScope.() -> Unit` → Icon + Text komen naast elkaar en `Modifier.weight` werkt. `FloatingActionButton` is niet RowScope-gescoped. Icon + tekst in een Button: `Icon(...)`, `Spacer(Modifier.width(ButtonDefaults.IconSpacing))`, `Text(...)`.
 
 **KMP 101**
 - Targets: Kotlin/JVM (.class), Native (.so/.dll/iOS), JS, Wasm.
@@ -484,8 +493,54 @@ AnimatedVisibility(
   actual fun getPlatform(): String = "Java ${System.getProperty("java.version")}"
   ```
 - **expect/actual vs interface:** expect/actual voor kleine, stateless platformverschillen (platformnaam, UUID, datum formatteren); compiler dwingt een `actual` per target af. **Interface** voor alles wat op een service lijkt (netwerk, database, analytics, meerdere methods, state, test double nodig) → fake injecteren vanuit `commonTest`.
-- Valkuil bij alleen Android + JVM targetten: JVM-only libraries sluipen erin (`java.io/nio`, `String.format`, Retrofit). Gebruik KMP-libraries (klibs.io): kotlinx-io, kotlinx-datetime, Ktor.
-- Integratie: gedeelde logica (KMP) met native UI, of ook gedeelde UI (Compose Multiplatform). CMP is een JetBrains-fork; Android-artifacts verwijzen naar de originele Jetpack Compose.
-- Demo: github.com/pjfmast/incident-details-demo-kmp
+- Valkuil bij alleen Android + JVM targetten: JVM-only libraries sluipen erin (`java.io/nio`, `String.format`, Retrofit). Zolang er geen niet-JVM target (iOS, Wasm/JS) is, controleert de compiler `commonMain` alleen tegen de JVM; voeg je later iOS toe, dan faalt de build op al die plekken. Gebruik KMP-libraries (klibs.io):
+  - datum formatteren → kotlinx-datetime `LocalDateTime.format(...)` i.p.v. `String.format`
+  - UUID → `kotlin.uuid.Uuid`
+  - bestands-I/O → kotlinx-io of Okio i.p.v. `java.io.File`/`java.nio`
+  - netwerk → Ktor i.p.v. Retrofit
+- Integratie: gedeelde logica (KMP) met native UI, of ook gedeelde UI (Compose Multiplatform). CMP is een JetBrains-fork (github.com/JetBrains/compose-multiplatform-core); Android-artifacts verwijzen naar de originele Jetpack Compose (`androidx.compose.*`), andere platforms naar `org.jetbrains.compose.*`.
+- Demo: pjfmast/incident-details-demo-kmp (zie `voorbeelden.md`).
 
-**Huiswerk voor les 10:** Android Basics with Compose **Unit 3** – pathway 2 *Build a scrollable list* (kern, belangrijk voor proftaak), pathway 3 *Build beautiful apps* (material design, animaties).
+**Huiswerk voor les 10:** Android Basics with Compose **Unit 3** – pathway 1 (Kotlin fundamentals, snelle herhaling), pathway 2 *Build a scrollable list* (kern, belangrijk voor proftaak), pathway 3 *Build beautiful apps* (material design, animaties; verfraaien kan later).
+
+## Les 10 – ViewModel + StateFlow, Navigation 3, KMP-migratie
+
+Demo's: pjfmast/Unscramble (+ KMP-versie unscramble-ktc), Navigation 3-workshop HouseHelper (KotlinConf, door docent gemigreerd naar Kotlin Toolchain: pjfmast/HouseHelper-KTC), android/nav3-recipes en terrakok/nav3-recipes. Code: zie `voorbeelden.md` → *Navigation 3 – basis*.
+
+**ViewModel in Compose**
+- Deelt UI-state tussen composables; tussenlaag tussen UI en andere lagen (bv. repository); overleeft configuration changes.
+- Stelt bloot: **UI-state als `StateFlow`** (observable state holder) + **event handlers** die de state wijzigen. Oud alternatief `LiveData<T>` kom je nog tegen; TL;DR: gebruik StateFlow.
+- **StateFlow:** read-only, geeft altijd de laatste waarde (`value`), is de publieke kant van een private `MutableStateFlow`; één single source of truth; updates zijn conflated (trage collector ziet alleen de laatste waarde).
+- Best practice: UI-logica in de ViewModel, niet in composables ("dumb UI").
+- **Brug naar Compose:** `val x by viewModel.flow.collectAsStateWithLifecycle()` (aanbevolen, niet meer experimental). Houd de ViewModel vrij van Compose-code (`uiState: StateFlow`), zodat het patroon ook buiten Compose/KMP werkt.
+- Unscramble: `private val _uiState = MutableStateFlow(GameUiState())` + `val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()`, `data class GameUiState(...)`, `var userGuess by mutableStateOf(""); private set`. (De KMP-versie gebruikt een explicit backing field, zie les 9.)
+
+**Android → CMP: string resources**
+- CMP vereist **positionele placeholders**: `<string name="score">Score: %1$d</string>`, `%1$s` (Android's `getString` accepteert ook `%d`/`%s`). Gebruik `stringResource(Res.string.score, score)`.
+
+**Navigation 3**
+- Compose-first navigatiebibliotheek met meer controle over de back stack; Navigation 2 wordt uitgefaseerd. Veel bestaande voorbeelden (ook de codelabs) gebruiken nog Nav-2: `NavController`/`rememberNavController`, `NavGraph`, `NavHost` mag je vergeten.
+- Kernbegrippen:
+  - **`NavKey`** – route/sleutel van een scherm: puur data (`@Serializable` object/class), alleen de parameters die het scherm nodig heeft.
+  - **`NavBackStack`** – observable Compose-lijst met NavKeys = navigatiegeschiedenis; navigeren met gewone lijstoperaties `add`, `removeLastOrNull`, `clear`. Aanmaken met `rememberNavBackStack(...)`.
+  - **`NavEntry` / `entry<T> { }`** – koppelt een key aan de UI (+ id en optionele metadata).
+  - **`entryProvider { }`** – lookup key → NavEntry; alle bestemmingen op één centrale plek.
+  - **`SceneStrategy`** – bepaalt hoe entries getoond worden: `SinglePaneSceneStrategy` (standaard), `TwoPaneSceneStrategy`, `DialogSceneStrategy` (entry als dialog via metadata).
+  - **`NavDisplay`** – composable die de back stack observeert, entries ophaalt, de scene kiest en terug afhandelt (`onBack`).
+  - **`NavEntryDecorator`** – extra gedrag per entry: `rememberSaveableStateHolderNavEntryDecorator()` (rememberSaveable-state behouden), `rememberViewModelStoreNavEntryDecorator()` (ViewModel per entry, opgeruimd als het scherm van de stack gaat).
+- Basisstappen: 1) type-safe routes (`@Serializable data object ListRoute : NavKey`, `data class DetailRoute(val id: String) : NavKey`); 2) back stack `rememberNavBackStack(ListRoute)`; 3) `NavDisplay(backStack, onBack = { backStack.removeLastOrNull() }, entryProvider = …)`; 4) `entry<ListRoute> { … }`, `entry<DetailRoute> { key -> … key.id … }`.
+- KMP: routes als `@Serializable sealed interface Route : NavKey` en `rememberNavBackStack(savedStateConfig, ListRoute)` met een `SavedStateConfiguration` (polymorfe serialisatie, werkt platformonafhankelijk). Bron: kotlinlang.org/docs/multiplatform/compose-navigation-3.html. Wij houden deze vorm aan (zoals HouseHelper-KTC); versieverschillen tussen de bronnen: zie `voorbeelden.md` → *Navigation 3 – basis*.
+- `NavDisplay` kan eenvoudig navigatie-animaties toevoegen.
+- **Dialog-scene (workshop task 10):** `DialogSceneStrategy` in `sceneStrategies` + `entry<RenameDevice>(metadata = DialogSceneStrategy.dialog())`. Wrap de inhoud in een `Surface(color = MaterialTheme.colorScheme.surface, shape = MaterialTheme.shapes.extraLarge)`: de kale `Dialog` is transparant (achtergrond schijnt door), M3-dialogen hebben `extraLarge`-hoeken (28.dp) en `Surface` zet de juiste contentkleur (light/dark).
+- Talk: *Peeling back the Layers: A Navigation3 Deep Dive* (Marcello Galhardo & Ian Lake, YouTube). Docs scenes: developer.android.com/guide/navigation/navigation-3/scenes.
+
+**Codelab Lunch Tray (Unit 4 pathway 2, *Add navigation*) – migratie-challenges**
+- Challenge 1: Navigation 2 → 3. Stappen: dependencies naar Nav-3; enum met schermen → `@Serializable sealed interface LunchTrayRoute : NavKey { @Serializable data object Start : LunchTrayRoute … }`; NavController → `val backStack: NavBackStack<LunchTrayRoute> = rememberNavBackStack(Start)` (optioneel met `SavedStateConfiguration`). `CenterAlignedTopAppBar` niet meer nodig.
+- Challenge 2: Android/Gradle → KMP met Kotlin Toolchain. Leerpunten (agentic migratie):
+  - Begin met een nieuw KMP/Kotlin Toolchain-project en laat de AI-agent de code overzetten (voorkomt achtergebleven Gradle-artifacts).
+  - Gebruik de door JetBrains onderhouden multiplatform-varianten `org.jetbrains.androidx.*` (bv. `org.jetbrains.androidx.navigation3:navigation3-ui`, `lifecycle-viewmodel-navigation3`).
+  - Material 3: `@OptIn(ExperimentalMaterial3Api::class)` vaak niet meer nodig.
+  - `R.string.x` → `Res.string.x`; placeholders `%1$s`; `java.text.NumberFormat` → eigen Kotlin-extensie (`Double.formatPrice()`); geen Android-resource-ids in routes.
+  - Platformmodules (`androidApp`, `desktopApp`, `iosApp`, `webApp`) bevatten alleen opstart-wrappers naar de gedeelde `App()`; tests in `shared/test` met `kotlin.test` + `kotlinx-coroutines-test`.
+
+**Huiswerk voor les 11:** Android Basics with Compose t/m **Unit 4** – pathway 1 *Architecture components* (ViewModel, Unscramble; zie ook developer.android.com/topic/architecture en MAD Skills), pathway 2 *Navigation* (belangrijk voor proftaak: pas zelf Navigation 3 toe in de codelabs), pathway 3 *Adaptive* (optioneel). Bedenk per profgroep een vraag voor de gastles state management van Dave Leeds.

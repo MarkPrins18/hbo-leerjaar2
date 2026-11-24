@@ -13,7 +13,7 @@ Schoolproject autodeelplatform: Ktor-API (`server`) + Compose-app (`shared`, And
 - `/brainstorming` start alleen de gebruiker.
 
 ## Regels
-- Alleen Kotlin stdlib, geen `java.*`. Geen DI-library; dependencies via constructors vanuit `Routing.kt`.
+- Alleen Kotlin stdlib, geen `java.*`. Server: geen DI-library; dependencies via constructors vanuit `Routing.kt`. App (`shared`): Koin.
 - Route → Service → Repository. Routes kennen alleen services.
 - Validatie in `services/CarValidation.kt`.
 - Fouten: gooi alleen exceptions uit `services/Exception.kt` (niet Ktor's); `StatusPages.kt` handelt ze af, nooit zelf foutcodes responden.
