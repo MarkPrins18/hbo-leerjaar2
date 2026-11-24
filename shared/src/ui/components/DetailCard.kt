@@ -14,13 +14,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import nl.carsharing.app.ui.theme.BorderRegular
 import nl.carsharing.app.ui.theme.BorderThick
 import nl.carsharing.app.ui.theme.BorderThin
+import nl.carsharing.app.ui.theme.LocalAppColors
 
 val LabelColumnWidth = 144.dp
 
@@ -36,19 +36,25 @@ fun DetailCard(
     content: @Composable ColumnScope.() -> Unit
 ) {
     val colors = MaterialTheme.colorScheme
+    val appColors = LocalAppColors.current
 
     Column(
         verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = modifier
             .fillMaxWidth()
             .background(
-                color = if (emphasized) colors.surfaceContainerLow else Color.Transparent,
+                // Deviation: own card colour (grey: same SubtleGrey as surfaceContainerLow before);
+                // experiment: blockFill for a normal card (Transparent by default).
+                color = if (emphasized) appColors.card else appColors.blockFill,
                 shape = MaterialTheme.shapes.extraSmall
             )
-            .border(
-                width = if (emphasized) BorderThick else BorderRegular,
-                color = if (emphasized) colors.primary else colors.outline,
-                shape = MaterialTheme.shapes.extraSmall
+            // Experiment: a filled palette drops the frame.
+            .then(
+                if (appColors.blockBorders) Modifier.border(
+                    width = if (emphasized) BorderThick else BorderRegular,
+                    color = if (emphasized) colors.primary else colors.outline,
+                    shape = MaterialTheme.shapes.extraSmall
+                ) else Modifier
             )
             .padding(horizontal = 12.dp, vertical = 8.dp)
     ) {

@@ -25,6 +25,7 @@ import nl.carsharing.app.resources.home_car_photo
 import nl.carsharing.app.ui.icons.AppIcons
 import nl.carsharing.app.ui.icons.Image
 import nl.carsharing.app.ui.theme.BorderRegular
+import nl.carsharing.app.ui.theme.LocalAppColors
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -41,7 +42,13 @@ fun PhotoListRow(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
-            .border(BorderRegular, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.extraSmall)
+            // Experiment: blockFill and optional frame (defaults: no fill, frame).
+            .background(LocalAppColors.current.blockFill, MaterialTheme.shapes.extraSmall)
+            .then(
+                if (LocalAppColors.current.blockBorders) {
+                    Modifier.border(BorderRegular, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.extraSmall)
+                } else Modifier
+            )
             .clip(MaterialTheme.shapes.extraSmall)
             .clickable(enabled = onClick != null) { onClick?.invoke() }
             .padding(8.dp)
@@ -50,7 +57,8 @@ fun PhotoListRow(
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .size(66.dp)
-                .background(MaterialTheme.colorScheme.surfaceContainerLow, MaterialTheme.shapes.extraSmall)
+                // Deviation: own placeholder colour (grey: same SubtleGrey as surfaceContainerLow before).
+                .background(LocalAppColors.current.photoPlaceholder, MaterialTheme.shapes.extraSmall)
         ) {
             Icon(
                 imageVector = AppIcons.Image,

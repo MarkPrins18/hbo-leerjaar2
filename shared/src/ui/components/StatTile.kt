@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import nl.carsharing.app.ui.theme.LocalAppColors
 
 /**
  * Result tile with a small grey [label] and a big bold [value] (`$stat_row` in the wireframes).
@@ -21,11 +22,13 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun StatTile(label: String, value: String, modifier: Modifier = Modifier, emphasized: Boolean = false) {
     val colors = MaterialTheme.colorScheme
+    // Deviation: own tile colours (grey: same as surfaceContainerLow/Highest and the inherited text colour).
+    val appColors = LocalAppColors.current
 
     Column(
         modifier = modifier
             .background(
-                color = if (emphasized) colors.surfaceContainerHighest else colors.surfaceContainerLow,
+                color = if (emphasized) appColors.tileEmphasized else appColors.tile,
                 shape = MaterialTheme.shapes.extraSmall
             )
             .padding(horizontal = 10.dp, vertical = 6.dp)
@@ -35,7 +38,12 @@ fun StatTile(label: String, value: String, modifier: Modifier = Modifier, emphas
             style = MaterialTheme.typography.labelMedium,
             color = colors.onSurfaceVariant
         )
-        Text(text = value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = appColors.onTile
+        )
     }
 }
 

@@ -9,6 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import nl.carsharing.app.ui.theme.LocalAppColors
 
 /**
  * Filled main action of a screen, like the `[ .. ]` buttons in the wireframes.
@@ -19,8 +20,9 @@ fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifi
         onClick = onClick,
         shape = MaterialTheme.shapes.extraSmall,
         colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            // Deviation: own button colour, so it differs from the date picker selection (grey: same LightGrey).
+            containerColor = LocalAppColors.current.button,
+            contentColor = LocalAppColors.current.onButton
         ),
         elevation = null,
         contentPadding = PaddingValues(vertical = 8.dp),

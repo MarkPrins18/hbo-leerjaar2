@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import nl.carsharing.app.ui.theme.BorderThick
+import nl.carsharing.app.ui.theme.LocalAppColors
 
 private val SheetShape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
 
@@ -57,7 +58,11 @@ fun BottomSheet(
                 .padding(top = 56.dp)
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.surface, SheetShape)
-                .border(BorderThick, MaterialTheme.colorScheme.primary, SheetShape)
+                // Experiment: a filled palette drops the sheet frame.
+                .then(
+                    if (LocalAppColors.current.blockBorders) Modifier.border(BorderThick, MaterialTheme.colorScheme.primary, SheetShape)
+                    else Modifier
+                )
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {

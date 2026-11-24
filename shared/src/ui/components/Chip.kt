@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import nl.carsharing.app.ui.theme.LocalAppColors
 
 /**
  * Status chip from the wireframes; [emphasized] gives the dark variant (`$chip_dark`).
@@ -22,13 +23,15 @@ fun Chip(
     contentColor: Color? = null
 ) {
     val colors = MaterialTheme.colorScheme
+    // Deviation: own chip colour (grey: same LightGrey as secondaryContainer before).
+    val appColors = LocalAppColors.current
 
     Text(
         text = text,
         style = MaterialTheme.typography.labelMedium,
-        color = contentColor ?: if (emphasized) colors.onPrimary else colors.onSecondaryContainer,
+        color = contentColor ?: if (emphasized) colors.onPrimary else appColors.onChip,
         modifier = modifier
-            .background(containerColor ?: if (emphasized) colors.primary else colors.secondaryContainer)
+            .background(containerColor ?: if (emphasized) colors.primary else appColors.chip)
             .padding(horizontal = 6.dp, vertical = 2.dp)
     )
 }

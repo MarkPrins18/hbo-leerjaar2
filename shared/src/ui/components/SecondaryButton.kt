@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import nl.carsharing.app.ui.theme.BorderField
+import nl.carsharing.app.ui.theme.LocalAppColors
 
 /**
  * Outlined secondary action with an optional leading [icon].
@@ -27,11 +28,17 @@ fun SecondaryButton(
     modifier: Modifier = Modifier,
     icon: ImageVector? = null
 ) {
+    val appColors = LocalAppColors.current
+
     OutlinedButton(
         onClick = onClick,
         shape = MaterialTheme.shapes.extraSmall,
-        border = BorderStroke(BorderField, MaterialTheme.colorScheme.primary),
-        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
+        // Experiment: a filled palette drops the frame and uses fieldFill (default Transparent).
+        border = if (appColors.blockBorders) BorderStroke(BorderField, MaterialTheme.colorScheme.primary) else null,
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = appColors.fieldFill,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        ),
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
         modifier = modifier.height(40.dp)
     ) {

@@ -26,6 +26,7 @@ import nl.carsharing.app.resources.home_car_photo
 import nl.carsharing.app.ui.icons.AppIcons
 import nl.carsharing.app.ui.icons.Image
 import nl.carsharing.app.ui.theme.BorderRegular
+import nl.carsharing.app.ui.theme.LocalAppColors
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -48,8 +49,15 @@ fun PhotoCarousel(
         modifier = modifier
             .fillMaxWidth()
             .then(
-                if (framed) Modifier.border(BorderRegular, MaterialTheme.colorScheme.outline, shape)
-                else Modifier.background(MaterialTheme.colorScheme.surfaceContainerLow, shape)
+                // Experiment: framed = blockFill plus a frame unless the palette is filled (defaults: frame only).
+                if (framed) Modifier
+                    .background(LocalAppColors.current.blockFill, shape)
+                    .then(
+                        if (LocalAppColors.current.blockBorders) Modifier.border(BorderRegular, MaterialTheme.colorScheme.outline, shape)
+                        else Modifier
+                    )
+                // Deviation: own placeholder colour (grey: same SubtleGrey as surfaceContainerLow before).
+                else Modifier.background(LocalAppColors.current.photoPlaceholder, shape)
             )
             .padding(horizontal = 8.dp, vertical = 8.dp)
     ) {

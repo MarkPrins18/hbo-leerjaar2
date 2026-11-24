@@ -7,6 +7,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import nl.carsharing.app.ui.components.NavigationTab
 import nl.carsharing.app.ui.theme.CarSharingColorTheme
+import nl.carsharing.app.ui.theme.LightDarkRows
+import nl.carsharing.app.ui.theme.TealPalette
 
 /** Coloured version of S11 [CarFormScreen]: same screen in [CarSharingColorTheme]. */
 @Composable
@@ -30,10 +32,15 @@ fun color_CarFormScreen(
     }
 }
 
-@Preview(widthDp = 768, heightDp = 824)
+// Light on top, dark below, like TealPalettePreview; size from LightDarkRows.
+@Preview(widthDp = 768, heightDp = 1648)
 @Composable
 private fun color_CarFormScreenPreview() {
-    CarSharingColorTheme {
-        CarFormPreviewRow()
-    }
+    LightDarkRows(
+        TealPalette,
+        listOf(
+            { CarFormPreviewSingle(details = false) },
+            { CarFormPreviewSingle(details = true) }
+        )
+    )
 }

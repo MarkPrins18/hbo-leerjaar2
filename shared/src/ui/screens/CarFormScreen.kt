@@ -518,7 +518,13 @@ private fun AddPhotoTile(onClick: () -> Unit, modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
         modifier = modifier
-            .border(BorderField, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.extraSmall)
+            // Experiment: styled like a field (fieldFill, frame unless the palette is filled).
+            .background(LocalAppColors.current.fieldFill, MaterialTheme.shapes.extraSmall)
+            .then(
+                if (LocalAppColors.current.blockBorders) {
+                    Modifier.border(BorderField, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.extraSmall)
+                } else Modifier
+            )
             .clickable(onClick = onClick)
             .padding(4.dp)
     ) {
@@ -559,26 +565,14 @@ private fun LocationRow(
     }
 }
 
-/** Variant A and B side by side; shared by the grey and the coloured preview. */
+/** One phone of [CarFormPreviewRow]: variant A (import) or B ([details]); also used by PalettePreview.kt. */
 @Composable
-internal fun CarFormPreviewRow() {
+internal fun CarFormPreviewSingle(details: Boolean) {
     val phone = Modifier
         .width(360.dp)
         .fillMaxHeight()
         .border(BorderRegular, MaterialTheme.colorScheme.outline)
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(24.dp),
-        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(12.dp)
-    ) {
-        AddCarContent(
-            form = sampleImportForm,
-            onFormChange = { },
-            onCheck = { },
-            result = sampleApproved,
-            onBack = { },
-            onTabClick = { },
-            modifier = phone
-        )
+    if (details) {
         CarDetailsContent(
             form = sampleDetailsForm,
             onFormChange = { },
@@ -591,6 +585,28 @@ internal fun CarFormPreviewRow() {
             onTabClick = { },
             modifier = phone
         )
+    } else {
+        AddCarContent(
+            form = sampleImportForm,
+            onFormChange = { },
+            onCheck = { },
+            result = sampleApproved,
+            onBack = { },
+            onTabClick = { },
+            modifier = phone
+        )
+    }
+}
+
+/** Variant A and B side by side; shared by the grey and the coloured preview. */
+@Composable
+internal fun CarFormPreviewRow() {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(24.dp),
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(12.dp)
+    ) {
+        CarFormPreviewSingle(details = false)
+        CarFormPreviewSingle(details = true)
     }
 }
 

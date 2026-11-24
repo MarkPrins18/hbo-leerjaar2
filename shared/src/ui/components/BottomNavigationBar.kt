@@ -14,6 +14,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -80,17 +85,35 @@ private fun BottomNavigationItem(
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(2.dp),
         modifier = modifier.clickable(role = Role.Tab, onClick = onClick)
     ) {
-        Icon(tab.icon, contentDescription = null, tint = color)
-        Text(
-            text = stringResource(tab.label),
-            style = MaterialTheme.typography.labelMedium,
-            color = color,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
-        )
+        // Deviation: rounded indicator behind icon + label of the selected tab, drawn outside the layout so
+        // the bar keeps its size; Transparent in the grey palette, so it looks like the wireframe there.
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+            modifier = if (selected) Modifier.navigationIndicator(colors.navigationIndicator) else Modifier
+        ) {
+            Icon(tab.icon, contentDescription = null, tint = color)
+            Text(
+                text = stringResource(tab.label),
+                style = MaterialTheme.typography.labelMedium,
+                color = color,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+            )
+        }
     }
+}
+
+private fun Modifier.navigationIndicator(color: Color) = drawBehind {
+    val horizontal = 16.dp.toPx()
+    val vertical = 4.dp.toPx()
+    drawRoundRect(
+        color = color,
+        topLeft = Offset(-horizontal, -vertical),
+        size = Size(size.width + 2 * horizontal, size.height + 2 * vertical),
+        cornerRadius = CornerRadius(16.dp.toPx())
+    )
 }
 
 @Preview

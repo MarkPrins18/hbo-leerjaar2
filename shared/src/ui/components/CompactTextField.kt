@@ -1,5 +1,6 @@
 package nl.carsharing.app.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -15,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.unit.dp
 import nl.carsharing.app.ui.theme.BorderField
+import nl.carsharing.app.ui.theme.LocalAppColors
 
 /**
  * Small single-line text field with a thin border, like the input fields in the wireframes.
@@ -31,6 +33,7 @@ fun CompactTextField(
 ) {
     val colors = MaterialTheme.colorScheme
     val textStyle = MaterialTheme.typography.bodyMedium
+    val appColors = LocalAppColors.current
 
     BasicTextField(
         value = value,
@@ -46,7 +49,12 @@ fun CompactTextField(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(BorderField, colors.outline, MaterialTheme.shapes.extraSmall)
+                    // Experiment: fieldFill and optional frame (defaults: no fill, frame).
+                    .background(appColors.fieldFill, MaterialTheme.shapes.extraSmall)
+                    .then(
+                        if (appColors.blockBorders) Modifier.border(BorderField, colors.outline, MaterialTheme.shapes.extraSmall)
+                        else Modifier
+                    )
                     .padding(horizontal = 8.dp, vertical = 8.dp)
             ) {
                 Box(Modifier.weight(1f)) {

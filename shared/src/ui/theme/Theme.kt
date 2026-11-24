@@ -1,11 +1,15 @@
 package nl.carsharing.app.ui.theme
 
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.graphics.Color
 
-// Light only for now; a dark scheme follows when the final colours are chosen.
+// Light grey scheme that reproduces the wireframes; DarkColorScheme below is its dark variant.
 private val ColorScheme = lightColorScheme(
     primary = DarkGrey,
     onPrimary = White,
@@ -36,60 +40,65 @@ private val ColorScheme = lightColorScheme(
     outlineVariant = LineGrey
 )
 
-// Coloured version of the scheme above, used by the color_ screens.
-private val BrandColorScheme = lightColorScheme(
-    primary = Teal,
-    onPrimary = White,
-    primaryContainer = Teal,
+// Experiment: dark grey variant; the wireframes only define the light version.
+private val DarkColorScheme = darkColorScheme(
+    primary = LightGrey,
+    onPrimary = Black,
+    primaryContainer = Color(0xFF3A3A3A),
     onPrimaryContainer = White,
-    inversePrimary = TealLight,
-    secondary = TealDark,
-    onSecondary = White,
-    secondaryContainer = TealLight,
-    onSecondaryContainer = TealDark,
-    tertiary = Amber,
-    onTertiary = OnAmber,
-    tertiaryContainer = AmberLight,
-    onTertiaryContainer = OnAmber,
-    error = Red,
-    onError = White,
-    errorContainer = RedLight,
-    onErrorContainer = Red,
-    background = Mint,
-    onBackground = Ink,
-    surface = White,
-    onSurface = Ink,
-    surfaceVariant = TealLight,
-    onSurfaceVariant = InkMuted,
-    surfaceTint = White,
-    surfaceContainerLowest = White,
-    surfaceContainerLow = TealLight,
-    surfaceContainer = White,
-    surfaceContainerHigh = White,
-    surfaceContainerHighest = TealMid,
-    outline = Mist,
-    outlineVariant = MistLight
+    inversePrimary = DarkGrey,
+    secondary = LightGrey,
+    onSecondary = Black,
+    secondaryContainer = Color(0xFF3A3A3A),
+    onSecondaryContainer = White,
+    tertiary = LightGrey,
+    onTertiary = Black,
+    tertiaryContainer = Color(0xFF3A3A3A),
+    onTertiaryContainer = White,
+    background = Color(0xFF121212),
+    onBackground = Color(0xFFEEEEEE),
+    surface = Color(0xFF121212),
+    onSurface = Color(0xFFEEEEEE),
+    surfaceVariant = Color(0xFF3A3A3A),
+    onSurfaceVariant = Color(0xFFAAAAAA),
+    surfaceTint = Color(0xFF121212),
+    surfaceContainerLowest = Color(0xFF121212),
+    surfaceContainerLow = Color(0xFF1C1C1C),
+    surfaceContainer = Color(0xFF121212),
+    surfaceContainerHigh = Color(0xFF121212),
+    surfaceContainerHighest = Color(0xFF3A3A3A),
+    outline = Color(0xFF6E6E6E),
+    outlineVariant = Color(0xFF333333)
 )
 
+/** A light and a dark colour set; [CarSharingTheme] picks one of the two. */
+data class Palette(
+    val name: String,
+    val light: ColorScheme,
+    val dark: ColorScheme,
+    val lightApp: AppColors,
+    val darkApp: AppColors
+)
+
+/** Production palette: light reproduces the wireframes. */
+val GreyPalette = Palette("Grey", ColorScheme, DarkColorScheme, GreyAppColors, GreyDarkAppColors)
+
+// Deviation: palette is selectable and the app now follows the system dark mode (was always light grey).
 @Composable
-fun CarSharingTheme(content: @Composable () -> Unit) {
-    CompositionLocalProvider(LocalAppColors provides GreyAppColors) {
+fun CarSharingTheme(
+    palette: Palette = GreyPalette,
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    content: @Composable () -> Unit
+) {
+    CompositionLocalProvider(LocalAppColors provides if (darkTheme) palette.darkApp else palette.lightApp) {
         MaterialTheme(
-            colorScheme = ColorScheme,
+            colorScheme = if (darkTheme) palette.dark else palette.light,
             typography = Typography,
             content = content
         )
     }
 }
 
-/** Coloured theme for the color_ screens; same layout, brand palette from Color.kt. */
+/** Coloured theme for the color_ screens; same layout, [TealPalette] from Palettes.kt. */
 @Composable
-fun CarSharingColorTheme(content: @Composable () -> Unit) {
-    CompositionLocalProvider(LocalAppColors provides ColorAppColors) {
-        MaterialTheme(
-            colorScheme = BrandColorScheme,
-            typography = Typography,
-            content = content
-        )
-    }
-}
+fun CarSharingColorTheme(content: @Composable () -> Unit) = CarSharingTheme(palette = TealPalette, content = content)
