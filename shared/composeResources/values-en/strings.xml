@@ -11,7 +11,8 @@
     <string name="date_time_placeholder">dd-mm-yyyy hh:mm</string>
     <string name="select_date_time">Choose date and time</string>
 
-    <string name="home_filters">Filters</string>
+    <string name="home_search_placeholder">Search by name, price, distance…</string>
+    <string name="home_filters_toggle">Show or hide filters</string>
     <string name="home_max_price">Max price per day (€)</string>
     <string name="home_max_distance">Max distance (km)</string>
     <string name="home_period_start">Period start</string>

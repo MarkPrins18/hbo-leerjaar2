@@ -26,6 +26,7 @@ fun CompactTextField(
     placeholder: String = "",
     readOnly: Boolean = false,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    leadingIcon: (@Composable () -> Unit)? = null,
     trailingIcon: (@Composable () -> Unit)? = null
 ) {
     val colors = MaterialTheme.colorScheme
@@ -53,6 +54,7 @@ fun CompactTextField(
                     )
                     .padding(horizontal = 8.dp, vertical = 8.dp)
             ) {
+                leadingIcon?.invoke()
                 Box(Modifier.weight(1f)) {
                     if (value.isEmpty() && placeholder.isNotEmpty()) {
                         Text(placeholder, style = textStyle, color = colors.onSurfaceVariant)

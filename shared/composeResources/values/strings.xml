@@ -11,7 +11,8 @@
     <string name="date_time_placeholder">dd-mm-jjjj uu:mm</string>
     <string name="select_date_time">Kies datum en tijd</string>
 
-    <string name="home_filters">Filters</string>
+    <string name="home_search_placeholder">Zoek op naam, prijs, afstand…</string>
+    <string name="home_filters_toggle">Filters tonen of verbergen</string>
     <string name="home_max_price">Max prijs per dag (€)</string>
     <string name="home_max_distance">Max afstand (km)</string>
     <string name="home_period_start">Periode start</string>

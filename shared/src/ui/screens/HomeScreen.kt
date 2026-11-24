@@ -1,8 +1,11 @@
 package nl.carsharing.app.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -14,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -26,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
@@ -38,7 +43,7 @@ import nl.carsharing.app.resources.app_title
 import nl.carsharing.app.resources.decimal_separator
 import nl.carsharing.app.resources.distance_km
 import nl.carsharing.app.resources.home_available_cars
-import nl.carsharing.app.resources.home_filters
+import nl.carsharing.app.resources.home_filters_toggle
 import nl.carsharing.app.resources.home_last_search
 import nl.carsharing.app.resources.home_last_search_max_price
 import nl.carsharing.app.resources.home_max_distance
@@ -47,6 +52,7 @@ import nl.carsharing.app.resources.home_no_cars
 import nl.carsharing.app.resources.home_period_end
 import nl.carsharing.app.resources.home_period_start
 import nl.carsharing.app.resources.home_search
+import nl.carsharing.app.resources.home_search_placeholder
 import nl.carsharing.app.resources.price_amount
 import nl.carsharing.app.resources.price_per_day
 import nl.carsharing.app.ui.components.BottomNavigationBar
@@ -61,9 +67,13 @@ import nl.carsharing.app.ui.components.TitleBar
 import nl.carsharing.app.ui.formatDecimal
 import nl.carsharing.app.ui.icons.AppIcons
 import nl.carsharing.app.ui.icons.LocationOn
+import nl.carsharing.app.ui.icons.Search
+import nl.carsharing.app.ui.icons.Tune
 import nl.carsharing.app.ui.icons.Undo
 import nl.carsharing.app.ui.theme.BorderThin
+import nl.carsharing.app.ui.theme.BorderField
 import nl.carsharing.app.ui.theme.CarSharingTheme
+import nl.carsharing.app.ui.theme.LocalAppColors
 import org.jetbrains.compose.resources.stringResource
 
 data class SearchFilters(
@@ -71,7 +81,10 @@ data class SearchFilters(
     val maxDistanceKm: String = "",
     val startTime: LocalDateTime? = null,
     val endTime: LocalDateTime? = null
-)
+) {
+    val hasValues: Boolean
+        get() = maxPrice.isNotBlank() || maxDistanceKm.isNotBlank() || startTime != null || endTime != null
+}
 
 data class CarListItem(
     val id: Int,
@@ -88,6 +101,16 @@ private val ShortDateTimeFormat = LocalDateTime.Format {
     hour()
     char(':')
     minute()
+}
+
+/** Case-insensitive match on the name, or on price and distance as shown (`,` and `.` both work as decimal separator). */
+fun matchesQuery(car: CarListItem, query: String, decimalSeparator: String): Boolean {
+    val needle = query.trim().lowercase()
+    if (needle.isEmpty()) return true
+    val numberNeedle = needle.replace(",", decimalSeparator).replace(".", decimalSeparator)
+    return car.name.lowercase().contains(needle) ||
+        formatDecimal(car.pricePerDay, 2, decimalSeparator).contains(numberNeedle) ||
+        formatDecimal(car.distanceKm, 1, decimalSeparator).contains(numberNeedle)
 }
 
 private val sampleCars = listOf(
@@ -112,9 +135,15 @@ fun HomeScreen(
     onCarClick: (Int) -> Unit = { },
     onTabClick: (NavigationTab) -> Unit = { }
 ) {
+    var query by remember { mutableStateOf("") }
+    var filtersExpanded by remember { mutableStateOf(false) }
     var filters by remember { mutableStateOf(SearchFilters()) }
 
     HomeContent(
+        query = query,
+        onQueryChange = { query = it },
+        filtersExpanded = filtersExpanded,
+        onToggleFilters = { filtersExpanded = !filtersExpanded },
         filters = filters,
         onFiltersChange = { filters = it },
         onSearch = { },
@@ -129,6 +158,10 @@ fun HomeScreen(
 
 @Composable
 fun HomeContent(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    filtersExpanded: Boolean,
+    onToggleFilters: () -> Unit,
     filters: SearchFilters,
     onFiltersChange: (SearchFilters) -> Unit,
     onSearch: () -> Unit,
@@ -139,6 +172,9 @@ fun HomeContent(
     onTabClick: (NavigationTab) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val separator = stringResource(Res.string.decimal_separator)
+    val shownCars = cars.filter { matchesQuery(it, query, separator) }
+
     Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         TitleBar(stringResource(Res.string.app_title))
         LazyColumn(
@@ -146,17 +182,29 @@ fun HomeContent(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.weight(1f)
         ) {
-            item { SectionHeader(stringResource(Res.string.home_filters)) }
-            item { FilterFields(filters, onFiltersChange) }
             item {
-                PrimaryButton(stringResource(Res.string.home_search), onSearch, Modifier.fillMaxWidth())
+                SearchRow(
+                    query = query,
+                    onQueryChange = onQueryChange,
+                    filtersExpanded = filtersExpanded,
+                    hasActiveFilters = filters.hasValues,
+                    onToggleFilters = onToggleFilters
+                )
+            }
+            item {
+                AnimatedVisibility(visible = filtersExpanded) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FilterFields(filters, onFiltersChange)
+                        PrimaryButton(stringResource(Res.string.home_search), onSearch, Modifier.fillMaxWidth())
+                    }
+                }
             }
             if (lastSearch != null) {
                 item { LastSearchRow(lastSearch, onRestoreLastSearch) }
             }
             item { HorizontalDivider(thickness = BorderThin, color = MaterialTheme.colorScheme.outlineVariant) }
-            item { SectionHeader(stringResource(Res.string.home_available_cars, cars.size)) }
-            if (cars.isEmpty()) {
+            item { SectionHeader(stringResource(Res.string.home_available_cars, shownCars.size)) }
+            if (shownCars.isEmpty()) {
                 item {
                     Text(
                         text = stringResource(Res.string.home_no_cars),
@@ -164,11 +212,73 @@ fun HomeContent(
                     )
                 }
             }
-            items(cars, key = { car -> car.id }) { car ->
+            items(shownCars, key = { car -> car.id }) { car ->
                 CarRow(car, onClick = { onCarClick(car.id) })
             }
         }
         BottomNavigationBar(selectedTab = NavigationTab.Search, onTabClick = onTabClick)
+    }
+}
+
+@Composable
+private fun SearchRow(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    filtersExpanded: Boolean,
+    hasActiveFilters: Boolean,
+    onToggleFilters: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colors = MaterialTheme.colorScheme
+    val appColors = LocalAppColors.current
+    val shape = MaterialTheme.shapes.extraSmall
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier.fillMaxWidth()
+    ) {
+        CompactTextField(
+            value = query,
+            onValueChange = onQueryChange,
+            placeholder = stringResource(Res.string.home_search_placeholder),
+            leadingIcon = {
+                Icon(
+                    imageVector = AppIcons.Search,
+                    contentDescription = null,
+                    tint = colors.onSurfaceVariant,
+                    modifier = Modifier.padding(end = 6.dp).size(18.dp)
+                )
+            },
+            modifier = Modifier.weight(1f)
+        )
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(36.dp)
+                .background(if (filtersExpanded) colors.primary else appColors.fieldFill, shape)
+                .then(
+                    if (appColors.blockBorders && !filtersExpanded) Modifier.border(BorderField, colors.outline, shape)
+                    else Modifier
+                )
+                .clickable(role = Role.Button, onClick = onToggleFilters)
+        ) {
+            Icon(
+                imageVector = AppIcons.Tune,
+                contentDescription = stringResource(Res.string.home_filters_toggle),
+                tint = if (filtersExpanded) colors.onPrimary else colors.onSurfaceVariant,
+                modifier = Modifier.size(20.dp)
+            )
+            if (hasActiveFilters && !filtersExpanded) {
+                Box(
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(5.dp)
+                        .size(8.dp)
+                        .background(colors.primary, CircleShape)
+                )
+            }
+        }
     }
 }
 
@@ -297,12 +407,37 @@ private fun HomeScreenPreview() {
 private fun HomeScreenEmptyPreview() {
     CarSharingTheme {
         HomeContent(
+            query = "",
+            onQueryChange = { },
+            filtersExpanded = false,
+            onToggleFilters = { },
             filters = SearchFilters(),
             onFiltersChange = { },
             onSearch = { },
             lastSearch = null,
             onRestoreLastSearch = { },
             cars = emptyList(),
+            onCarClick = { },
+            onTabClick = { }
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun HomeScreenFiltersExpandedPreview() {
+    CarSharingTheme {
+        HomeContent(
+            query = "",
+            onQueryChange = { },
+            filtersExpanded = true,
+            onToggleFilters = { },
+            filters = sampleLastSearch,
+            onFiltersChange = { },
+            onSearch = { },
+            lastSearch = sampleLastSearch,
+            onRestoreLastSearch = { },
+            cars = sampleCars,
             onCarClick = { },
             onTabClick = { }
         )
