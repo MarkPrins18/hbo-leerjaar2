@@ -1,7 +1,5 @@
 package nl.carsharing.app.ui.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -21,6 +19,7 @@ import nl.carsharing.app.ui.theme.BorderRegular
 import nl.carsharing.app.ui.theme.BorderThick
 import nl.carsharing.app.ui.theme.BorderThin
 import nl.carsharing.app.ui.theme.LocalAppColors
+import nl.carsharing.app.ui.theme.block
 
 val LabelColumnWidth = 144.dp
 
@@ -42,16 +41,10 @@ fun DetailCard(
         verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = modifier
             .fillMaxWidth()
-            .background(
-                color = if (emphasized) appColors.card else appColors.blockFill,
-                shape = MaterialTheme.shapes.extraSmall
-            )
-            .then(
-                if (appColors.blockBorders) Modifier.border(
-                    width = if (emphasized) BorderThick else BorderRegular,
-                    color = if (emphasized) colors.primary else colors.outline,
-                    shape = MaterialTheme.shapes.extraSmall
-                ) else Modifier
+            .block(
+                fill = if (emphasized) appColors.card else appColors.blockFill,
+                borderWidth = if (emphasized) BorderThick else BorderRegular,
+                borderColor = if (emphasized) colors.primary else colors.outline
             )
             .padding(horizontal = 12.dp, vertical = 8.dp)
     ) {

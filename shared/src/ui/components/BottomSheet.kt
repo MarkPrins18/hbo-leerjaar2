@@ -1,7 +1,6 @@
 package nl.carsharing.app.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -24,7 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import nl.carsharing.app.ui.theme.BorderThick
-import nl.carsharing.app.ui.theme.LocalAppColors
+import nl.carsharing.app.ui.theme.block
 
 private val SheetShape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
 
@@ -57,11 +56,7 @@ fun BottomSheet(
                 .align(Alignment.BottomCenter)
                 .padding(top = 56.dp)
                 .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surface, SheetShape)
-                .then(
-                    if (LocalAppColors.current.blockBorders) Modifier.border(BorderThick, MaterialTheme.colorScheme.primary, SheetShape)
-                    else Modifier
-                )
+                .block(MaterialTheme.colorScheme.surface, BorderThick, MaterialTheme.colorScheme.primary, SheetShape)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {

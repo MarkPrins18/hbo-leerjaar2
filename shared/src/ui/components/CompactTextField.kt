@@ -1,7 +1,5 @@
 package nl.carsharing.app.ui.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,6 +15,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.unit.dp
 import nl.carsharing.app.ui.theme.BorderField
 import nl.carsharing.app.ui.theme.LocalAppColors
+import nl.carsharing.app.ui.theme.block
 
 @Composable
 fun CompactTextField(
@@ -47,11 +46,7 @@ fun CompactTextField(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(appColors.fieldFill, MaterialTheme.shapes.extraSmall)
-                    .then(
-                        if (appColors.blockBorders) Modifier.border(BorderField, colors.outline, MaterialTheme.shapes.extraSmall)
-                        else Modifier
-                    )
+                    .block(appColors.fieldFill, BorderField)
                     .padding(horizontal = 8.dp, vertical = 8.dp)
             ) {
                 leadingIcon?.invoke()

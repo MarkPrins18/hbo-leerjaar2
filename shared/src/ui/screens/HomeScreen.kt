@@ -2,15 +2,12 @@ package nl.carsharing.app.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -18,7 +15,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -32,7 +28,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -55,25 +50,27 @@ import nl.carsharing.app.resources.home_search
 import nl.carsharing.app.resources.home_search_placeholder
 import nl.carsharing.app.resources.price_amount
 import nl.carsharing.app.resources.price_per_day
-import nl.carsharing.app.ui.components.BottomNavigationBar
 import nl.carsharing.app.ui.components.CompactTextField
 import nl.carsharing.app.ui.components.DateTimeField
 import nl.carsharing.app.ui.components.FormRow
 import nl.carsharing.app.ui.components.NavigationTab
 import nl.carsharing.app.ui.components.PhotoListRow
 import nl.carsharing.app.ui.components.PrimaryButton
+import nl.carsharing.app.ui.components.ScreenContentPadding
+import nl.carsharing.app.ui.components.ScreenScaffold
 import nl.carsharing.app.ui.components.SectionHeader
-import nl.carsharing.app.ui.components.TitleBar
+import nl.carsharing.app.ui.components.TextFormRow
 import nl.carsharing.app.ui.formatDecimal
 import nl.carsharing.app.ui.icons.AppIcons
 import nl.carsharing.app.ui.icons.LocationOn
 import nl.carsharing.app.ui.icons.Search
 import nl.carsharing.app.ui.icons.Tune
 import nl.carsharing.app.ui.icons.Undo
-import nl.carsharing.app.ui.theme.BorderThin
 import nl.carsharing.app.ui.theme.BorderField
+import nl.carsharing.app.ui.theme.BorderThin
 import nl.carsharing.app.ui.theme.CarSharingTheme
 import nl.carsharing.app.ui.theme.LocalAppColors
+import nl.carsharing.app.ui.theme.block
 import org.jetbrains.compose.resources.stringResource
 
 data class SearchFilters(
@@ -175,12 +172,11 @@ fun HomeContent(
     val separator = stringResource(Res.string.decimal_separator)
     val shownCars = cars.filter { matchesQuery(it, query, separator) }
 
-    Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        TitleBar(stringResource(Res.string.app_title))
+    ScreenScaffold(stringResource(Res.string.app_title), NavigationTab.Search, onTabClick, modifier) { bodyModifier ->
         LazyColumn(
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+            contentPadding = ScreenContentPadding,
             verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.weight(1f)
+            modifier = bodyModifier
         ) {
             item {
                 SearchRow(
@@ -216,7 +212,6 @@ fun HomeContent(
                 CarRow(car, onClick = { onCarClick(car.id) })
             }
         }
-        BottomNavigationBar(selectedTab = NavigationTab.Search, onTabClick = onTabClick)
     }
 }
 
@@ -256,10 +251,11 @@ private fun SearchRow(
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .size(36.dp)
-                .background(if (filtersExpanded) colors.primary else appColors.fieldFill, shape)
-                .then(
-                    if (appColors.blockBorders && !filtersExpanded) Modifier.border(BorderField, colors.outline, shape)
-                    else Modifier
+                .block(
+                    fill = if (filtersExpanded) colors.primary else appColors.fieldFill,
+                    borderWidth = BorderField,
+                    shape = shape,
+                    bordered = appColors.blockBorders && !filtersExpanded
                 )
                 .clickable(role = Role.Button, onClick = onToggleFilters)
         ) {
@@ -288,24 +284,12 @@ private fun FilterFields(
     onFiltersChange: (SearchFilters) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val numberKeyboard = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-
     Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = modifier) {
-        FormRow(stringResource(Res.string.home_max_price)) { fieldModifier ->
-            CompactTextField(
-                value = filters.maxPrice,
-                onValueChange = { onFiltersChange(filters.copy(maxPrice = it)) },
-                keyboardOptions = numberKeyboard,
-                modifier = fieldModifier
-            )
+        TextFormRow(stringResource(Res.string.home_max_price), filters.maxPrice, number = true) {
+            onFiltersChange(filters.copy(maxPrice = it))
         }
-        FormRow(stringResource(Res.string.home_max_distance)) { fieldModifier ->
-            CompactTextField(
-                value = filters.maxDistanceKm,
-                onValueChange = { onFiltersChange(filters.copy(maxDistanceKm = it)) },
-                keyboardOptions = numberKeyboard,
-                modifier = fieldModifier
-            )
+        TextFormRow(stringResource(Res.string.home_max_distance), filters.maxDistanceKm, number = true) {
+            onFiltersChange(filters.copy(maxDistanceKm = it))
         }
         FormRow(stringResource(Res.string.home_period_start)) { fieldModifier ->
             DateTimeField(

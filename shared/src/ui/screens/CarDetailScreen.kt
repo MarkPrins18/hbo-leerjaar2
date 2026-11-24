@@ -1,12 +1,10 @@
 package nl.carsharing.app.ui.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -55,14 +53,14 @@ import nl.carsharing.app.resources.unit_kwh
 import nl.carsharing.app.resources.unit_kwh_per_100km
 import nl.carsharing.app.resources.unit_litres
 import nl.carsharing.app.resources.unit_litres_per_100km
-import nl.carsharing.app.ui.components.BottomNavigationBar
 import nl.carsharing.app.ui.components.Chip
 import nl.carsharing.app.ui.components.DetailCard
 import nl.carsharing.app.ui.components.DetailRow
 import nl.carsharing.app.ui.components.NavigationTab
 import nl.carsharing.app.ui.components.PhotoCarousel
 import nl.carsharing.app.ui.components.PrimaryButton
-import nl.carsharing.app.ui.components.TitleBar
+import nl.carsharing.app.ui.components.ScreenContentPadding
+import nl.carsharing.app.ui.components.ScreenScaffold
 import nl.carsharing.app.ui.formatDecimal
 import nl.carsharing.app.ui.theme.CarSharingTheme
 import org.jetbrains.compose.resources.StringResource
@@ -174,14 +172,12 @@ fun CarDetailContent(
     onTabClick: (NavigationTab) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        TitleBar(car.name, onBack = onBack)
+    ScreenScaffold(car.name, NavigationTab.Search, onTabClick, modifier, onBack) { bodyModifier ->
         Column(
             verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier
-                .weight(1f)
+            modifier = bodyModifier
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .padding(ScreenContentPadding)
         ) {
             PhotoCarousel(car.photoCount, currentPhoto, onPhotoChange)
             ChipsRow(car)
@@ -189,7 +185,6 @@ fun CarDetailContent(
             RentalTermsCard(terms)
             PriceRow(terms.pricePerDay, onRentClick)
         }
-        BottomNavigationBar(selectedTab = NavigationTab.Search, onTabClick = onTabClick)
     }
 }
 

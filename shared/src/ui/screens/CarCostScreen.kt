@@ -1,13 +1,10 @@
 package nl.carsharing.app.ui.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -51,16 +48,16 @@ import nl.carsharing.app.resources.cost_usage
 import nl.carsharing.app.resources.decimal_separator
 import nl.carsharing.app.resources.grouping_separator
 import nl.carsharing.app.resources.price_amount
-import nl.carsharing.app.ui.components.BottomNavigationBar
 import nl.carsharing.app.ui.components.Chip
 import nl.carsharing.app.ui.components.CompactTextField
 import nl.carsharing.app.ui.components.DetailCard
 import nl.carsharing.app.ui.components.NavigationTab
 import nl.carsharing.app.ui.components.PhotoListRow
+import nl.carsharing.app.ui.components.ScreenContentPadding
+import nl.carsharing.app.ui.components.ScreenScaffold
 import nl.carsharing.app.ui.components.SecondaryButton
 import nl.carsharing.app.ui.components.SectionHeader
 import nl.carsharing.app.ui.components.StatRow
-import nl.carsharing.app.ui.components.TitleBar
 import nl.carsharing.app.ui.formatDecimal
 import nl.carsharing.app.ui.icons.AppIcons
 import nl.carsharing.app.ui.icons.DateRange
@@ -148,14 +145,12 @@ fun CarCostContent(
     onTabClick: (NavigationTab) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        TitleBar(stringResource(Res.string.cost_title), onBack = onBack)
+    ScreenScaffold(stringResource(Res.string.cost_title), NavigationTab.Account, onTabClick, modifier, onBack) { bodyModifier ->
         Column(
             verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier
-                .weight(1f)
+            modifier = bodyModifier
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .padding(ScreenContentPadding)
         ) {
             CarHeader(car)
             SectionHeader(stringResource(Res.string.cost_tco))
@@ -180,7 +175,6 @@ fun CarCostContent(
                 fuelCost?.let { FuelCostResult(it) }
             }
         }
-        BottomNavigationBar(selectedTab = NavigationTab.Account, onTabClick = onTabClick)
     }
 }
 
@@ -228,7 +222,7 @@ private fun CostBlock(
             CompactTextField(
                 value = value,
                 onValueChange = onValueChange,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.width(80.dp)
             )
             Spacer(Modifier.width(8.dp))

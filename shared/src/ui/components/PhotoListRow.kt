@@ -1,7 +1,6 @@
 package nl.carsharing.app.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,8 +23,8 @@ import nl.carsharing.app.resources.Res
 import nl.carsharing.app.resources.home_car_photo
 import nl.carsharing.app.ui.icons.AppIcons
 import nl.carsharing.app.ui.icons.Image
-import nl.carsharing.app.ui.theme.BorderRegular
 import nl.carsharing.app.ui.theme.LocalAppColors
+import nl.carsharing.app.ui.theme.block
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -42,12 +41,7 @@ fun PhotoListRow(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
-            .background(LocalAppColors.current.blockFill, MaterialTheme.shapes.extraSmall)
-            .then(
-                if (LocalAppColors.current.blockBorders) {
-                    Modifier.border(BorderRegular, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.extraSmall)
-                } else Modifier
-            )
+            .block(LocalAppColors.current.blockFill)
             .clip(MaterialTheme.shapes.extraSmall)
             .clickable(enabled = onClick != null) { onClick?.invoke() }
             .padding(8.dp)
