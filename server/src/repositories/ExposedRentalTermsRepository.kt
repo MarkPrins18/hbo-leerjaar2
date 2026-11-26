@@ -9,14 +9,9 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.suspendTransaction
 import org.jetbrains.exposed.v1.jdbc.update
-import tables.CarTable
 import tables.RentalTermsTable
 
 class ExposedRentalTermsRepository : RentalTermsRepository {
-
-    override suspend fun carExists(carId: Int): Boolean = suspendTransaction {
-        !CarTable.selectAll().where { CarTable.id eq carId }.empty()
-    }
 
     override suspend fun getRentalTermsByCarId(carId: Int): RentalTerms? = suspendTransaction {
         RentalTermsTable.selectAll().where { RentalTermsTable.carId eq carId }.singleOrNull()?.toRentalTerms()

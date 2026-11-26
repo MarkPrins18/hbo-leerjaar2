@@ -7,16 +7,21 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.delete
+import io.ktor.client.request.forms.MultiPartFormDataContent
+import io.ktor.client.request.forms.formData
 import io.ktor.client.request.get
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
+import io.ktor.http.Headers
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.files.Path
+import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.files.SystemTemporaryDirectory
 import models.*
 import contracts.models.*
@@ -30,6 +35,7 @@ import services.ForbiddenException
 import services.ResourceNotFoundException
 import services.ValidationException
 import services.validate
+import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -100,8 +106,8 @@ private class FakeOwnedCarRepository(vararg cars: BEVCar, private val inUseCarId
     override suspend fun createCar(car: Car): Car = TODO()
 }
 
-private class FakeOwnedCarPhotoRepository : PhotoRepository {
-    override suspend fun getFileNamesByCarId(carId: Int): List<String> = emptyList()
+private class FakeOwnedCarPhotoRepository(private val fileNames: List<String> = emptyList()) : PhotoRepository {
+    override suspend fun getFileNamesByCarId(carId: Int): List<String> = fileNames
 
     override suspend fun createPhoto(carId: Int, fileName: String): Photo = TODO()
     override suspend fun getPhotosByCarId(carId: Int): List<Photo> = TODO()
@@ -135,7 +141,6 @@ private class UnusedOwnedCarReservationRepository : ReservationRepository {
 }
 
 private class UnusedOwnedCarRentalTermsRepository : RentalTermsRepository {
-    override suspend fun carExists(carId: Int): Boolean = TODO()
     override suspend fun getRentalTermsByCarId(carId: Int): RentalTerms? = TODO()
     override suspend fun getAllRentalTerms(): List<RentalTerms> = TODO()
     override suspend fun saveRentalTerms(carId: Int, request: contracts.requests.RentalTermsRequest): RentalTerms = TODO()
@@ -158,16 +163,25 @@ class CarChangeDtoValidationTest {
 class CarOwnershipServiceTest {
     private val carRepository = FakeOwnedCarRepository(testCar())
 
+    private val photoDirectory = Path(SystemTemporaryDirectory, "car-test-${Uuid.random()}")
+    private val photoStorage = PhotoStorage(photoDirectory)
+
     private val service = service(carRepository)
 
-    private fun service(carRepository: CarRepository) = CarService(
+    private fun service(carRepository: CarRepository, photoRepository: PhotoRepository = FakeOwnedCarPhotoRepository()) = CarService(
         carRepository,
         UnusedOwnedCarLocationRepository(),
-        FakeOwnedCarPhotoRepository(),
-        PhotoStorage(Path(SystemTemporaryDirectory, "car-test-${Uuid.random()}")),
+        photoRepository,
+        photoStorage,
         UnusedOwnedCarRentalTermsRepository(),
         UnusedOwnedCarReservationRepository()
     )
+
+    @AfterTest
+    fun cleanUp() {
+        photoStorage.clear()
+        SystemFileSystem.delete(photoDirectory, mustExist = false)
+    }
 
     // ---------- updateCar ----------
 
@@ -199,6 +213,16 @@ class CarOwnershipServiceTest {
         service.deleteCar(CAR_ID, OWNER_ID)
 
         assertNull(carRepository.cars[CAR_ID])
+    }
+
+    @Test
+    fun `verwijderen haalt ook de fotobestanden van de auto weg`() = runBlocking {
+        photoStorage.save("car10.jpg", byteArrayOf(1, 2, 3))
+        val service = service(carRepository, FakeOwnedCarPhotoRepository(listOf("car10.jpg")))
+
+        service.deleteCar(CAR_ID, OWNER_ID)
+
+        assertNull(photoStorage.read("car10.jpg"))
     }
 
     @Test
@@ -522,12 +546,21 @@ class CarRoutesTest {
     @Test
     fun `verwijderen haalt de auto en zijn gekoppelde gegevens weg`() = e2eTest { client ->
         val token = client.login(OWNER_ID)
+        val photo = client.post("/cars/$ICE_CAR_ID/photos") {
+            bearerAuth(token)
+            setBody(MultiPartFormDataContent(formData {
+                append("photo", byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte()), Headers.build {
+                    append(HttpHeaders.ContentDisposition, "filename=\"test.jpg\"")
+                })
+            }))
+        }.body<Photo>()
 
         val response = client.delete("/cars/$ICE_CAR_ID") { bearerAuth(token) }
 
         assertEquals(HttpStatusCode.NoContent, response.status)
         assertEquals(HttpStatusCode.NotFound, client.get("/cars/$ICE_CAR_ID").status)
         assertEquals(HttpStatusCode.NotFound, client.get("/cars/$ICE_CAR_ID/photos").status)
+        assertEquals(HttpStatusCode.NotFound, client.get(photo.url).status)
         assertEquals(HttpStatusCode.NotFound, client.get("/cars/$ICE_CAR_ID/rental-terms").status)
         assertEquals(SEED_CAR_COUNT - 1, client.get("/cars").body<List<Car>>().size)
     }

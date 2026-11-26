@@ -12,7 +12,6 @@ import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
 
 // Upper limits follow the database columns: decimal(6,2) = 9999.99, decimal(7,2) = 99999.99
-private const val LICENSE_PLATE_MAX_LENGTH = 20
 private val DUTCH_LICENSE_PLATE = Regex("[A-Z0-9]{6}")
 private const val NAME_MAX_LENGTH = 100
 private const val COLOR_MAX_LENGTH = 50
@@ -75,7 +74,9 @@ fun CarChangeDto.validate(car: Car) {
 
 private fun checkLicensePlate(licensePlate: String) {
     val normalizedLicensePlate = normalizeLicensePlate(licensePlate)
-    checkText("licensePlate", normalizedLicensePlate, LICENSE_PLATE_MAX_LENGTH)
+    if (normalizedLicensePlate.isBlank()) {
+        throw ValidationException("'licensePlate' mag niet leeg zijn")
+    }
     if (!normalizedLicensePlate.matches(DUTCH_LICENSE_PLATE)) {
         throw ValidationException("'licensePlate' moet een Nederlands kenteken zijn van 6 letters en cijfers, bijvoorbeeld AB-123-C")
     }
@@ -141,8 +142,8 @@ fun LocationRequest.validate() {
 fun CarFilter.validate() {
     maxPrice?.let { checkNotNegative("maxPrice", it) }
     maxDistanceKm?.let { checkNotNegative("maxDistanceKm", it) }
-    latitude?.let { checkRange("latitude", it, -90.0..90.0) }
-    longitude?.let { checkRange("longitude", it, -180.0..180.0) }
+    latitude?.let { checkRange("latitude", it, LATITUDE) }
+    longitude?.let { checkRange("longitude", it, LONGITUDE) }
 
     val distanceParameters = listOf(maxDistanceKm, latitude, longitude)
     if (distanceParameters.any { it != null } && distanceParameters.any { it == null }) {

@@ -44,8 +44,8 @@ private val storedRentalTerms = RentalTerms(
     pickupLocation = "Grote Markt 1, Breda"
 )
 
-private fun testCar(): Car = BEVCar(
-    id = CAR_ID,
+private fun testCar(id: Int = CAR_ID): Car = BEVCar(
+    id = id,
     userId = OWNER_ID,
     licensePlate = "AB-123-C",
     brand = "Tesla",
@@ -85,18 +85,13 @@ private class FakeRentalTermsRepository : RentalTermsRepository {
         RentalTerms(id = 1, carId = carId, pricePerDay = request.pricePerDay, pickupLocation = request.pickupLocation)
             .also { saved[carId] = it }
 
-    override suspend fun carExists(carId: Int): Boolean = TODO()
     override suspend fun getRentalTermsByCarId(carId: Int): RentalTerms? = TODO()
     override suspend fun getAllRentalTerms(): List<RentalTerms> = TODO()
 }
 
-private class FakeStoredRentalTermsRepository(
-    private val carIds: Set<Int>,
-    vararg rentalTerms: RentalTerms
-) : RentalTermsRepository {
+private class FakeStoredRentalTermsRepository(vararg rentalTerms: RentalTerms) : RentalTermsRepository {
     private val rentalTerms = rentalTerms.associateBy { it.carId }
 
-    override suspend fun carExists(carId: Int): Boolean = carId in carIds
     override suspend fun getRentalTermsByCarId(carId: Int): RentalTerms? = rentalTerms[carId]
 
     override suspend fun saveRentalTerms(carId: Int, request: RentalTermsRequest): RentalTerms = TODO()
@@ -110,8 +105,8 @@ class RentalTermsServiceTest {
     private val service = RentalTermsService(rentalTermsRepository, FakeRentalTermsCarRepository(testCar()))
 
     private val lookupService = RentalTermsService(
-        FakeStoredRentalTermsRepository(setOf(CAR_ID, CAR_WITHOUT_TERMS), storedRentalTerms),
-        FakeRentalTermsCarRepository()
+        FakeStoredRentalTermsRepository(storedRentalTerms),
+        FakeRentalTermsCarRepository(testCar(), testCar(CAR_WITHOUT_TERMS))
     )
 
     // ---------- getRentalTerms ----------

@@ -106,7 +106,6 @@ private class FakeReservationRentalTermsRepository(vararg rentalTerms: RentalTer
 
     override suspend fun getRentalTermsByCarId(carId: Int): RentalTerms? = rentalTerms[carId]
 
-    override suspend fun carExists(carId: Int): Boolean = TODO()
     override suspend fun saveRentalTerms(carId: Int, request: RentalTermsRequest): RentalTerms = TODO()
     override suspend fun getAllRentalTerms(): List<RentalTerms> = TODO()
 }
@@ -441,6 +440,27 @@ class ReservationRoutesTest {
         val thirdUserToken = client.login(thirdUserId)
 
         assertEquals(HttpStatusCode.Conflict, client.reserve(validBody, thirdUserToken).status)
+    }
+
+    @Test
+    fun `tijdsblok van een geannuleerde reservering kan opnieuw gereserveerd worden`() = e2eTest { client ->
+        val token = client.login(otherUserId)
+        val cancelled = client.reserve(validBody, token).body<Reservation>()
+        client.cancel(cancelled.id, token)
+
+        assertEquals(HttpStatusCode.Created, client.reserve(validBody, client.login(thirdUserId)).status)
+    }
+
+    @Test
+    fun `aansluitende reserveringen op dezelfde auto geven allemaal 201`() = e2eTest { client ->
+        val token = client.login(otherUserId)
+        val morning = """{ "carId": 1, "startTime": "2099-03-01T09:00:00Z", "endTime": "2099-03-01T12:00:00Z" }"""
+        val afternoon = """{ "carId": 1, "startTime": "2099-03-01T12:00:00Z", "endTime": "2099-03-01T15:00:00Z" }"""
+        val early = """{ "carId": 1, "startTime": "2099-03-01T06:00:00Z", "endTime": "2099-03-01T09:00:00Z" }"""
+
+        assertEquals(HttpStatusCode.Created, client.reserve(morning, token).status)
+        assertEquals(HttpStatusCode.Created, client.reserve(afternoon, token).status)
+        assertEquals(HttpStatusCode.Created, client.reserve(early, token).status)
     }
 
     // ---------- GET /reservations ----------

@@ -142,7 +142,6 @@ private class FakeSearchRentalTermsRepository(vararg rentalTerms: RentalTerms) :
         return rentalTerms
     }
 
-    override suspend fun carExists(carId: Int): Boolean = TODO()
     override suspend fun getRentalTermsByCarId(carId: Int): RentalTerms? = TODO()
     override suspend fun saveRentalTerms(carId: Int, request: RentalTermsRequest): RentalTerms = TODO()
 }

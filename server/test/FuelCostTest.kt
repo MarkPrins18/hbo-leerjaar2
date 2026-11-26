@@ -262,6 +262,17 @@ class FuelCostServiceTest {
     }
 
     @Test
+    fun `Gemini wordt per auto maar een keer gevraagd als het geen verbruik weet`() = runBlocking {
+        val costEstimator = FakeFuelCostEstimator(CarCostEstimate(roadTaxPerQuarter = null, consumptionCombined = null))
+        val service = service(bevCar(consumption = null), costEstimator = costEstimator)
+
+        assertFailsWith<UnprocessableException> { service.getFuelCost(CAR_ID, OWNER_ID, 100.0) }
+        assertFailsWith<UnprocessableException> { service.getFuelCost(CAR_ID, OWNER_ID, 100.0) }
+
+        assertEquals(1, costEstimator.calls)
+    }
+
+    @Test
     fun `onbekende auto geeft ResourceNotFoundException`() = runBlocking {
         assertFailsWith<ResourceNotFoundException> { service(iceCar()).getFuelCost(999, OWNER_ID, 100.0) }
         Unit

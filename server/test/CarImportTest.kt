@@ -3,8 +3,11 @@ import contracts.requests.CarChangeDto
 import contracts.requests.CarDto
 import kotlinx.coroutines.runBlocking
 import mappers.normalizeLicensePlate
+import mappers.toCar
 import contracts.models.BEVCar
 import contracts.models.Car
+import contracts.models.FuelType
+import contracts.models.ICECar
 import models.User
 import contracts.models.VehicleType
 import models.rdw.RdwFuelDto
@@ -147,6 +150,45 @@ class CarDtoValidationTest {
     @Test
     fun `leeg kenteken geeft ValidationException`() {
         assertFailsWith<ValidationException> { importRequest(" - ").validate() }
+    }
+}
+
+// ==================== 1. Validation: RdwVehicleDto.toCar() ====================
+
+class RdwCarMapperTest {
+    private fun fuel(sequenceNumber: String, description: String, consumption: String? = null) =
+        RdwFuelDto(LICENSE_PLATE, sequenceNumber, description, consumption)
+
+    private fun toCar(vararg fuels: RdwFuelDto, tankCapacityL: Double? = 50.0) =
+        rdwVehicle().toCar(fuels.toList(), id = 1, userId = USER_ID, trim = null, tankCapacityL = tankCapacityL, automaticTransmission = false)
+
+    @Test
+    fun `benzineauto wordt een ICE-auto op benzine`() {
+        val car = toCar(fuel("1", "Benzine", "6.5"))
+
+        assertIs<ICECar>(car)
+        assertEquals(FuelType.PETROL, car.fuelType)
+        assertEquals(50.0, car.tankCapacityL)
+        assertEquals(6.5, car.consumptionCombined)
+    }
+
+    @Test
+    fun `plug-in hybride neemt de niet-elektrische rij`() {
+        val car = toCar(fuel("1", "Elektriciteit", "15.0"), fuel("2", "Benzine", "1.2"))
+
+        assertIs<ICECar>(car)
+        assertEquals(FuelType.PETROL, car.fuelType)
+        assertEquals(1.2, car.consumptionCombined)
+    }
+
+    @Test
+    fun `ICE-auto zonder tankinhoud geeft UnprocessableException`() {
+        assertFailsWith<UnprocessableException> { toCar(fuel("1", "Diesel"), tankCapacityL = null) }
+    }
+
+    @Test
+    fun `niet-ondersteunde brandstof geeft UnprocessableException`() {
+        assertFailsWith<UnprocessableException> { toCar(fuel("1", "CNG")) }
     }
 }
 

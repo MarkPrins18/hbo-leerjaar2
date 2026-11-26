@@ -13,8 +13,7 @@ class LocationService(
 ) {
     /** Any logged-in user may get the route link; the position itself is public via GET /cars/map. */
     suspend fun getMapsUrl(carId: Int): String {
-        carRepository.getCarById(carId)
-            ?: throw ResourceNotFoundException("Auto", carId)
+        carRepository.getCarById(carId) ?: throw carNotFound(carId)
 
         val location = locationRepository.getLatestLocationByCarId(carId)
             ?: throw ResourceNotFoundException("Geen locatie bekend voor deze auto")

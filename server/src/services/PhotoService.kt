@@ -12,10 +12,7 @@ class PhotoService(
     private val photoStorage: PhotoStorage
 ) {
     suspend fun uploadPhoto(carId: Int, userId: Int, data: ByteArray): Photo {
-        val car = carRepository.getCarById(carId)
-            ?: throw carNotFound(carId)
-
-        if (car.userId != userId) throw ForbiddenException()
+        carRepository.getOwnedCar(carId, userId)
 
         data.validatePhoto()
 
