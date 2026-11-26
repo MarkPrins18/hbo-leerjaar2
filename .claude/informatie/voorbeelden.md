@@ -1,7 +1,7 @@
 # Voorbeeldcode docent
 
 Voorbeelden uit de demo-repo's van de docent (pjfmast) en de andere repo's uit de slides. Werkwijze:
-- Eerst `slides.md` en de voorbeelden hieronder bekijken.
+- Eerst de slides (`slides-p1.md` voor de server, `slides-p2.md` voor de app) en de voorbeelden hieronder bekijken.
 - Staat het er niet in: zoek het op in een van de repo's (index hieronder), en zet het gebruikte voorbeeld onder **Voorbeelden** met bron (pad + commit).
 - Alleen opnemen wat we echt gebruiken; niet de hele repo kopiëren.
 
@@ -208,7 +208,7 @@ DeadlineDateFormat.format(dateTime)
 DatePicker/TimePicker en NavigationBar komen niet voor in de demo's; daarvoor is de standaard Material 3-API gebruikt.
 
 ### Navigation 3 – basis
-Bron: `HouseHelper-KTC` @ 4003e3c (branch `solutions`), tenzij anders vermeld. Begrippen: zie `slides.md` → Les 10.
+Bron: `HouseHelper-KTC` @ 4003e3c (branch `solutions`), tenzij anders vermeld. Begrippen: zie `slides-p2.md` → Les 10.
 
 **1. Dependencies** (`shared/module.yaml` + `libs.versions.toml`, alleen de nav3-relevante regels):
 ```yaml

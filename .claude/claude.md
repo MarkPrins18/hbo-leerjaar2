@@ -6,7 +6,11 @@ Schoolproject autodeelplatform: Ktor-API (`server`) + Compose-app (`shared`, And
 - Praat Nederlands. Code, identifiers en KDoc Engels; foutmeldingen naar de client Nederlands.
 - Grotere wijzigingen: eerst voorstel, pas na akkoord aanpassen. Bij twijfel: vragen.
 - Pragmatisch en simpel.
-- Kotlin/Ktor/Compose-aanpak: eerst `.claude/informatie/slides.md` en `voorbeelden.md` (lesvoorbeelden). Niet gevonden → zoek in de repo's uit `voorbeelden.md` en vul het voorbeeld aan. Bestaande code gaat voor.
+- Kotlin/Ktor/Compose-aanpak, in deze volgorde:
+  1. Bestaande code in deze repo gaat voor.
+  2. De slides, alleen het bestand van de module waaraan je werkt: `server` → `.claude/informatie/slides-p1.md` (Ktor), `shared`/app → `.claude/informatie/slides-p2.md` (Compose). *Uit de slides* is de lesstof en heeft voorrang (zie de leeswijzer bovenaan `slides-p2.md`).
+  3. Alleen als de slides het niet behandelen of een aanvulling aantoonbaar een beter resultaat geeft: *Aanvulling* in het slides-bestand en de voorbeelden in `voorbeelden.md`. Noem dan de bron en waarom je afwijkt van de slides.
+  4. Niet gevonden → zoek in de repo's uit `voorbeelden.md` en vul het voorbeeld aan (met bron).
 - Eisen school: `requirements-kort.md` (lees vóór een nieuwe feature); details/letterlijk: `requirements.md` (leidend).
 - Weinig commentaar. `//check`, `//remove` en `//rename` zijn notities: laten staan.
 - Na een wijziging: `./kotlin build` (Windows: `.\kotlin.bat build`), geen Gradle. Op Windows slaat dit iOS over (`iosApp` bouwt alleen op macOS).

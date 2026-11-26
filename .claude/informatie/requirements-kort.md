@@ -35,7 +35,7 @@ Eisen waar wijzigingen aan de backend aan moeten blijven voldoen:
 - **MVVM** volgen: ViewModel met `StateFlow`, UDF (state omlaag, events omhoog), state hoisting.
 - Per scherm dat data laadt: **loading-, error-, empty- en success-state** (sealed `UiState`).
 - Een **complete end-to-end gebruikersflow** aantoonbaar laten werken.
-- Gebouwd zijn volgens de lessen (`slides.md`, `voorbeelden.md`): Ktor Client, Koin voor DI.
+- Gebouwd zijn volgens de lessen (`slides-p2.md`, `voorbeelden.md`): Ktor Client, Koin voor DI.
 
 ### Functionaliteit volgens de casus
 - Kiezen tussen auto aanbieden en auto huren.

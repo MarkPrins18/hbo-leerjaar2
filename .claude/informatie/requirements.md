@@ -52,7 +52,7 @@ Eisen en module-informatie uit Brightspace. Per onderdeel:
 - **Asynchroon:** wordt expliciet genoemd naast OO en FP → coroutines/`suspend` in de backend zijn relevant om te kunnen aanwijzen (bij ons: `suspend` repository-functies, `suspendTransaction`).
 - **Sensoren:** camera en GPS als voorbeelden; volgens les 2 (P1) moet de app **2 sensoren/actuatoren** gebruiken. Camera + GPS ligt voor de hand voor een autodeelplatform (foto's van auto's, locatie van auto's).
 - **AI-agent in de app:** de inleiding zegt dat AI-agent "centraal staat", maar bij periode 1 staat het als **optioneel**. ❓ Navragen of een AI-agent verplicht is of een extra.
-- **AI-tooling:** verantwoorden in het ontwikkeldocument hoe AI is gebruikt (zie `slides.md`, les 1); iedereen moet zijn eigen code kunnen uitleggen.
+- **AI-tooling:** verantwoorden in het ontwikkeldocument hoe AI is gebruikt (zie `slides-p1.md`, les 1); iedereen moet zijn eigen code kunnen uitleggen.
 - **iOS / KMP:** optioneel. KMP is wel interessant als we de stack willen hergebruiken in de vervolgmodule (Scrum-project).
 - **Sockets/gRPC:** optioneel; SSE is in les 6 behandeld als alternatief voor live updates.
 
@@ -78,7 +78,7 @@ Status op basis van een snelle blik in de code (19-11-2026); ✅ = aanwezig, ⚠
 
 | # | Eis | Bij ons |
 |---|---|---|
-| 1 | OO + FP onderbouwd | ✅ in de code (interfaces voor repositories/clients, data classes, collection-functies). ⚠️ "Onderbouwd" = je moet in het ontwikkeldocument kunnen aanwijzen *waar* en *waarom* (zie assessment-vragen in `slides.md`). |
+| 1 | OO + FP onderbouwd | ✅ in de code (interfaces voor repositories/clients, data classes, collection-functies). ⚠️ "Onderbouwd" = je moet in het ontwikkeldocument kunnen aanwijzen *waar* en *waarom* (zie assessment-vragen in `slides-p1.md`). |
 | 2 | Contracts, statuscodes, validatie | ✅ `openapi/documentation.yaml`, `CarValidation`/`UserValidation`, DTO's/responses. |
 | 2 | Lagen scheiden | ✅ Route → Service → Repository; `dto`, `models`, `mappers`, `clients`, `config`. |
 | 2 | Consistente foutafhandeling | ✅ eigen exceptions in `services/Exception.kt` + `StatusPages.kt`. |
@@ -111,8 +111,8 @@ Gedrag: analyseren • ontwerpen • realiseren • testen • valideren • ver
 
 ### Wat betekent dit voor ons
 - **UX-proces:** wireframes staan al in `diagrams/wireframes/` (PlantUML). ⚠️ Onderbouwen met doelgroep/scenario's, user flows, en vastleggen welke feedback tot welke iteratie leidde.
-- **Toegankelijkheid:** in Compose o.a. `contentDescription` bij iconen/afbeeldingen, `sp` voor tekst, voldoende contrast (zie `slides.md`, les 8).
-- **Backend-integratie:** Ktor Client (les 12). Elk scherm dat data laadt heeft een `UiState` met loading / success / error / empty, bv. een sealed interface (zie `slides.md`, les 2 en les 9).
+- **Toegankelijkheid:** in Compose o.a. `contentDescription` bij iconen/afbeeldingen, `sp` voor tekst, voldoende contrast (zie `slides-p2.md`, les 8).
+- **Backend-integratie:** Ktor Client (les 12). Elk scherm dat data laadt heeft een `UiState` met loading / success / error / empty, bv. een sealed interface (zie `slides-p1.md`, les 2, en `slides-p2.md`, les 9).
 - **Architectuur:** MVVM ligt het meest voor de hand (ViewModel met `StateFlow`, zie `voorbeelden.md` → `IncidentsViewModel`). Events omhoog via callbacks, state omlaag (UDF). Navigatie met Navigation-3 (les 10). DI met Koin.
 - **Testen:** unit tests voor ViewModels (met fake repository/API), UI-tests voor kritieke paden (bv. inloggen → auto zoeken → reserveren).
 - **Cross- of native:** keuze tussen Android-only (Jetpack Compose) en KMP/CMP mag; KMP sluit aan op de vervolgmodule.
@@ -213,7 +213,7 @@ Deel 2 is een **uitbreiding** van deel 1 (zelfde ontwikkeldocument, aangevuld).
 
 **Individueel: kennis en kunde OO en FP in Kotlin**
 - Aantonen met een Excel-matrix: horizontaal je projecten, verticaal per concept 0/1/2 (niet / wel / uitgebreid toegepast). Mag binnen één uitgewerkte casus (klassendiagram → Kotlin).
-- Concepten: zie de volledige lijst in `slides.md` → *FSA individueel portfolio (checklist)*; die is identiek (basis, OO, FP incl. lambda with receiver en scope functions).
+- Concepten: zie de volledige lijst in `slides-p1.md` → *FSA individueel portfolio (checklist)*; die is identiek (basis, OO, FP incl. lambda with receiver en scope functions).
 
 **Ontwikkeldocument Web API (profgroep)**
 1. **User stories** die in de app (deel 2) worden uitgewerkt.
@@ -367,7 +367,7 @@ Status backend op basis van een snelle blik in de code (19-11-2026).
   - de foutafhandeling: eigen exceptions → `StatusPages`;
   - authenticatie: `requireAuthentication { }` + `authenticatedUserId()`, eigendomscontrole in de service;
   - de berekeningen: `TotalCostOfOwnership`, `FuelCost`, `BonusPoints`.
-- **Voorbeeldvragen** over Kotlin-concepten staan in `slides.md` → *Assessment-voorbeeldvragen*.
+- **Voorbeeldvragen** over Kotlin-concepten staan in `slides-p1.md` → *Assessment-voorbeeldvragen*.
 - **HTTP-requests-files** voor de demo-user-flows: handig om die per use case klaar te hebben (registreren → inloggen → auto importeren → voorwaarden → zoeken → reserveren → rit).
 
 ---
