@@ -13,9 +13,9 @@ class CarCostService(
     private val costEstimator: CostEstimator,
     private val carRepository: CarRepository
 ) {
-    // shortcut: per process and lost on restart, so after a restart GETs ask Gemini once more per car
-    private val askedCarIds = mutableSetOf<Int>()
-    private val askedCarIdsMutex = Mutex()
+    // shortcut: per process and lost on restart, so after a restart GETs ask Gemini once more per car version
+    private val askedCars = mutableSetOf<Car>()
+    private val askedCarsMutex = Mutex()
 
     suspend fun fillMissingCostData(carId: Int, userId: Int): Car =
         fill(carRepository.getOwnedCar(carId, userId))
@@ -37,9 +37,9 @@ class CarCostService(
         return calculateTco(fillOnce(car), annualKm)
     }
 
-    /** GETs ask Gemini at most once per car; the POST fill endpoint always asks again. */
+    /** GETs ask Gemini at most once per car version (a changed car asks again); the POST fill endpoint always asks again. */
     private suspend fun fillOnce(car: Car): Car {
-        if (askedCarIdsMutex.withLock { car.id in askedCarIds }) return car
+        if (askedCarsMutex.withLock { car in askedCars }) return car
         return fill(car)
     }
 
@@ -47,8 +47,8 @@ class CarCostService(
         if (car.roadTaxPerQuarter != null && car.consumptionCombined != null) return car
 
         val estimate = callExternal("Gemini") { costEstimator.estimateCarCosts(car) }
-        askedCarIdsMutex.withLock { askedCarIds.add(car.id) }
         estimate.validate()
+        askedCarsMutex.withLock { askedCars.add(car) }
 
         val change = CarChangeDto(
             roadTaxPerQuarter = estimate.roadTaxPerQuarter.takeIf { car.roadTaxPerQuarter == null },

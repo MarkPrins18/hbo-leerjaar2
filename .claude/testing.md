@@ -5,7 +5,8 @@ Voorbeeld van alle drie de lagen: `server/test/PhotoUploadTest.kt`.
 
 ## Draaien
 - `.\kotlin.bat test` (Linux/macOS: `./kotlin test`). Geen Gradle.
-- Tests staan in `server/test/`, zonder package.
+- Tests staan in `server/test/`, zonder package. Pure functies van de app (bv. `ui/Formatting.kt`) testen we in `shared/test/` (laag 1, draait als Android-unittest op de JVM).
+- Eén module testen: `.\kotlin.bat test -m shared` (of `-m server`); één class: `--include-classes=FormattingTest`.
 - Test-dependencies in `server/module.yaml`: alleen `ktor.server.testHost`. Gebruik `kotlin.test`; geen mock-library, geen `kotlinx-coroutines-test`.
 
 ## Drie lagen

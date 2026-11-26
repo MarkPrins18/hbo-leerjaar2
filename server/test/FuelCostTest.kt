@@ -273,6 +273,30 @@ class FuelCostServiceTest {
     }
 
     @Test
+    fun `Gemini wordt opnieuw gevraagd als de auto is gewijzigd`() = runBlocking {
+        val carRepository = FakeFuelCostCarRepository(bevCar(consumption = null))
+        val costEstimator = FakeFuelCostEstimator(CarCostEstimate(roadTaxPerQuarter = null, consumptionCombined = null))
+        val service = CarCostService(costEstimator, carRepository)
+
+        assertFailsWith<UnprocessableException> { service.getFuelCost(CAR_ID, OWNER_ID, 100.0) }
+        carRepository.cars[CAR_ID] = (bevCar(consumption = null) as BEVCar).copy(model = "Model Y")
+        assertFailsWith<UnprocessableException> { service.getFuelCost(CAR_ID, OWNER_ID, 100.0) }
+
+        assertEquals(2, costEstimator.calls)
+    }
+
+    @Test
+    fun `ongeldig antwoord van Gemini wordt niet onthouden`() = runBlocking {
+        val costEstimator = FakeFuelCostEstimator(CarCostEstimate(roadTaxPerQuarter = null, consumptionCombined = -1.0))
+        val service = service(bevCar(consumption = null), costEstimator = costEstimator)
+
+        assertFailsWith<ExternalServiceException> { service.getFuelCost(CAR_ID, OWNER_ID, 100.0) }
+        assertFailsWith<ExternalServiceException> { service.getFuelCost(CAR_ID, OWNER_ID, 100.0) }
+
+        assertEquals(2, costEstimator.calls)
+    }
+
+    @Test
     fun `onbekende auto geeft ResourceNotFoundException`() = runBlocking {
         assertFailsWith<ResourceNotFoundException> { service(iceCar()).getFuelCost(999, OWNER_ID, 100.0) }
         Unit
@@ -288,6 +312,19 @@ class FuelCostServiceTest {
     fun `negatieve afstand geeft ValidationException`() = runBlocking {
         assertFailsWith<ValidationException> { service(iceCar()).getFuelCost(CAR_ID, OWNER_ID, -1.0) }
         Unit
+    }
+
+    // ---------- fillMissingCostData ----------
+
+    @Test
+    fun `aanvullen vraagt Gemini opnieuw ook als een GET het al vroeg`() = runBlocking {
+        val costEstimator = FakeFuelCostEstimator(CarCostEstimate(roadTaxPerQuarter = null, consumptionCombined = null))
+        val service = service(bevCar(consumption = null), costEstimator = costEstimator)
+
+        assertFailsWith<UnprocessableException> { service.getFuelCost(CAR_ID, OWNER_ID, 100.0) }
+        service.fillMissingCostData(CAR_ID, OWNER_ID)
+
+        assertEquals(2, costEstimator.calls)
     }
 }
 

@@ -74,9 +74,6 @@ fun CarChangeDto.validate(car: Car) {
 
 private fun checkLicensePlate(licensePlate: String) {
     val normalizedLicensePlate = normalizeLicensePlate(licensePlate)
-    if (normalizedLicensePlate.isBlank()) {
-        throw ValidationException("'licensePlate' mag niet leeg zijn")
-    }
     if (!normalizedLicensePlate.matches(DUTCH_LICENSE_PLATE)) {
         throw ValidationException("'licensePlate' moet een Nederlands kenteken zijn van 6 letters en cijfers, bijvoorbeeld AB-123-C")
     }
