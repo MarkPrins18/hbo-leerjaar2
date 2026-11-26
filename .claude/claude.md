@@ -14,7 +14,7 @@ Schoolproject autodeelplatform: Ktor-API (`server`) + Compose-app (`shared`, And
 - Eisen school: `requirements-kort.md` (lees vóór een nieuwe feature); details/letterlijk: `requirements.md` (leidend).
 - Weinig commentaar. `//check`, `//remove` en `//rename` zijn notities: laten staan.
 - Na een wijziging: `./kotlin build` (Windows: `.\kotlin.bat build`), geen Gradle. Op Windows slaat dit iOS over (`iosApp` bouwt alleen op macOS).
-- `/brainstorming` start alleen de gebruiker.
+- Werk altijd via subagents: de hoofdagent verdeelt en coördineert alleen. Bouwen, testen, mergen en de build-controle gaan ook naar subagents. Korte vragen zonder codewijziging mag je direct beantwoorden. Worktree-agents kunnen van een oudere commit starten: laat de integrator cherry-picken op de doelbranch.
 
 ## Regels
 - Alleen Kotlin stdlib, geen `java.*`. Server: geen DI-library; dependencies via constructors vanuit `Routing.kt`. App (`shared`): Koin.
