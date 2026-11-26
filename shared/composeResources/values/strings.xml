@@ -89,9 +89,6 @@
     <string name="form_rdw">RDW</string>
     <string name="form_year_color">· %1$d · %2$s</string>
     <string name="form_rdw_details">%1$s · %2$d kg rijklaar · %3$s</string>
-    <string name="form_rejected_registered">✗ Dit kenteken is al geregistreerd</string>
-    <string name="form_rejected_not_found">✗ Geen voertuig gevonden bij de RDW</string>
-    <string name="form_rejected_invalid">✗ Geen Nederlands kenteken (bijv. AB-123-C)</string>
     <string name="form_add_photo">Foto toevoegen</string>
     <string name="form_location_here">Auto staat hier</string>
     <string name="form_coordinates">%1$s, %2$s</string>

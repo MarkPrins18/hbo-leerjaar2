@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -15,25 +16,10 @@ import contracts.responses.*
 import nl.carsharing.app.resources.*
 import nl.carsharing.app.ui.components.*
 import nl.carsharing.app.ui.formatDecimal
+import nl.carsharing.app.ui.formatMoney
 import nl.carsharing.app.ui.icons.*
 import nl.carsharing.app.ui.theme.*
 import org.jetbrains.compose.resources.stringResource
-
-private val sampleCostCar = CarDetail(
-    id = 1,
-    name = "Toyota Yaris",
-    productionYear = 2021,
-    energyType = EnergyType.Petrol,
-    automaticTransmission = true,
-    seats = 5,
-    doors = 5,
-    licensePlate = "AB-123-C",
-    trim = "1.5 Hybrid",
-    color = "Wit",
-    consumption = 3.8,
-    capacity = 36.0,
-    photoCount = 3
-)
 
 private val sampleTco = TcoResponse(
     carId = 1,
@@ -64,11 +50,11 @@ fun CarCostScreen(
     onBack: () -> Unit = { },
     onTabClick: (NavigationTab) -> Unit = { }
 ) {
-    var annualKm by remember { mutableStateOf("15000") }
-    var distanceKm by remember { mutableStateOf("100") }
+    var annualKm by rememberSaveable { mutableStateOf("15000") }
+    var distanceKm by rememberSaveable { mutableStateOf("100") }
 
     CarCostContent(
-        car = sampleCostCar,
+        car = sampleCar,
         annualKm = annualKm,
         onAnnualKmChange = { annualKm = it },
         onCalculateTco = { },
@@ -186,26 +172,20 @@ private fun CostBlock(
 }
 
 @Composable
-private fun money(value: Double, decimals: Int): String = stringResource(
-    Res.string.price_amount,
-    formatDecimal(value, decimals, stringResource(Res.string.decimal_separator), stringResource(Res.string.grouping_separator))
-)
-
-@Composable
 private fun TcoResult(tco: TcoResponse, modifier: Modifier = Modifier) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = modifier) {
         StatRow(
             firstLabel = stringResource(Res.string.cost_total_per_year),
-            firstValue = money(tco.annualTotal, 0),
+            firstValue = formatMoney(tco.annualTotal, 0),
             secondLabel = stringResource(Res.string.cost_per_km),
-            secondValue = money(if (tco.annualKm > 0) tco.annualTotal / tco.annualKm else 0.0, 2),
+            secondValue = formatMoney(if (tco.annualKm > 0) tco.annualTotal / tco.annualKm else 0.0, 2),
             emphasizeFirst = true
         )
         StatRow(
             firstLabel = stringResource(Res.string.cost_fuel_per_year),
-            firstValue = money(tco.annualFuelCost, 0),
+            firstValue = formatMoney(tco.annualFuelCost, 0),
             secondLabel = stringResource(Res.string.cost_road_tax_per_year),
-            secondValue = money(tco.annualRoadTax, 0)
+            secondValue = formatMoney(tco.annualRoadTax, 0)
         )
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
@@ -215,7 +195,7 @@ private fun TcoResult(tco: TcoResponse, modifier: Modifier = Modifier) {
                 modifier = Modifier.weight(1f)
             )
             Text(
-                text = money(tco.monthlyTotal, 2),
+                text = formatMoney(tco.monthlyTotal, 2),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -233,9 +213,9 @@ private fun FuelCostResult(fuelCost: FuelCostResponse, modifier: Modifier = Modi
 
     StatRow(
         firstLabel = stringResource(Res.string.cost_estimated),
-        firstValue = money(fuelCost.estimatedCost, 2),
+        firstValue = formatMoney(fuelCost.estimatedCost, 2),
         secondLabel = stringResource(priceLabel),
-        secondValue = money(fuelCost.pricePerUnit, 2),
+        secondValue = formatMoney(fuelCost.pricePerUnit, 2),
         emphasizeFirst = true,
         modifier = modifier
     )

@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -35,6 +36,7 @@ import nl.carsharing.app.resources.dialog_cancel
 import nl.carsharing.app.resources.dialog_ok
 import nl.carsharing.app.resources.select_date_time
 import nl.carsharing.app.ui.icons.AppIcons
+import nl.carsharing.app.ui.jsonSaver
 import nl.carsharing.app.ui.icons.DateRange
 import nl.carsharing.app.ui.theme.CarSharingTheme
 import org.jetbrains.compose.resources.stringResource
@@ -62,8 +64,8 @@ fun DateTimeField(
     onValueChange: (LocalDateTime) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var showDatePicker by remember { mutableStateOf(false) }
-    var pickedDate by remember { mutableStateOf<LocalDate?>(null) }
+    var showDatePicker by rememberSaveable { mutableStateOf(false) }
+    var pickedDate by rememberSaveable(stateSaver = jsonSaver<LocalDate?>()) { mutableStateOf(null) }
 
     Box(modifier) {
         CompactTextField(

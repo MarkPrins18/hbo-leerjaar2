@@ -4,15 +4,18 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import contracts.models.VehicleType
+import kotlinx.serialization.Serializable
 import nl.carsharing.app.resources.*
 import nl.carsharing.app.ui.components.*
 import nl.carsharing.app.ui.formatDecimal
+import nl.carsharing.app.ui.jsonSaver
 import nl.carsharing.app.ui.icons.*
 import nl.carsharing.app.ui.theme.*
 import org.jetbrains.compose.resources.*
@@ -26,6 +29,7 @@ enum class DriveType(val label: StringResource, val capacityLabel: StringResourc
     Hydrogen(Res.string.fuel_hydrogen, Res.string.form_tank_capacity_kg)
 }
 
+@Serializable
 data class CarImportForm(
     val licensePlate: String = "",
     val driveType: DriveType = DriveType.Fuel,
@@ -33,7 +37,9 @@ data class CarImportForm(
     val automaticTransmission: Boolean = false
 )
 
+@Serializable
 sealed interface RdwCheckResult {
+    @Serializable
     data class Approved(
         val carId: Int,
         val name: String,
@@ -43,10 +49,9 @@ sealed interface RdwCheckResult {
         val readyToDriveWeightKg: Int,
         val vehicleType: VehicleType
     ) : RdwCheckResult
-
-    data class Rejected(val reason: StringResource) : RdwCheckResult
 }
 
+@Serializable
 data class CarDetailsForm(
     val licensePlate: String,
     val brand: String,
@@ -125,8 +130,8 @@ fun CarFormScreen(
     onTabClick: (NavigationTab) -> Unit = { }
 ) {
     if (carId == null) {
-        var form by remember { mutableStateOf(CarImportForm()) }
-        var result by remember { mutableStateOf<RdwCheckResult?>(null) }
+        var form by rememberSaveable(stateSaver = jsonSaver()) { mutableStateOf(CarImportForm()) }
+        var result by rememberSaveable(stateSaver = jsonSaver<RdwCheckResult?>()) { mutableStateOf(null) }
 
         AddCarContent(
             form = form,
@@ -141,8 +146,8 @@ fun CarFormScreen(
             modifier = modifier
         )
     } else {
-        var form by remember { mutableStateOf(sampleDetailsForm) }
-        var currentPhoto by remember { mutableIntStateOf(0) }
+        var form by rememberSaveable(stateSaver = jsonSaver()) { mutableStateOf(sampleDetailsForm) }
+        var currentPhoto by rememberSaveable { mutableIntStateOf(0) }
 
         CarDetailsContent(
             form = form,
@@ -208,11 +213,6 @@ fun AddCarContent(
             )
             when (result) {
                 is RdwCheckResult.Approved -> ApprovedCard(result)
-                is RdwCheckResult.Rejected -> Text(
-                    text = stringResource(result.reason),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = LocalAppColors.current.errorText
-                )
                 null -> { }
             }
         }

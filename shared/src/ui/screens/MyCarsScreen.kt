@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -13,6 +14,8 @@ import kotlinx.datetime.LocalTime
 import nl.carsharing.app.resources.*
 import nl.carsharing.app.ui.components.*
 import nl.carsharing.app.ui.formatDecimal
+import nl.carsharing.app.ui.formatMoney
+import nl.carsharing.app.ui.formatTrimmed
 import nl.carsharing.app.ui.icons.*
 import nl.carsharing.app.ui.theme.*
 import org.jetbrains.compose.resources.stringResource
@@ -70,8 +73,8 @@ fun MyCarsScreen(
     onDeleteCar: (Int) -> Unit = { },
     onTabClick: (NavigationTab) -> Unit = { }
 ) {
-    var selectedCarId by remember { mutableStateOf<Int?>(null) }
-    var currentPhoto by remember { mutableIntStateOf(0) }
+    var selectedCarId by rememberSaveable { mutableStateOf<Int?>(null) }
+    var currentPhoto by rememberSaveable { mutableIntStateOf(0) }
 
     MyCarsContent(
         cars = sampleMyCars,
@@ -172,8 +175,6 @@ private fun RentalStatusChip(forRent: Boolean, modifier: Modifier = Modifier) {
 
 @Composable
 private fun MyCarRow(item: MyCarItem, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val separator = stringResource(Res.string.decimal_separator)
-
     PhotoListRow(onClick = onClick, modifier = modifier) {
         Text(
             text = item.car.name,
@@ -192,15 +193,7 @@ private fun MyCarRow(item: MyCarItem, onClick: () -> Unit, modifier: Modifier = 
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         } else {
-            Row {
-                Text(
-                    text = stringResource(Res.string.price_amount, formatDecimal(item.terms.pricePerDay, 2, separator)),
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(Modifier.width(4.dp))
-                Text(stringResource(Res.string.price_per_day), style = MaterialTheme.typography.bodyMedium)
-            }
+            PriceRow(item.terms.pricePerDay)
         }
         RentalStatusChip(forRent = item.terms != null)
     }
@@ -229,27 +222,9 @@ private fun MyCarSheet(
             RentalStatusChip(forRent = item.terms != null)
         }
         PhotoCarousel(item.car.photoCount, currentPhoto, onPhotoChange, framed = false)
-        SheetChipsRow(item.car)
+        CarChips(item.car, lastChip = item.car.color)
         CarSummaryCard(item)
         SheetActions(onEdit, onRentalTerms, onCosts, onDelete)
-    }
-}
-
-@Composable
-private fun SheetChipsRow(car: CarDetail, modifier: Modifier = Modifier) {
-    val chips = listOfNotNull(
-        car.productionYear.toString(),
-        stringResource(car.energyType.label),
-        if (car.energyType.isFuel && car.automaticTransmission) stringResource(Res.string.detail_automatic) else null,
-        car.seats?.let { stringResource(Res.string.detail_seats, it) },
-        car.color
-    )
-
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        modifier = modifier.horizontalScroll(rememberScrollState())
-    ) {
-        chips.forEach { Chip(it) }
     }
 }
 
@@ -272,10 +247,7 @@ private fun CarSummaryCard(item: MyCarItem, modifier: Modifier = Modifier) {
         }
         DetailRow(
             label = stringResource(car.energyType.capacityLabel),
-            value = stringResource(
-                car.energyType.capacityUnit,
-                formatDecimal(car.capacity, if (car.capacity % 1.0 == 0.0) 0 else 1, separator)
-            ),
+            value = stringResource(car.energyType.capacityUnit, formatTrimmed(car.capacity, 2, separator)),
             labelWidth = SheetLabelWidth
         )
         HorizontalDivider(thickness = BorderThin, color = MaterialTheme.colorScheme.outlineVariant)
@@ -289,23 +261,12 @@ private fun CarSummaryCard(item: MyCarItem, modifier: Modifier = Modifier) {
         } else {
             DetailRow(
                 label = stringResource(Res.string.my_cars_price_per_day),
-                value = stringResource(Res.string.price_amount, formatDecimal(terms.pricePerDay, 2, separator)),
+                value = formatMoney(terms.pricePerDay),
                 labelWidth = SheetLabelWidth,
                 bold = true
             )
             DetailRow(stringResource(Res.string.detail_pickup), terms.pickupAddress, labelWidth = SheetLabelWidth)
-            if (terms.pickupOpen != null && terms.pickupClose != null) {
-                DetailRow(
-                    label = "",
-                    value = stringResource(
-                        Res.string.detail_opening_hours,
-                        terms.pickupOpen.toString(),
-                        terms.pickupClose.toString()
-                    ),
-                    labelWidth = SheetLabelWidth,
-                    muted = true
-                )
-            }
+            OpeningHoursRow(terms.pickupOpen, terms.pickupClose, labelWidth = SheetLabelWidth)
         }
     }
 }

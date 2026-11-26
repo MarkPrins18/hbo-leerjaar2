@@ -4,6 +4,7 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -12,6 +13,7 @@ import kotlinx.datetime.LocalTime
 import nl.carsharing.app.resources.*
 import nl.carsharing.app.ui.components.*
 import nl.carsharing.app.ui.formatDecimal
+import nl.carsharing.app.ui.formatTrimmed
 import nl.carsharing.app.ui.theme.CarSharingTheme
 import org.jetbrains.compose.resources.*
 
@@ -59,7 +61,7 @@ data class RentalTermsDetail(
     val returnClose: LocalTime?
 )
 
-private val sampleCar = CarDetail(
+internal val sampleCar = CarDetail(
     id = 1,
     name = "Toyota Yaris",
     productionYear = 2021,
@@ -96,7 +98,7 @@ fun CarDetailScreen(
     onRentClick: (Int) -> Unit = { },
     onTabClick: (NavigationTab) -> Unit = { }
 ) {
-    var currentPhoto by remember { mutableIntStateOf(0) }
+    var currentPhoto by rememberSaveable { mutableIntStateOf(0) }
 
     CarDetailContent(
         car = sampleCar,
@@ -129,29 +131,11 @@ fun CarDetailContent(
                 .padding(ScreenContentPadding)
         ) {
             PhotoCarousel(car.photoCount, currentPhoto, onPhotoChange)
-            ChipsRow(car)
+            CarChips(car, lastChip = car.doors?.let { stringResource(Res.string.detail_doors, it) })
             CarCard(car)
             RentalTermsCard(terms)
-            PriceRow(terms.pricePerDay, onRentClick)
+            RentRow(terms.pricePerDay, onRentClick)
         }
-    }
-}
-
-@Composable
-private fun ChipsRow(car: CarDetail, modifier: Modifier = Modifier) {
-    val chips = listOfNotNull(
-        car.productionYear.toString(),
-        stringResource(car.energyType.label),
-        if (car.energyType.isFuel && car.automaticTransmission) stringResource(Res.string.detail_automatic) else null,
-        car.seats?.let { stringResource(Res.string.detail_seats, it) },
-        car.doors?.let { stringResource(Res.string.detail_doors, it) }
-    )
-
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        modifier = modifier.horizontalScroll(rememberScrollState())
-    ) {
-        chips.forEach { Chip(it) }
     }
 }
 
@@ -172,7 +156,7 @@ private fun CarCard(car: CarDetail, modifier: Modifier = Modifier) {
         }
         DetailRow(
             stringResource(unit.capacityLabel),
-            stringResource(unit.capacityUnit, formatDecimal(car.capacity, if (car.capacity % 1.0 == 0.0) 0 else 1, separator))
+            stringResource(unit.capacityUnit, formatTrimmed(car.capacity, 2, separator))
         )
     }
 }
@@ -188,28 +172,9 @@ private fun RentalTermsCard(terms: RentalTermsDetail, modifier: Modifier = Modif
 }
 
 @Composable
-private fun OpeningHoursRow(open: LocalTime?, close: LocalTime?, modifier: Modifier = Modifier) {
-    if (open == null || close == null) return
-    DetailRow(
-        label = "",
-        value = stringResource(Res.string.detail_opening_hours, open.toString(), close.toString()),
-        muted = true,
-        modifier = modifier
-    )
-}
-
-@Composable
-private fun PriceRow(pricePerDay: Double, onRentClick: () -> Unit, modifier: Modifier = Modifier) {
-    val separator = stringResource(Res.string.decimal_separator)
-
+private fun RentRow(pricePerDay: Double, onRentClick: () -> Unit, modifier: Modifier = Modifier) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = modifier.fillMaxWidth()) {
-        Text(
-            text = stringResource(Res.string.price_amount, formatDecimal(pricePerDay, 2, separator)),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(Modifier.width(4.dp))
-        Text(stringResource(Res.string.price_per_day), style = MaterialTheme.typography.bodyMedium)
+        PriceRow(pricePerDay, amountStyle = MaterialTheme.typography.titleLarge)
         Spacer(Modifier.width(16.dp))
         PrimaryButton(stringResource(Res.string.detail_rent), onRentClick, Modifier.weight(1f))
     }

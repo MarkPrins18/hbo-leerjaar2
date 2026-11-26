@@ -89,9 +89,6 @@
     <string name="form_rdw">RDW</string>
     <string name="form_year_color">· %1$d · %2$s</string>
     <string name="form_rdw_details">%1$s · %2$d kg curb weight · %3$s</string>
-    <string name="form_rejected_registered">✗ This licence plate is already registered</string>
-    <string name="form_rejected_not_found">✗ No vehicle found at the RDW</string>
-    <string name="form_rejected_invalid">✗ Not a Dutch licence plate (e.g. AB-123-C)</string>
     <string name="form_add_photo">Add photo</string>
     <string name="form_location_here">Car is here</string>
     <string name="form_coordinates">%1$s, %2$s</string>

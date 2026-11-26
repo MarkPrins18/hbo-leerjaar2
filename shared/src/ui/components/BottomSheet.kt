@@ -22,6 +22,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.navigationevent.NavigationEventInfo
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
 import nl.carsharing.app.ui.theme.BorderThick
 import nl.carsharing.app.ui.theme.block
 
@@ -29,7 +32,7 @@ private val SheetShape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
 
 /**
  * Bottom sheet from the wireframes (`$scrim` + `$sheet_begin`): dims the screen below it and shows
- * [title] and [content] in a sheet at the bottom. Tapping the dimmed part calls [onDismiss].
+ * [title] and [content] in a sheet at the bottom. Tapping the dimmed part or system back calls [onDismiss].
  * Drawn inside the screen layout (not as a window), so it also shows in previews.
  */
 @Composable
@@ -39,6 +42,7 @@ fun BottomSheet(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    NavigationBackHandler(rememberNavigationEventState(NavigationEventInfo.None), onBackCompleted = onDismiss)
     Box(modifier.fillMaxSize()) {
         Box(
             Modifier

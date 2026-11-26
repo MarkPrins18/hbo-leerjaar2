@@ -7,10 +7,17 @@ Zoveel mogelijk zit in `shared`, zodat Android en iOS het delen. `androidApp` en
 | Ik zoek… | Bestand |
 |---|---|
 | een scherm | `shared/src/ui/screens/<Naam>Screen.kt` |
-| welk scherm als eerste getoond wordt | `shared/src/App.kt` |
-| kleuren (licht en donker) | `shared/src/ui/theme/Color.kt` |
+| tijdelijk scherm voor tab Ritten/Account | `shared/src/ui/screens/PlaceholderScreen.kt` |
+| onderdelen die schermen delen (knoppen, velden, titelbalk, bottom bar) | `shared/src/ui/components/` |
+| de tabs van de bottom bar | `shared/src/ui/components/BottomNavigationBar.kt` (`NavigationTab`) |
+| iconen | `shared/src/ui/icons/` (`AppIcons.<Naam>`) |
+| routes (welke schermen er zijn + argumenten) | `shared/src/navigation/Routes.kt` |
+| welk scherm bij welke route hoort, startscherm, tab wisselen | `shared/src/App.kt` (`NavDisplay`) |
+| kleuren (licht en donker) | `shared/src/ui/theme/Theme.kt` (`CarSharingPalette`, `AppColors`) |
 | licht/donker kiezen | `shared/src/ui/theme/Theme.kt` |
 | lettertypen | `shared/src/ui/theme/Type.kt` |
+| randdiktes en blok-stijl (`Modifier.block`) | `shared/src/ui/theme/Border.kt` |
+| kleurenonderzoek (alleen previews) | `shared/src/ui/theme/Palettes.kt`, `PalettePreview.kt`, `TealStylingPreview.kt` |
 | tekst in een scherm (Nederlands) | `shared/composeResources/values/strings.xml` |
 | tekst in een scherm (Engels) | `shared/composeResources/values-en/strings.xml` |
 | plaatje in een scherm | `shared/composeResources/drawable/` (map aanmaken bij het eerste plaatje) |
@@ -29,11 +36,14 @@ Zoveel mogelijk zit in `shared`, zodat Android en iOS het delen. `androidApp` en
 shared/                          ← ALLES wat Android en iOS delen
 ├── module.yaml                  libraries + resources aanzetten
 ├── src/
-│   ├── App.kt                   root: thema + Scaffold + eerste scherm
+│   ├── App.kt                   root: thema + Scaffold + NavDisplay (back stack)
 │   ├── api/ApiClient.kt         Ktor-client naar de server
+│   ├── navigation/Routes.kt     routes (NavKeys) + SavedStateConfiguration
 │   └── ui/
-│       ├── screens/             één bestand per scherm (HomeScreen.kt, …)
-│       └── theme/               Color.kt, Theme.kt, Type.kt
+│       ├── components/          gedeelde onderdelen (ScreenScaffold, BottomNavigationBar, knoppen, …)
+│       ├── icons/               AppIcons
+│       ├── screens/             één bestand per scherm (HomeScreen.kt, …, PlaceholderScreen.kt)
+│       └── theme/               Theme.kt, Type.kt, Border.kt (+ Palettes/previews)
 └── composeResources/
     ├── values/strings.xml       teksten NL (standaard)
     ├── values-en/strings.xml    teksten EN
@@ -72,11 +82,13 @@ MainActivity.kt                           ContentView.swift
                        ↓                      ComposeUIViewController { App() }
               shared/src/App.kt  ←────────────────┘
                        ↓
-              CarSharingTheme              ui/theme/Theme.kt (+ Color.kt, Type.kt)
+              CarSharingTheme              ui/theme/Theme.kt (+ Type.kt)
                        ↓
               Scaffold
                        ↓
-              HomeScreen                   ui/screens/HomeScreen.kt
+              NavDisplay                   back stack: rememberNavBackStack(…, Route.Search)
+                       ↓                   routes: navigation/Routes.kt
+              bovenste route → scherm      bv. Route.Search → HomeScreen (ui/screens/HomeScreen.kt)
                ├─ tekst:   stringResource(Res.string.x)    → composeResources/values*/strings.xml
                └─ plaatje: painterResource(Res.drawable.x) → composeResources/drawable/
 ```
@@ -94,9 +106,22 @@ MainActivity.kt                           ContentView.swift
 3. `iosApp/src/main.kt`: `fun MainViewController() = ComposeUIViewController { App() }`.
 
 ### Gedeelde UI
-1. `shared/src/App.kt`: `CarSharingTheme { Scaffold { innerPadding -> HomeScreen(Modifier.padding(innerPadding)) } }`.
-2. `shared/src/ui/theme/Theme.kt`: `isSystemInDarkTheme()` kiest `DarkColorScheme` of `LightColorScheme` (kleuren uit `Color.kt`, lettertypen uit `Type.kt`).
-3. `shared/src/ui/screens/HomeScreen.kt`: `Text(stringResource(Res.string.home_welcome))`.
+1. `shared/src/App.kt`: `CarSharingTheme { Scaffold { innerPadding -> NavDisplay(…, Modifier.padding(innerPadding)) } }`.
+2. `shared/src/ui/theme/Theme.kt`: `isSystemInDarkTheme()` kiest de donkere of lichte kleuren van `CarSharingPalette` (lettertypen uit `Type.kt`).
+3. `NavDisplay` toont het scherm van de bovenste route op de back stack; bij de start is dat `Route.Search` → `HomeScreen`.
+
+### Navigatie (Navigation 3)
+1. `shared/src/navigation/Routes.kt`: elke bestemming is een `@Serializable` route in `sealed interface Route : NavKey` (`data object`, of `data class` met argument, bv. `carId: Int`). `carSharingSavedStateConfig` registreert alle routes, zodat de back stack ook op iOS bewaard kan worden.
+2. `shared/src/App.kt`: `rememberNavBackStack(carSharingSavedStateConfig, Route.Search)` is de back stack; `NavDisplay` koppelt in `entryProvider { entry<Route.X> { XScreen(…) } }` elke route aan een scherm.
+3. Navigeren: `backStack.add(Route.X)`; terug (pijltje of systeem-terug): `backStack.removeLastOrNull()`.
+4. Schermen kennen de back stack niet: ze krijgen callbacks (`onBack`, `onTabClick`, …) die in `App.kt` worden ingevuld.
+5. Bottom bar: elk scherm tekent hem zelf via `ScreenScaffold`. Een tik op een tab doet `backStack.clear()` + `backStack.add(<route van de tab>)`: Zoeken → `Route.Search` (HomeScreen), Ritten → `Route.Rides`, Account → `Route.Account`.
+6. Ritten en Account tonen voorlopig `PlaceholderScreen`; Account heeft daarop een knop naar Mijn auto's (`Route.MyCars`).
+
+### Scherm toevoegen aan de navigatie
+1. Route toevoegen in `Routes.kt`: `@Serializable data object X : Route` (of `data class X(val carId: Int) : Route`).
+2. In `App.kt` een `entry<Route.X> { XScreen(onBack = { backStack.removeLastOrNull() }, onTabClick = onTabClick) }` toevoegen.
+3. Vanaf een ander scherm: callback invullen met `backStack.add(Route.X)`.
 
 ### Tekst toevoegen
 1. Zet de tekst in **beide** bestanden met dezelfde `name`:

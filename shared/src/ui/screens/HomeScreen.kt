@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.*
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -15,13 +16,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.format.char
+import kotlinx.serialization.Serializable
 import nl.carsharing.app.resources.*
 import nl.carsharing.app.ui.components.*
 import nl.carsharing.app.ui.formatDecimal
+import nl.carsharing.app.ui.jsonSaver
 import nl.carsharing.app.ui.icons.*
 import nl.carsharing.app.ui.theme.*
 import org.jetbrains.compose.resources.stringResource
 
+@Serializable
 data class SearchFilters(
     val maxPrice: String = "",
     val maxDistanceKm: String = "",
@@ -50,6 +54,7 @@ private val ShortDateTimeFormat = LocalDateTime.Format {
 }
 
 /** Case-insensitive match on the name, or on price and distance as shown (`,` and `.` both work as decimal separator). */
+//check: prices are compared without thousands separator, while formatMoney shows "€ 1.250,00" (search "1.250" fails)
 fun matchesQuery(car: CarListItem, query: String, decimalSeparator: String): Boolean {
     val needle = query.trim().lowercase()
     if (needle.isEmpty()) return true
@@ -81,9 +86,9 @@ fun HomeScreen(
     onCarClick: (Int) -> Unit = { },
     onTabClick: (NavigationTab) -> Unit = { }
 ) {
-    var query by remember { mutableStateOf("") }
-    var filtersExpanded by remember { mutableStateOf(false) }
-    var filters by remember { mutableStateOf(SearchFilters()) }
+    var query by rememberSaveable { mutableStateOf("") }
+    var filtersExpanded by rememberSaveable { mutableStateOf(false) }
+    var filters by rememberSaveable(stateSaver = jsonSaver()) { mutableStateOf(SearchFilters()) }
 
     HomeContent(
         query = query,
@@ -301,15 +306,7 @@ private fun CarRow(car: CarListItem, onClick: () -> Unit, modifier: Modifier = M
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Bold
         )
-        Row {
-            Text(
-                text = stringResource(Res.string.price_amount, formatDecimal(car.pricePerDay, 2, separator)),
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(Modifier.width(4.dp))
-            Text(stringResource(Res.string.price_per_day), style = MaterialTheme.typography.bodyMedium)
-        }
+        PriceRow(car.pricePerDay)
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = AppIcons.LocationOn,
