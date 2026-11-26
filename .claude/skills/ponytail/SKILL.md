@@ -7,6 +7,7 @@ description: >
   "ponytail", "be lazy", "simplest solution", "yagni", or complains about
   over-engineering or bloat. Levels: lite, full (default), ultra.
 argument-hint: "[lite|full|ultra|off]"
+disable-model-invocation: true
 license: MIT
 ---
 
