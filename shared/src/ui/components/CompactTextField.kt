@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import nl.carsharing.app.ui.theme.BorderField
 import nl.carsharing.app.ui.theme.LocalAppColors
@@ -25,6 +26,8 @@ fun CompactTextField(
     placeholder: String = "",
     readOnly: Boolean = false,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
+    minLines: Int = 1,
     leadingIcon: (@Composable () -> Unit)? = null,
     trailingIcon: (@Composable () -> Unit)? = null
 ) {
@@ -36,8 +39,10 @@ fun CompactTextField(
         value = value,
         onValueChange = onValueChange,
         readOnly = readOnly,
-        singleLine = true,
+        singleLine = minLines == 1,
+        minLines = minLines,
         keyboardOptions = keyboardOptions,
+        visualTransformation = visualTransformation,
         textStyle = textStyle.copy(color = colors.onSurface),
         cursorBrush = SolidColor(colors.onSurface),
         modifier = modifier,

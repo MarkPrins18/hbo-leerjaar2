@@ -122,4 +122,97 @@
     <string name="cost_price_per_litre">Prijs per liter</string>
     <string name="cost_price_per_kwh">Prijs per kWh</string>
     <string name="cost_price_per_kg">Prijs per kg</string>
+
+    <string name="common_cancel">Annuleren</string>
+    <string name="common_close">Sluiten</string>
+    <string name="common_save">Opslaan</string>
+    <string name="common_show_password">Wachtwoord tonen</string>
+    <string name="common_hide_password">Wachtwoord verbergen</string>
+
+    <string name="password_strength">Sterkte</string>
+    <string name="password_strength_weak">Zwak</string>
+    <string name="password_strength_medium">Gemiddeld</string>
+    <string name="password_strength_strong">Sterk</string>
+    <string name="password_rule_length">Minimaal 8 tekens</string>
+    <string name="password_rule_uppercase">Een hoofdletter</string>
+    <string name="password_rule_lowercase">Een kleine letter</string>
+    <string name="password_rule_digit">Een cijfer</string>
+    <string name="password_rule_special">Een speciaal teken (bijv. ! of #)</string>
+    <string name="password_rule_match">Wachtwoorden zijn gelijk</string>
+
+    <string name="account_title">Account</string>
+    <string name="account_edit_details">Gegevens wijzigen</string>
+    <string name="account_bonus_points">Bonuspunten</string>
+    <string name="account_completed_rides">Afgeronde ritten</string>
+    <string name="account_my_cars">Mijn auto\'s (%1$d)</string>
+    <string name="account_ride_history">Rittenhistorie</string>
+    <string name="account_dark_mode">Donkere modus</string>
+    <string name="account_language">Taal</string>
+    <string name="account_report_problem">Probleem melden</string>
+    <string name="account_logout">Uitloggen</string>
+    <string name="account_section_appearance">Uiterlijk</string>
+    <string name="account_section_your_cars">Jouw auto\'s</string>
+    <string name="account_balance">Saldo</string>
+    <string name="account_ride_history_count">Rittenhistorie (%1$d)</string>
+    <string name="account_email_invalid">Geen geldig e-mailadres</string>
+
+    <string name="account_change_email">E-mailadres wijzigen</string>
+    <string name="account_change_password">Wachtwoord wijzigen</string>
+    <string name="account_delete_account">Account verwijderen</string>
+    <string name="account_current_email">Huidig: %1$s</string>
+    <string name="account_new_email">Nieuw e-mailadres</string>
+    <string name="account_confirm_password">Wachtwoord (ter bevestiging)</string>
+    <string name="account_email_hint">Na het wijzigen log je opnieuw in met je nieuwe e-mailadres.</string>
+    <string name="account_current_password">Huidig wachtwoord</string>
+    <string name="account_new_password">Nieuw wachtwoord</string>
+    <string name="account_repeat_password">Herhaal nieuw wachtwoord</string>
+    <string name="account_delete_warning">Je account wordt definitief verwijderd. Dit kan niet ongedaan worden gemaakt.</string>
+    <string name="account_delete_restriction">Niet mogelijk tijdens een reservering of rit.</string>
+    <string name="account_delete">Verwijderen</string>
+
+    <string name="report_intro">Voor de ontwikkelaars: fouten en ideeën over de app</string>
+    <string name="report_type">Soort probleem</string>
+    <string name="report_type_bug">Bug</string>
+    <string name="report_type_crash">Crash</string>
+    <string name="report_type_suggestion">Suggestie</string>
+    <string name="report_type_other">Anders</string>
+    <string name="report_summary">Korte omschrijving</string>
+    <string name="report_steps">Wat gebeurde er? (stappen)</string>
+    <string name="report_device_info">App-versie en toestel worden automatisch meegestuurd.</string>
+    <string name="report_send">Versturen</string>
+
+    <string name="language_hint">Kies de taal van de app</string>
+    <string name="language_dutch">Nederlands</string>
+    <string name="language_english">English</string>
+
+    <string name="ride_history_rides">Ritten</string>
+    <string name="ride_history_total_distance">Totale afstand</string>
+    <string name="ride_history_points">+%1$d punten</string>
+    <string name="ride_history_empty_title">Nog geen ritten</string>
+    <string name="ride_status_completed">Afgerond</string>
+    <string name="ride_details_title">Ritdetails</string>
+    <string name="ride_details_date">Datum</string>
+    <string name="ride_details_time">Start – einde</string>
+    <string name="ride_details_duration">Duur</string>
+    <string name="ride_details_distance">Afstand</string>
+    <string name="ride_details_avg_speed">Gem. snelheid</string>
+    <string name="ride_details_avg_acceleration">Gem. acceleratie</string>
+    <string name="ride_details_avg_deceleration">Gem. vertraging</string>
+
+    <string name="rental_terms_title">Huurvoorwaarden</string>
+    <string name="rental_terms_for_rent">Te huur</string>
+    <string name="rental_terms_not_for_rent">Niet te huur</string>
+    <string name="rental_terms_price">Prijs</string>
+    <string name="rental_terms_price_per_day">Prijs per dag</string>
+    <string name="rental_terms_pickup">Ophalen</string>
+    <string name="rental_terms_return">Inleveren</string>
+    <string name="rental_terms_optional">Optioneel</string>
+    <string name="rental_terms_location">Locatie</string>
+    <string name="rental_terms_from">Vanaf</string>
+    <string name="rental_terms_until">Tot</string>
+    <string name="rental_terms_time_placeholder">uu:mm</string>
+    <string name="rental_terms_error_price">Vul een prijs groter dan 0 in</string>
+    <string name="rental_terms_error_time_format">Gebruik een geldige tijd, bijv. 08:00</string>
+    <string name="rental_terms_error_time_pair">Vul beide tijden in, of laat beide leeg</string>
+    <string name="rental_terms_error_time_order">De eindtijd moet na de begintijd liggen</string>
 </resources>

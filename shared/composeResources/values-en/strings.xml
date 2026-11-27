@@ -122,4 +122,97 @@
     <string name="cost_price_per_litre">Price per litre</string>
     <string name="cost_price_per_kwh">Price per kWh</string>
     <string name="cost_price_per_kg">Price per kg</string>
+
+    <string name="common_cancel">Cancel</string>
+    <string name="common_close">Close</string>
+    <string name="common_save">Save</string>
+    <string name="common_show_password">Show password</string>
+    <string name="common_hide_password">Hide password</string>
+
+    <string name="password_strength">Strength</string>
+    <string name="password_strength_weak">Weak</string>
+    <string name="password_strength_medium">Medium</string>
+    <string name="password_strength_strong">Strong</string>
+    <string name="password_rule_length">At least 8 characters</string>
+    <string name="password_rule_uppercase">An uppercase letter</string>
+    <string name="password_rule_lowercase">A lowercase letter</string>
+    <string name="password_rule_digit">A number</string>
+    <string name="password_rule_special">A special character (e.g. ! or #)</string>
+    <string name="password_rule_match">Passwords match</string>
+
+    <string name="account_title">Account</string>
+    <string name="account_edit_details">Edit details</string>
+    <string name="account_bonus_points">Bonus points</string>
+    <string name="account_completed_rides">Completed rides</string>
+    <string name="account_my_cars">My cars (%1$d)</string>
+    <string name="account_ride_history">Ride history</string>
+    <string name="account_dark_mode">Dark mode</string>
+    <string name="account_language">Language</string>
+    <string name="account_report_problem">Report a problem</string>
+    <string name="account_logout">Log out</string>
+    <string name="account_section_appearance">Appearance</string>
+    <string name="account_section_your_cars">Your cars</string>
+    <string name="account_balance">Balance</string>
+    <string name="account_ride_history_count">Ride history (%1$d)</string>
+    <string name="account_email_invalid">Not a valid email address</string>
+
+    <string name="account_change_email">Change email address</string>
+    <string name="account_change_password">Change password</string>
+    <string name="account_delete_account">Delete account</string>
+    <string name="account_current_email">Current: %1$s</string>
+    <string name="account_new_email">New email address</string>
+    <string name="account_confirm_password">Password (to confirm)</string>
+    <string name="account_email_hint">After the change you log in again with your new email address.</string>
+    <string name="account_current_password">Current password</string>
+    <string name="account_new_password">New password</string>
+    <string name="account_repeat_password">Repeat new password</string>
+    <string name="account_delete_warning">Your account will be deleted permanently. This cannot be undone.</string>
+    <string name="account_delete_restriction">Not possible during a reservation or ride.</string>
+    <string name="account_delete">Delete</string>
+
+    <string name="report_intro">For the developers: bugs and ideas about the app</string>
+    <string name="report_type">Type of problem</string>
+    <string name="report_type_bug">Bug</string>
+    <string name="report_type_crash">Crash</string>
+    <string name="report_type_suggestion">Suggestion</string>
+    <string name="report_type_other">Other</string>
+    <string name="report_summary">Short description</string>
+    <string name="report_steps">What happened? (steps)</string>
+    <string name="report_device_info">App version and device are sent automatically.</string>
+    <string name="report_send">Send</string>
+
+    <string name="language_hint">Choose the language of the app</string>
+    <string name="language_dutch">Nederlands</string>
+    <string name="language_english">English</string>
+
+    <string name="ride_history_rides">Rides</string>
+    <string name="ride_history_total_distance">Total distance</string>
+    <string name="ride_history_points">+%1$d points</string>
+    <string name="ride_history_empty_title">No rides yet</string>
+    <string name="ride_status_completed">Completed</string>
+    <string name="ride_details_title">Ride details</string>
+    <string name="ride_details_date">Date</string>
+    <string name="ride_details_time">Start – end</string>
+    <string name="ride_details_duration">Duration</string>
+    <string name="ride_details_distance">Distance</string>
+    <string name="ride_details_avg_speed">Avg. speed</string>
+    <string name="ride_details_avg_acceleration">Avg. acceleration</string>
+    <string name="ride_details_avg_deceleration">Avg. deceleration</string>
+
+    <string name="rental_terms_title">Rental terms</string>
+    <string name="rental_terms_for_rent">For rent</string>
+    <string name="rental_terms_not_for_rent">Not for rent</string>
+    <string name="rental_terms_price">Price</string>
+    <string name="rental_terms_price_per_day">Price per day</string>
+    <string name="rental_terms_pickup">Pick-up</string>
+    <string name="rental_terms_return">Return</string>
+    <string name="rental_terms_optional">Optional</string>
+    <string name="rental_terms_location">Location</string>
+    <string name="rental_terms_from">From</string>
+    <string name="rental_terms_until">Until</string>
+    <string name="rental_terms_time_placeholder">hh:mm</string>
+    <string name="rental_terms_error_price">Enter a price above 0</string>
+    <string name="rental_terms_error_time_format">Use a valid time, e.g. 08:00</string>
+    <string name="rental_terms_error_time_pair">Fill in both times, or leave both empty</string>
+    <string name="rental_terms_error_time_order">The end time must be after the start time</string>
 </resources>
